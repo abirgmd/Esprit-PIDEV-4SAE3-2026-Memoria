@@ -1,0 +1,99 @@
+<div class="diagnostic-container">
+  <!-- Header -->
+  <div class="header">
+    <h1 class="title">Language Test</h1>
+    <div class="progress-info">
+      <span class="progress-text">{{ progressPercentage }}% completed</span>
+    </div>
+  </div>
+
+  <!-- Progress Bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" [style.width.%]="progressPercentage"></div>
+  </div>
+
+  <!-- Question Card -->
+  <div class="question-card">
+    <div class="question-header">
+      <span class="question-number">Question {{ currentQuestionNumber }} of {{ totalQuestions }}</span>
+    </div>
+
+    <div class="question-content">
+      <h2 class="question-text">{{ currentQuestion.text }}</h2>
+
+      <div class="answer-section">
+        <label class="answer-label">Your Answer:</label>
+        <textarea
+          class="answer-input"
+          [(ngModel)]="currentQuestion.answer"
+          placeholder="Enter your answer here..."
+          rows="4"
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="navigation-buttons">
+      <button
+        class="btn btn-secondary"
+        (click)="previousQuestion()"
+        [disabled]="currentQuestionIndex === 0"
+      >
+        Previous
+      </button>
+
+      <button
+        class="btn btn-primary"
+        (click)="nextQuestion()"
+      >
+        {{ currentQuestionIndex === totalQuestions - 1 ? 'Finish Test' : 'Next' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Pop-up -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title">Test Completed</h2>
+      <button class="close-btn" (click)="closeModal()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="score-section">
+        <div class="score-circle">
+          <span class="score-percentage">{{ score }}%</span>
+        </div>
+        <p class="score-label">Your Score</p>
+      </div>
+
+      <div class="mri-section">
+        <label class="mri-label">Upload MRI Image (Optional)</label>
+
+        <div class="image-upload-container">
+          <input
+            type="file"
+            id="mri-upload"
+            accept="image/*"
+            (change)="onImageSelected($event)"
+            class="file-input"
+          />
+          <label for="mri-upload" class="upload-label">
+            <span *ngIf="!mriImage">+ Add MRI Image</span>
+            <span *ngIf="mriImage">Change Image</span>
+          </label>
+        </div>
+
+        <div class="image-preview" *ngIf="mriImage">
+          <img [src]="mriImage" alt="MRI Preview" />
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+      <button class="btn btn-primary" (click)="submitDiagnostic()">Submit Diagnostic</button>
+    </div>
+  </div>
+</div>
