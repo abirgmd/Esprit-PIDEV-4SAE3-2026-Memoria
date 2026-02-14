@@ -45,8 +45,11 @@ public class Localisation {
 
     @OneToOne
     @JoinColumn(name = "id_traitement", nullable = false, unique = true)
+    private Traitements traitement;
 
     @OneToMany(mappedBy = "localisation", cascade = CascadeType.ALL)
     private List<ZoneAutorisee> zonesAutorisees;
-    private Traitements traitement;
+
+    @OneToMany(mappedBy = "localisation", cascade = CascadeType.ALL)
+    private List<HistoriquePosition> historiquePositions;
 }

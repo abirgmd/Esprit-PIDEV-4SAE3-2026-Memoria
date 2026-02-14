@@ -26,6 +26,7 @@ interface DiagnosticReport {
 
 @Component({
   selector: 'app-rapport',
+  standalone: true,
   imports: [CommonModule],
   templateUrl: './rapport.component.html',
   styleUrl: './rapport.component.css'

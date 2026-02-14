@@ -11,6 +11,7 @@ interface Question {
 
 @Component({
   selector: 'app-diagnostic',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './diagnostic.component.html',
   styleUrl: './diagnostic.component.css'
