@@ -1,5 +1,0 @@
-com\med\cognitive\service\PatientTestAssignmentServiceTest.class
-com\med\cognitive\controller\CognitiveTestControllerIntegrationTest.class
-com\med\cognitive\service\CognitiveTestServiceTest.class
-com\med\cognitive\service\DecisionServiceTest.class
-com\med\cognitive\controller\TestResultControllerIntegrationTest.class

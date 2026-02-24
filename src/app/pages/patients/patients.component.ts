@@ -1,17 +1,24 @@
-import { Component } from '@angular/core';
+import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { LucideAngularModule, Search, Filter, UserPlus, TrendingDown, TrendingUp, Clock } from 'lucide-angular';
+import { AssignationService } from '../../services/assignation.service';
 
 interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  lastTest: string;
-  score: number;
-  trend: 'up' | 'down' | 'stable';
-  status: 'normal' | 'surveillance' | 'critique';
-  nextAppointment: string;
+  id: number;
+  nom: string;
+  prenom: string;
+  email: string;
+  dateNaissance: string;
+  sexe: string;
+  adresse: string;
+  medecin?: {
+    id: number;
+    nom: string;
+    prenom: string;
+    email: string;
+    specialite: string;
+  };
 }
 
 @Component({
@@ -25,7 +32,9 @@ interface Patient {
   templateUrl: './patients.component.html',
   styleUrl: './patients.component.css'
 })
-export class PatientsComponent {
+export class PatientsComponent implements OnInit {
+  private assignationService = inject(AssignationService);
+  
   readonly icons = {
     Search,
     Filter,
@@ -35,90 +44,81 @@ export class PatientsComponent {
     Clock
   };
 
-  patients: Patient[] = [
-    {
-      id: '1',
-      name: 'Marie Dubois',
-      age: 72,
-      lastTest: '2024-02-01',
-      score: 24,
-      trend: 'down',
-      status: 'surveillance',
-      nextAppointment: '2024-02-15'
-    },
-    {
-      id: '2',
-      name: 'Jean Martin',
-      age: 68,
-      lastTest: '2024-01-28',
-      score: 28,
-      trend: 'stable',
-      status: 'normal',
-      nextAppointment: '2024-03-01'
-    },
-    {
-      id: '3',
-      name: 'Sophie Laurent',
-      age: 75,
-      lastTest: '2024-02-02',
-      score: 18,
-      trend: 'down',
-      status: 'critique',
-      nextAppointment: '2024-02-08'
-    },
-    {
-      id: '4',
-      name: 'Pierre Durand',
-      age: 70,
-      lastTest: '2024-01-30',
-      score: 26,
-      trend: 'up',
-      status: 'normal',
-      nextAppointment: '2024-02-20'
-    },
-    {
-      id: '5',
-      name: 'Claire Petit',
-      age: 77,
-      lastTest: '2024-02-01',
-      score: 22,
-      trend: 'down',
-      status: 'surveillance',
-      nextAppointment: '2024-02-12'
-    }
-  ];
+  patients = signal<Patient[]>([]);
+  filteredPatients = signal<Patient[]>([]);
+  searchQuery = signal<string>('');
+  isLoading = signal<boolean>(false);
 
-  getStatusClass(status: string): string {
-    switch (status) {
-      case 'normal':
-        return 'status-normal';
-      case 'surveillance':
-        return 'status-surveillance';
-      case 'critique':
-        return 'status-critique';
-      default:
-        return '';
+  ngOnInit() {
+    this.loadPatients();
+  }
+
+  loadPatients() {
+    this.isLoading.set(true);
+    this.assignationService.getAllPatientsWithMedecin().subscribe({
+      next: (patients: Patient[]) => {
+        this.patients.set(patients);
+        this.filteredPatients.set(patients);
+        this.isLoading.set(false);
+        console.log('Patients chargés:', patients);
+      },
+      error: (err) => {
+        console.error('Erreur lors du chargement des patients:', err);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  onSearchChange(event: any) {
+    const query = event.target.value;
+    this.searchQuery.set(query);
+    
+    if (query.trim() === '') {
+      this.filteredPatients.set(this.patients());
+    } else {
+      this.assignationService.searchPatients(query).subscribe({
+        next: (searchResults: Patient[]) => {
+          this.filteredPatients.set(searchResults);
+        },
+        error: (err) => {
+          console.error('Erreur lors de la recherche:', err);
+          // Fallback: filter local data
+          const filtered = this.patients().filter(patient => 
+            patient.nom.toLowerCase().includes(query.toLowerCase()) ||
+            patient.prenom.toLowerCase().includes(query.toLowerCase())
+          );
+          this.filteredPatients.set(filtered);
+        }
+      });
     }
   }
 
-  getStatusLabel(status: string): string {
-    switch (status) {
-      case 'normal':
-        return 'Stable';
-      case 'surveillance':
-        return 'À surveiller';
-      case 'critique':
-        return 'Critique';
-      default:
-        return status;
+  getAge(dateNaissance: string): number {
+    const birth = new Date(dateNaissance);
+    const today = new Date();
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
     }
+    return age;
   }
 
-  getInitials(name: string): string {
-    return name.split(' ').map(n => n[0]).join('');
+  getInitials(prenom: string, nom: string): string {
+    return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase();
   }
 
   formatDate(dateStr: string): string {
     return new Date(dateStr).toLocaleDateString('fr-FR');
+  }
+
+  getMedecinFullName(medecin?: any): string {
+    if (!medecin) return 'Non assigné';
+    return `Dr. ${medecin.prenom} ${medecin.nom}`;
+  }
+
+  getMedecinSpecialite(medecin?: any): string {
+    if (!medecin) return '';
+    return medecin.specialite || '';
   }
 }

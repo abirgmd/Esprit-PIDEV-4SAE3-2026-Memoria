@@ -5,7 +5,8 @@ export enum TestType {
     LOGIC = 'LOGIC',
     AUDIO = 'AUDIO',
     ATTENTION = 'ATTENTION',
-    DRAWING = 'DRAWING'
+    DRAWING = 'DRAWING',
+    GAME = 'GAME'
 }
 
 export enum QuestionType {
@@ -140,4 +141,67 @@ export interface Recommendation {
     notes?: string;
     completedAt?: string;
     completedBy?: number;
+}
+
+export interface UserDTO {
+    id: number;
+    nom: string;
+    prenom: string;
+    email?: string;
+    role: string;
+    actif: boolean;
+}
+
+export interface PatientDTO extends UserDTO {
+    dateNaissance?: string;
+    sexe?: string;
+    adresse?: string;
+    medecin?: {
+        id: number;
+        nom: string;
+        prenom: string;
+        email?: string;
+        specialite?: string;
+    };
+}
+
+export interface SoignantDTO extends UserDTO {
+    specialite?: string;
+    hopital?: string;
+    numeroOrdre?: string;
+}
+
+export interface AccompagnantDTO extends UserDTO {
+    relation?: string;
+    frequenceAccompagnement?: string;
+    telephone?: string;
+}
+
+export interface AssignationRequest {
+    patientId: number;
+    testId: number;
+    soignantId: number;
+    accompagnantId?: number;
+    dateLimite?: string;
+    instructions?: string;
+}
+
+export interface PersonalizedTestItem {
+    question: string;
+    reponse: string;
+    score: number;
+    imageUrl?: string;
+    metadata: { [key: string]: any };
+}
+
+export interface PersonalizedTestRequest {
+    patientId: number;
+    soignantId?: number; // Rendu optionnel pour récupération automatique
+    accompagnantId?: number;
+    titre: string;
+    description: string;
+    stage: 'STABLE' | 'MOYEN' | 'CRITIQUE';
+    dateLimite: string; // YYYY-MM-DD
+    instructions?: string;
+    items: PersonalizedTestItem[];
 }

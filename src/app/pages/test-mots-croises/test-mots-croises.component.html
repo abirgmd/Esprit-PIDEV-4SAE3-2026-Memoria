@@ -1,0 +1,190 @@
+<div class="test-mots-croises-container" (keydown)="onKeydown($event)" tabindex="0">
+  <!-- Phase 1: Presentation -->
+  @if (testPhase() === 'presentation') {
+    <div class="presentation-screen">
+      <div class="presentation-card">
+        <h1 class="presentation-title">TEST DE MOTS CROISÉS</h1>
+        
+        <div class="instructions">
+          <h2>Instructions :</h2>
+          <ul>
+            <li>Complétez la grille de mots croisés</li>
+            <li>Les définitions sont listées à droite</li>
+            <li>Cliquez sur une case pour la sélectionner</li>
+            <li>Tapez une lettre au clavier</li>
+            <li>Utilisez les flèches pour naviguer</li>
+          </ul>
+        </div>
+        
+        <div class="timer-info">
+          <span class="timer-icon">⏱️</span>
+          <span>Temps : 10 minutes</span>
+        </div>
+        
+        <button class="btn-start" (click)="startTest()">COMMENCER LE TEST</button>
+      </div>
+    </div>
+  }
+
+  <!-- Phase 2: Playing -->
+  @if (testPhase() === 'playing') {
+    <div class="game-screen">
+      <header class="game-header">
+        <h1 class="game-title">MOTS CROISÉS</h1>
+        <div class="timer-display">
+          <span class="timer-icon">⏱️</span>
+          <span>{{ formatTime(timeRemaining()) }}</span>
+        </div>
+      </header>
+
+      <main class="game-main">
+        <div class="game-content">
+          <!-- Grid -->
+          <div class="grid-section">
+            <div class="grid-container">
+              <!-- Column numbers -->
+              <div class="column-numbers">
+                <div class="col-number"></div>
+                @for (col of [1, 2, 3, 4, 5]; track col) {
+                  <div class="col-number">{{ col }}</div>
+                }
+              </div>
+              
+              <!-- Grid rows -->
+              @for (row of grid(); track rowIndex; let rowIndex = $index) {
+                <div class="grid-row">
+                  <div class="row-number">{{ rowIndex + 1 }}</div>
+                  @for (cell of row; track colIndex; let colIndex = $index) {
+                    <div 
+                      class="grid-cell"
+                      [class.selected]="selectedCell()?.row === rowIndex && selectedCell()?.col === colIndex"
+                      [class.blocked]="cell.isBlocked"
+                      [class.has-number]="cell.wordIds.length > 0"
+                      (click)="selectCell(rowIndex, colIndex)"
+                    >
+                      @if (!cell.isBlocked) {
+                        <span class="cell-input">{{ cell.userInput }}</span>
+                        @if (cell.wordIds.length > 0) {
+                          <span class="cell-number">{{ getWordNumber(cell.wordIds[0]) }}</span>
+                        }
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Definitions -->
+          <div class="definitions-section">
+            <div class="definitions-container">
+              <div class="definitions-group">
+                <h3>HORIZONTAUX</h3>
+                @for (word of horizontalWords(); track word.id) {
+                  <div class="definition-item">
+                    <span class="word-id">{{ word.id }}:</span>
+                    <span class="word-definition">{{ word.definition }}</span>
+                  </div>
+                }
+              </div>
+              
+              <div class="definitions-group">
+                <h3>VERTICAUX</h3>
+                @for (word of verticalWords(); track word.id) {
+                  <div class="definition-item">
+                    <span class="word-id">{{ word.id }}:</span>
+                    <span class="word-definition">{{ word.definition }}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Game controls -->
+        <div class="game-controls">
+          <div class="progress-info">
+            <span>Cases remplies: {{ getFilledCellsCount() }}/25</span>
+          </div>
+          
+          <div class="control-buttons">
+            <button class="btn-clear" (click)="clearGrid()">EFFACER</button>
+            <button class="btn-validate" (click)="showValidation()">VALIDER</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  }
+
+  <!-- Phase 3: Validation -->
+  @if (testPhase() === 'validation') {
+    <div class="validation-screen">
+      <div class="validation-card">
+        <div class="validation-message">
+          <span class="check-icon">✅</span>
+          <span>Grille complétée !</span>
+        </div>
+        
+        <p class="validation-question">Voulez-vous valider vos réponses ?</p>
+        
+        <div class="validation-buttons">
+          <button class="btn-no" (click)="testPhase.set('playing')">NON</button>
+          <button class="btn-yes" (click)="validateAnswers()">OUI</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Phase 4: Results -->
+  @if (testPhase() === 'results' && testResults()) {
+    <div class="results-screen">
+      <div class="results-card">
+        <h1 class="results-title">RÉSULTATS</h1>
+        
+        <div class="patient-info">
+          <p>Patient : Marie LAMBERT</p>
+          <p>Temps : {{ formatTime(testResults()!.timeTaken) }}</p>
+        </div>
+        
+        <div class="results-table">
+          <table>
+            <thead>
+              <tr>
+                <th>MOT</th>
+                <th>RÉPONSE</th>
+                <th>CORRECT</th>
+                <th>SCORE</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (response of testResults()!.responses; track response.wordId) {
+                <tr>
+                  <td>{{ response.wordId }} ({{ getWordById(response.wordId)?.answer }})</td>
+                  <td>{{ response.userInput || '-' }}</td>
+                  <td>
+                    @if (response.isCorrect) {
+                      <span class="correct-mark">✓</span>
+                    } @else {
+                      <span class="incorrect-mark">✗</span>
+                    }
+                  </td>
+                  <td>{{ response.isCorrect ? '1/1' : '0/1' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="final-score">
+          <span>SCORE TOTAL : {{ testResults()!.score }} / {{ testResults()!.totalQuestions }}</span>
+        </div>
+        
+        <div class="results-actions">
+          <button class="btn-detail">VOIR DÉTAIL</button>
+          <button class="btn-print">IMPRIMER</button>
+          <button class="btn-restart" (click)="restartTest()">NOUVEAU TEST</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

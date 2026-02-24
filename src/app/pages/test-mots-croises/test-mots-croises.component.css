@@ -1,0 +1,616 @@
+.test-mots-croises-container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  outline: none;
+}
+
+/* Presentation Screen */
+.presentation-screen {
+  width: 100%;
+  max-width: 600px;
+}
+
+.presentation-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border: 1px solid #e0e0e0;
+}
+
+.presentation-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 2rem 0;
+  text-align: center;
+}
+
+.instructions {
+  text-align: left;
+  margin: 2rem 0;
+}
+
+.instructions h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0 0 1rem 0;
+}
+
+.instructions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.instructions li {
+  padding: 0.5rem 0;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.instructions li:before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.timer-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin: 2rem 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.timer-icon {
+  font-size: 1.2rem;
+}
+
+.btn-start {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  margin-top: 2rem;
+}
+
+.btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Game Screen */
+.game-screen {
+  width: 100%;
+  max-width: 1200px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.game-header {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.game-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.timer-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.game-main {
+  padding: 2rem;
+}
+
+.game-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+/* Grid Section */
+.grid-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-columns: 40px repeat(5, 50px) 1fr;
+  grid-template-rows: 40px repeat(5, 50px);
+  gap: 2px;
+  background: #e0e0e0;
+  padding: 2px;
+  border-radius: 8px;
+}
+
+.column-numbers {
+  display: contents;
+}
+
+.col-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.col-number:first-child {
+  background: transparent;
+}
+
+.grid-row {
+  display: contents;
+}
+
+.row-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.grid-cell {
+  background: white;
+  border: 1px solid #ddd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.grid-cell:hover:not(.blocked) {
+  background: #f0f8ff;
+  border-color: #667eea;
+}
+
+.grid-cell.selected {
+  background: #e8f0fe;
+  border-color: #667eea;
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.grid-cell.blocked {
+  background: #f5f5f5;
+  cursor: default;
+  border-color: #ccc;
+}
+
+.cell-input {
+  color: #2c3e50;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cell-number {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #667eea;
+  line-height: 1;
+}
+
+/* Definitions Section */
+.definitions-section {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid #e0e0e0;
+}
+
+.definitions-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+}
+
+.definitions-group h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #667eea;
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #667eea;
+}
+
+.definition-item {
+  margin-bottom: 0.8rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.word-id {
+  font-weight: 700;
+  color: #667eea;
+  min-width: 30px;
+}
+
+.word-definition {
+  color: #2c3e50;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Game Controls */
+.game-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
+.progress-info {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.control-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-clear, .btn-validate {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-clear {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-clear:hover {
+  background: #545b62;
+  transform: translateY(-1px);
+}
+
+.btn-validate {
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: white;
+}
+
+.btn-validate:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Validation Screen */
+.validation-screen {
+  width: 100%;
+  max-width: 400px;
+}
+
+.validation-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border: 1px solid #e0e0e0;
+}
+
+.validation-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #28a745;
+  margin-bottom: 2rem;
+}
+
+.check-icon {
+  font-size: 1.5rem;
+}
+
+.validation-question {
+  font-size: 1.1rem;
+  color: #2c3e50;
+  margin: 0 0 2rem 0;
+}
+
+.validation-buttons {
+  display: flex;
+  gap: 2rem;
+  justify-content: center;
+}
+
+.btn-no, .btn-yes {
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 100px;
+}
+
+.btn-no {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-no:hover {
+  background: #545b62;
+  transform: translateY(-2px);
+}
+
+.btn-yes {
+  background: linear-gradient(135deg, #28a745, #218838);
+  color: white;
+}
+
+.btn-yes:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+/* Results Screen */
+.results-screen {
+  width: 100%;
+  max-width: 800px;
+}
+
+.results-card {
+  background: white;
+  border-radius: 16px;
+  padding: 3rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+.results-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2c3e50;
+  margin: 0 0 2rem 0;
+  text-align: center;
+}
+
+.patient-info {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.patient-info p {
+  margin: 0.5rem 0;
+  color: #2c3e50;
+  font-weight: 500;
+}
+
+.results-table {
+  margin: 2rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.results-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.results-table th {
+  background: #f8f9fa;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: #2c3e50;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.results-table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  color: #2c3e50;
+}
+
+.correct-mark {
+  color: #28a745;
+  font-weight: 700;
+}
+
+.incorrect-mark {
+  color: #dc3545;
+  font-weight: 700;
+}
+
+.final-score {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #667eea;
+  margin: 2rem 0;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #667eea;
+}
+
+.results-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-detail, .btn-print, .btn-restart {
+  padding: 1rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-detail {
+  background: #17a2b8;
+  color: white;
+}
+
+.btn-detail:hover {
+  background: #138496;
+  transform: translateY(-1px);
+}
+
+.btn-print {
+  background: #6c757d;
+  color: white;
+}
+
+.btn-print:hover {
+  background: #545b62;
+  transform: translateY(-1px);
+}
+
+.btn-restart {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+}
+
+.btn-restart:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .game-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .definitions-container {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .test-mots-croises-container {
+    padding: 1rem;
+  }
+  
+  .presentation-card,
+  .results-card {
+    padding: 2rem 1.5rem;
+  }
+  
+  .game-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .grid-container {
+    grid-template-columns: 30px repeat(5, 40px) 1fr;
+    grid-template-rows: 30px repeat(5, 40px);
+  }
+  
+  .grid-cell {
+    font-size: 0.9rem;
+  }
+  
+  .game-controls {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .control-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .results-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-detail, .btn-print, .btn-restart {
+    width: 100%;
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 480px) {
+  .presentation-title,
+  .results-title {
+    font-size: 1.5rem;
+  }
+  
+  .grid-container {
+    grid-template-columns: 25px repeat(5, 35px) 1fr;
+    grid-template-rows: 25px repeat(5, 35px);
+  }
+  
+  .grid-cell {
+    font-size: 0.8rem;
+  }
+  
+  .cell-number {
+    font-size: 0.6rem;
+  }
+  
+  .definition-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+  }
+}

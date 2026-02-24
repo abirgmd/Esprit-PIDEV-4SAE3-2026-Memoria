@@ -31,7 +31,7 @@
             </div>
 
             <!-- Aidant / Suivant -->
-            <div class="role-card role-aidant" (click)="selectedRole.set('aidant')">
+            <div class="role-card role-aidant" (click)="openSelectionModal('AIDANT')">
                 <div class="role-icon-wrapper">
                     <lucide-icon [img]="icons.Users" size="40"></lucide-icon>
                 </div>
@@ -48,13 +48,13 @@
                         <li class="feature-item">Ressources et support</li>
                     </ul>
                 </div>
-                <button class="btn-role-access" (click)="selectedRole.set('aidant')">
+                <button class="btn-role-access" (click)="$event.stopPropagation(); openSelectionModal('AIDANT')">
                     Accéder <lucide-icon [img]="icons.ChevronRight" size="18"></lucide-icon>
                 </button>
             </div>
 
             <!-- Patient -->
-            <div class="role-card role-patient" (click)="selectedRole.set('patient')">
+            <div class="role-card role-patient" (click)="openSelectionModal('PATIENT')">
                 <div class="role-icon-wrapper">
                     <lucide-icon [img]="icons.UserCircle" size="40"></lucide-icon>
                 </div>
@@ -71,7 +71,7 @@
                         <li class="feature-item">Progression personnelle</li>
                     </ul>
                 </div>
-                <button class="btn-role-access" (click)="selectedRole.set('patient')">
+                <button class="btn-role-access" (click)="$event.stopPropagation(); openSelectionModal('PATIENT')">
                     Accéder <lucide-icon [img]="icons.ChevronRight" size="18"></lucide-icon>
                 </button>
             </div>
@@ -99,7 +99,7 @@
                 </button>
                 <button class="btn-primary-purple" (click)="showNewTestModal.set(true)">
                     <lucide-icon [img]="icons.Plus" size="18"></lucide-icon>
-                    Nouveau Test
+                    Assigner Test
                 </button>
             </div>
         </div>
@@ -215,7 +215,7 @@
                     <lucide-icon [img]="icons.FlaskConical" size="32" class="teal"></lucide-icon>
                     <span>Gérer les Tests</span>
                 </div>
-                <div class="action-card">
+                <div class="action-card" (click)="showDoctorAssignmentsModal.set(true)">
                     <lucide-icon [img]="icons.ClipboardList" size="32" class="orange"></lucide-icon>
                     <span>Assignations</span>
                 </div>
@@ -319,29 +319,59 @@
                 </div>
             </div>
 
-            <!-- Prochain Rendez-vous -->
+            <!-- Tests & Rendez-vous -->
             <div class="bottom-section-card">
                 <div class="section-card-header">
                     <h3 class="card-title">
                         <lucide-icon [img]="icons.Calendar" size="20"></lucide-icon>
-                        Prochain Rendez-vous
+                        Tests & Rendez-vous
                     </h3>
+                    <span class="counter-badge blue">{{ patientAssignments().length + 1 }}</span>
                 </div>
                 <div class="appointment-content-aidant">
-                    <div class="appointment-card-inner">
-                        <div class="calendar-icon-mock">
-                            <lucide-icon [img]="icons.Calendar" size="32" class="blue-text"></lucide-icon>
+                    <!-- Tests Assignés -->
+                    <div *ngIf="patientAssignments().length > 0" class="tests-list-aidant-scrollable">
+                        <div *ngFor="let assignment of patientAssignments()" class="appointment-card-inner clickable"
+                            (click)="handleAidantAssignmentClick(assignment)">
+                            <div class="calendar-icon-mock">
+                                <lucide-icon [img]="icons.Brain" size="32" class="blue-text"></lucide-icon>
+                            </div>
+                            <div class="appointment-details-text">
+                                <span class="appoint-date">{{ assignment.test?.titre || 'Test Cognitif' }}</span>
+                                <span class="appoint-time">{{ assignment.test?.type || 'MEMORY' }}</span>
+                                <span class="appoint-desc" *ngIf="assignment.dateLimite">Échéance: {{ assignment.dateLimite | date:'dd/MM/yyyy' }}</span>
+                                <span class="appoint-loc" *ngIf="assignment.test?.durationMinutes">Durée: {{ assignment.test.durationMinutes }} min</span>
+                            </div>
+                            <div class="aidant-test-cta">
+                                <button class="btn-start-assignment" (click)="$event.stopPropagation(); handleAidantAssignmentClick(assignment)">
+                                    {{ assignment.status === 'IN_PROGRESS' ? 'Continuer' : 'Commencer' }}
+                                </button>
+                            </div>
                         </div>
-                        <div class="appointment-details-text">
-                            <span class="appoint-date">{{ aidantData.appointment.date }}</span>
-                            <span class="appoint-time">{{ aidantData.appointment.time }}</span>
-                            <span class="appoint-desc">{{ aidantData.appointment.description }}</span>
-                            <span class="appoint-loc">{{ aidantData.appointment.location }}</span>
+
+                        <!-- Rendez-vous -->
+                        <div class="appointment-card-inner">
+                            <div class="calendar-icon-mock">
+                                <lucide-icon [img]="icons.Calendar" size="32" class="blue-text"></lucide-icon>
+                            </div>
+                            <div class="appointment-details-text">
+                                <span class="appoint-date">{{ aidantData.appointment.date }}</span>
+                                <span class="appoint-time">{{ aidantData.appointment.time }}</span>
+                                <span class="appoint-desc">{{ aidantData.appointment.description }}</span>
+                                <span class="appoint-loc">{{ aidantData.appointment.location }}</span>
+                            </div>
                         </div>
                     </div>
-                    <button class="btn-outline-action">
-                        Ajouter au calendrier
+
+                    <button class="btn-outline-action" (click)="openCalendar()">
+                        Voir le calendrier
                     </button>
+
+                    <!-- Empty State -->
+                    <div *ngIf="patientAssignments().length === 0" class="empty-tests-state">
+                        <lucide-icon [img]="icons.ClipboardList" size="24" class="empty-icon"></lucide-icon>
+                        <span class="empty-text">Aucun test assigné</span>
+                    </div>
                 </div>
             </div>
 
@@ -377,7 +407,7 @@
                     Retour
                 </button>
             </div>
-            <h1 class="welcome-title">Bonjour ! 👋</h1>
+            <h1 class="welcome-title">Bonjour, {{ selectedPatientForDashboard()?.prenom || 'Patient' }} ! 👋</h1>
             <p class="welcome-subtitle">Voici votre tableau de bord</p>
         </header>
 
@@ -424,17 +454,62 @@
                         <lucide-icon [img]="icons.Clock" size="20"></lucide-icon>
                         Mes Tests à Faire
                     </h3>
+                    <span class="counter-badge blue" *ngIf="patientAssignments().length > 0">{{
+                        patientAssignments().length }}</span>
                 </div>
                 <div class="tests-list-patient">
-                    <div *ngFor="let test of patientData.testsToDo" class="test-to-do-card">
-                        <h4 class="test-to-do-title">{{ test.title }}</h4>
-                        <p class="test-to-do-desc">{{ test.desc }}</p>
-                        <div class="test-to-do-meta">
-                            <span class="meta-item"><lucide-icon [img]="icons.Clock" size="14"></lucide-icon> {{
-                                test.duration }}</span>
-                            <span class="meta-item">À faire avant le {{ test.deadline }}</span>
+                    <!-- Real assignments from backend -->
+                    <div *ngFor="let assign of patientAssignments()" class="test-to-do-card" [ngClass]="{
+                        'test-card-assigned': assign.status === 'ASSIGNED',
+                        'test-card-in-progress': assign.status === 'IN_PROGRESS',
+                        'test-card-completed': assign.status === 'COMPLETED'
+                    }">
+                        <div class="test-card-top">
+                            <div class="test-type-icon-wrapper">
+                                <lucide-icon [img]="getTestStyle(assign.test?.type).icon" size="20"></lucide-icon>
+                            </div>
+                            <div class="test-card-header-info">
+                                <h4 class="test-to-do-title">{{ assign.test?.titre || 'Test Cognitif' }}</h4>
+                                <span class="test-type-badge">{{ assign.test?.type }}</span>
+                            </div>
+                            <span class="status-badge" [ngClass]="{
+                                'status-assigned': assign.status === 'ASSIGNED',
+                                'status-in-progress': assign.status === 'IN_PROGRESS',
+                                'status-completed': assign.status === 'COMPLETED'
+                            }">{{ assign.status === 'ASSIGNED' ? 'À faire' : assign.status === 'IN_PROGRESS' ? 'En
+                                cours' : 'Terminé' }}</span>
                         </div>
-                        <button class="btn-start-test">Commencer le test</button>
+
+                        <p class="test-to-do-desc">{{ assign.test?.description || 'Évaluation cognitive assignée par
+                            votre médecin.' }}</p>
+
+                        <div class="test-to-do-meta">
+                            <span class="meta-item" *ngIf="assign.test?.durationMinutes">
+                                <lucide-icon [img]="icons.Clock" size="14"></lucide-icon>
+                                {{ assign.test.durationMinutes }} min
+                            </span>
+                            <span class="meta-item deadline-item" *ngIf="assign.dateLimite">
+                                📅 À faire avant le {{ assign.dateLimite | date:'dd/MM/yyyy' }}
+                            </span>
+                        </div>
+
+                        <p class="test-instructions" *ngIf="assign.instructions">
+                            📋 {{ assign.instructions }}
+                        </p>
+
+                        <button class="btn-start-test" [disabled]="assign.status === 'COMPLETED'"
+                            (click)="startPatientTest(assign)"
+                            [ngClass]="{'btn-completed': assign.status === 'COMPLETED'}">
+                            {{ assign.status === 'COMPLETED' ? '✅ Terminé' : assign.status === 'IN_PROGRESS' ? '▶
+                            Continuer le test' : '🚀 Commencer le test' }}
+                        </button>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div *ngIf="patientAssignments().length === 0" class="empty-assignments">
+                        <lucide-icon [img]="icons.CheckCircle2" size="40" class="empty-icon"></lucide-icon>
+                        <p>Aucun test assigné pour le moment.</p>
+                        <span>Votre médecin vous assignera des tests prochainement.</span>
                     </div>
                 </div>
             </div>
@@ -475,7 +550,7 @@
                     <span class="footer-loc">{{ patientData.nextAppointment.location }}</span>
                 </div>
             </div>
-            <button class="btn-detail-footer">Détails</button>
+            <button class="btn-detail-footer" (click)="openCalendar()">Calendrier</button>
         </div>
     </div>
 
@@ -503,18 +578,48 @@
                             [ngModel]="searchQuery()"
                             (ngModelChange)="searchQuery.set($event); selectedPatientId.set(null)">
                         <lucide-icon [img]="icons.Search" size="20" class="search-icon-inside"></lucide-icon>
-
                         <!-- Dynamic Results -->
                         <div *ngIf="filteredPatients.length > 0 && !selectedPatientId()"
                             class="search-results-dropdown">
                             <div *ngFor="let patient of filteredPatients" class="result-item"
                                 (click)="selectPatient(patient)">
                                 <span class="patient-dot"></span>
-                                <span class="patient-result-name">{{ patient.name }} - {{ patient.age }} ans</span>
+                                <span class="patient-result-name">{{ patient.prenom }} {{ patient.nom }}</span>
                             </div>
                             <div class="result-add-new">
                                 <lucide-icon [img]="icons.Plus" size="16"></lucide-icon>
                                 Ajouter un nouveau patient
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUICK PATIENT SELECTION -->
+                <div class="form-section-premium">
+                    <label class="label-premium">👥 SÉLECTION RAPIDE</label>
+
+                    <div *ngIf="patientsList().length > 0" class="quick-patients-grid">
+                        <div *ngFor="let patient of patientsList()" class="quick-patient-card"
+                            [ngClass]="{'active': selectedPatientId() === patient.id.toString()}"
+                            (click)="selectPatient(patient)">
+                            <div class="patient-avatar-small">
+                                {{ patient.prenom.charAt(0) }}{{ patient.nom.charAt(0) }}
+                            </div>
+                            <span class="quick-patient-name">{{ patient.prenom }} {{ patient.nom }}</span>
+                            <div class="check-overlay" *ngIf="selectedPatientId() === patient.id.toString()">
+                                <lucide-icon [img]="icons.CheckCircle2" size="16"></lucide-icon>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMPTY STATE / LOADING -->
+                    <div *ngIf="patientsList().length === 0" class="empty-patients-state">
+                        <div class="empty-content">
+                            <lucide-icon [img]="icons.AlertTriangle" size="24" class="empty-icon"></lucide-icon>
+                            <div class="empty-text">
+                                <span class="empty-title">Aucun patient trouvé</span>
+                                <span class="empty-subtitle">Vérifiez la connexion au module utilisateur ou ajoutez un
+                                    patient manuellement.</span>
                             </div>
                         </div>
                     </div>
@@ -642,6 +747,143 @@
                     ASSIGNER LE TEST
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELECTION PERSONNE (PATIENT OU AIDANT) -->
+    <div *ngIf="showSelectionModal()" class="modal-overlay" (click)="handleCloseSelectionModal()">
+        <div class="modal-content selection-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header-premium">
+                <div class="header-title-group">
+                    <lucide-icon [img]="selectionType() === 'PATIENT' ? icons.UserCircle : icons.Users" size="24"
+                        class="purple-text"></lucide-icon>
+                    <h2 class="modal-title-premium">
+                        Sélectionner {{ selectionType() === 'PATIENT' ? 'le patient' : 'l\'accompagnant' }}
+                    </h2>
+                </div>
+                <button class="btn-close-modal" (click)="handleCloseSelectionModal()">
+                    <lucide-icon [img]="icons.XMark" size="24"></lucide-icon>
+                </button>
+            </div>
+
+            <div class="modal-body-scrollable">
+                <div class="selection-grid">
+                    <ng-container *ngIf="selectionType() === 'PATIENT'">
+                        <div *ngFor="let p of patientsList()" class="selection-item-card"
+                            [ngClass]="{'selected': selectedPersonId() === p.id}" (click)="selectedPersonId.set(p.id)">
+                            <div class="selection-avatar">{{ p.prenom.charAt(0) }}{{ p.nom.charAt(0) }}</div>
+                            <div class="selection-info">
+                                <span class="selection-name">{{ p.prenom }} {{ p.nom }}</span>
+                                <span class="selection-sub">Patient ID: {{ p.id }}</span>
+                            </div>
+                            <div class="selection-check" *ngIf="selectedPersonId() === p.id">
+                                <lucide-icon [img]="icons.CheckCircle2" size="20"></lucide-icon>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <ng-container *ngIf="selectionType() === 'AIDANT'">
+                        <div *ngFor="let a of aidantsList()" class="selection-item-card"
+                            [ngClass]="{'selected': selectedPersonId() === a.id}" (click)="selectedPersonId.set(a.id)">
+                            <div class="selection-avatar aidant">{{ a.prenom.charAt(0) }}{{ a.nom.charAt(0) }}</div>
+                            <div class="selection-info">
+                                <span class="selection-name">{{ a.prenom }} {{ a.nom }}</span>
+                                <span class="selection-sub">{{ a.role }}</span>
+                            </div>
+                            <div class="selection-check" *ngIf="selectedPersonId() === a.id">
+                                <lucide-icon [img]="icons.CheckCircle2" size="20"></lucide-icon>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+
+                <div *ngIf="(selectionType() === 'PATIENT' && patientsList().length === 0) || (selectionType() === 'AIDANT' && aidantsList().length === 0)"
+                    class="empty-selection">
+                    <p>Aucune personne trouvée dans la base de données.</p>
+                </div>
+            </div>
+
+            <div class="modal-footer-premium">
+                <button class="btn-modal-secondary" (click)="handleCloseSelectionModal()">ANNULER</button>
+                <button class="btn-modal-primary" [disabled]="!selectedPersonId()"
+                    [ngClass]="{'disabled': !selectedPersonId()}" (click)="confirmSelection()">
+                    CONFIRMER ET ACCÉDER
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ASSIGNATIONS MÉDECIN -->
+<div *ngIf="showDoctorAssignmentsModal()" class="modal-overlay" (click)="showDoctorAssignmentsModal.set(false)">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header-premium">
+            <div class="header-title-group">
+                <lucide-icon [img]="icons.ClipboardList" size="24" class="purple-text"></lucide-icon>
+                <h2 class="modal-title-premium">Mes Assignations de Tests</h2>
+            </div>
+            <button class="btn-close-modal" (click)="showDoctorAssignmentsModal.set(false)">
+                <lucide-icon [img]="icons.XMark" size="24"></lucide-icon>
+            </button>
+        </div>
+
+        <div class="modal-body-scrollable">
+            <!-- Empty state -->
+            <div *ngIf="doctorAssignments().length === 0" class="empty-assignments">
+                <lucide-icon [img]="icons.ClipboardList" size="40" class="empty-icon"></lucide-icon>
+                <p>Aucune assignation trouvée.</p>
+                <span>Utilisez le bouton "Assigner Test" pour créer une nouvelle assignation.</span>
+            </div>
+
+            <!-- Assignments list -->
+            <div *ngIf="doctorAssignments().length > 0" class="assignments-table-container">
+                <table class="assignments-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Test</th>
+                            <th>Date Assignation</th>
+                            <th>Date Limite</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let assign of doctorAssignments()" class="assignment-row">
+                            <td class="patient-cell">
+                                <div class="patient-avatar-small">{{ getPatientName(assign.patientId).charAt(0) }}</div>
+                                <span>{{ getPatientName(assign.patientId) }}</span>
+                            </td>
+                            <td>
+                                <span class="test-name-cell">{{ assign.test?.titre || 'Test Inconnu' }}</span>
+                                <span class="test-type-badge">{{ assign.test?.type }}</span>
+                            </td>
+                            <td class="date-cell">
+                                {{ assign.dateAssignation | date:'dd/MM/yyyy HH:mm' }}
+                            </td>
+                            <td class="date-cell">
+                                <span *ngIf="assign.dateLimite">{{ assign.dateLimite | date:'dd/MM/yyyy' }}</span>
+                                <span *ngIf="!assign.dateLimite" class="no-date">—</span>
+                            </td>
+                            <td>
+                                <span class="meta-item status-badge" [ngClass]="{
+                                    'status-assigned': assign.status === 'ASSIGNED',
+                                    'status-in-progress': assign.status === 'IN_PROGRESS',
+                                    'status-completed': assign.status === 'COMPLETED'
+                                }">{{ assign.status }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-footer-premium">
+            <button class="btn-modal-secondary" (click)="showDoctorAssignmentsModal.set(false)">FERMER</button>
+            <button class="btn-modal-primary"
+                (click)="showDoctorAssignmentsModal.set(false); showNewTestModal.set(true)">
+                <lucide-icon [img]="icons.Plus" size="16"></lucide-icon>
+                NOUVELLE ASSIGNATION
+            </button>
         </div>
     </div>
 </div>

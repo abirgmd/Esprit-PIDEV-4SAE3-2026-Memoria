@@ -57,11 +57,6 @@ export class SidebarComponent {
       path: '/tests-cognitifs',
       label: 'Tests cognitifs',
       icon: Brain,
-      children: [
-        { path: '/tests-cognitifs/memoire', label: 'Tests mémoire' },
-        { path: '/tests-cognitifs/langage', label: 'Tests langage' },
-        { path: '/tests-cognitifs/orientation', label: "Tests d'orientation" }
-      ]
     },
     {
       path: '/diagnosis',

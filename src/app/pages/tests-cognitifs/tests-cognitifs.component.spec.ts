@@ -7,6 +7,7 @@ import { LucideAngularModule, Brain, MessageSquare, Compass, Plus, Activity } fr
 import { of } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Router } from '@angular/router';
+import { AssignationService } from '../../services/assignation.service';
 
 describe('TestsCognitifsComponent', () => {
     let component: TestsCognitifsComponent;
@@ -18,6 +19,14 @@ describe('TestsCognitifsComponent', () => {
         const cognitiveSpy = jasmine.createSpyObj('CognitiveTestService', ['getAll']);
         const resultSpy = jasmine.createSpyObj('TestResultService', ['getByPatient']);
         const routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+        const assignationSpy = jasmine.createSpyObj('AssignationService', [
+            'getAllPatientsWithMedecin',
+            'getAllAidants',
+            'getAllAssignations',
+            'getAssignationsByPatient',
+            'getAssignationsByMedecin',
+            'createAssignation'
+        ]);
 
         await TestBed.configureTestingModule({
             imports: [
@@ -29,6 +38,7 @@ describe('TestsCognitifsComponent', () => {
             providers: [
                 { provide: CognitiveTestService, useValue: cognitiveSpy },
                 { provide: TestResultService, useValue: resultSpy },
+                { provide: AssignationService, useValue: assignationSpy },
                 { provide: Router, useValue: routerSpy }
             ]
         }).compileComponents();
@@ -38,6 +48,12 @@ describe('TestsCognitifsComponent', () => {
 
         cognitiveTestService.getAll.and.returnValue(of([]));
         testResultService.getByPatient.and.returnValue(of([]));
+        assignationSpy.getAllPatientsWithMedecin.and.returnValue(of([]));
+        assignationSpy.getAllAidants.and.returnValue(of([]));
+        assignationSpy.getAllAssignations.and.returnValue(of([]));
+        assignationSpy.getAssignationsByPatient.and.returnValue(of([]));
+        assignationSpy.getAssignationsByMedecin.and.returnValue(of([]));
+        assignationSpy.createAssignation.and.returnValue(of({} as any));
 
         fixture = TestBed.createComponent(TestsCognitifsComponent);
         component = fixture.componentInstance;

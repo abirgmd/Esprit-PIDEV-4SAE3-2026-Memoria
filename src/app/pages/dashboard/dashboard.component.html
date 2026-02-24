@@ -6,29 +6,103 @@
         <span class="breadcrumb-current">Dashboard</span>
     </div>
 
-    <!-- Page title -->
-    <h1 class="page-title">Dashboard</h1>
+    <!-- Page title with medecin info -->
+    <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <div class="medecin-info" *ngIf="medecinData()">
+            <span class="medecin-name">{{ getMedecinName() }}</span>
+            <span class="medecin-specialite">{{ getMedecinSpecialite() }}</span>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading()" class="loading-state">
+        <p>Chargement du dashboard...</p>
+    </div>
 
     <!-- Metrics Grid -->
-    <section class="metrics-grid" aria-label="Métriques principales">
-        <app-metric-card title="Tests Réalisés" [value]="completedTests()" subtitle="Total tests complétés" trend="+12%"
+    <section *ngIf="!isLoading()" class="metrics-grid" aria-label="Métriques principales">
+        <app-metric-card title="Tests Réalisés" [value]="getCompletedTestsForMedecin()" subtitle="Tests complétés" trend="+12%"
             [icon]="icons.ClipboardCheck" color="blue"></app-metric-card>
 
-        <app-metric-card title="Patients Suivis" [value]="activePatients()" subtitle="Patients actifs" trend="+2"
+        <app-metric-card title="Patients Suivis" [value]="getTotalPatients()" subtitle="Patients actifs" trend="+2"
             [icon]="icons.Users" color="green"></app-metric-card>
 
-        <app-metric-card title="Assignations" [value]="pendingAssignments()" subtitle="En attente" trend="Urgent: 2"
+        <app-metric-card title="Tests en cours" [value]="getInProgressTestsForMedecin()" subtitle="En progression" trend="Urgent: 2"
             [icon]="icons.Calendar" color="orange"></app-metric-card>
 
-        <app-metric-card title="Catalogue Tests" [value]="totalTests()" subtitle="Tests disponibles" trend="New: 1"
+        <app-metric-card title="Total Tests" [value]="getTotalTestsForMedecin()" subtitle="Tests assignés" trend="New: 1"
             [icon]="icons.AlertCircle" color="red"></app-metric-card>
     </section>
 
+    <!-- Recent Patients Section -->
+    <section *ngIf="!isLoading()" class="recent-patients">
+        <h2 class="section-title">Patients Récents</h2>
+        <div class="patients-grid">
+            <div *ngFor="let patient of getRecentPatients()" class="patient-card">
+                <div class="patient-avatar">
+                    {{ patient.prenom?.charAt(0) }}{{ patient.nom?.charAt(0) }}
+                </div>
+                <div class="patient-info">
+                    <span class="patient-name">{{ patient.prenom }} {{ patient.nom }}</span>
+                    <span class="patient-email">{{ patient.email }}</span>
+                </div>
+                <button class="btn btn-sm btn-primary" 
+                        [routerLink]="['/personalized-test']" 
+                        [queryParams]="{patientId: patient.id, patientName: patient.prenom + ' ' + patient.nom, type: 'FACES', stage: 'STABLE'}">
+                    Assigner test
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Cards Section -->
+    <section *ngIf="!isLoading()" class="test-cards-section">
+        <h2 class="section-title">Tests Cognitifs Disponibles</h2>
+        <div class="test-cards-grid">
+            <div class="test-card" (click)="openTest({id: 'mmse_test', name: 'Test MMSE', type: 'MMSE'})">
+                <div class="test-card-header">
+                    <h3>Test MMSE</h3>
+                    <span class="test-type-badge">MMSE</span>
+                </div>
+                <p class="test-description">Mini Mental State Examination - Test cognitif standard</p>
+                <div class="test-meta">
+                    <span class="test-duration">30 min</span>
+                    <span class="test-questions">30 questions</span>
+                </div>
+            </div>
+            
+            <div class="test-card" (click)="openTest({id: 'memory_test', name: 'Test de Mémoire', type: 'MEMORY'})">
+                <div class="test-card-header">
+                    <h3>Test de Mémoire</h3>
+                    <span class="test-type-badge">MEMORY</span>
+                </div>
+                <p class="test-description">Évaluation des capacités de mémoire</p>
+                <div class="test-meta">
+                    <span class="test-duration">20 min</span>
+                    <span class="test-questions">10 questions</span>
+                </div>
+            </div>
+            
+            <div class="test-card" (click)="openTest({id: 'orientation_test', name: 'Test d\'Orientation', type: 'ORIENTATION'})">
+                <div class="test-card-header">
+                    <h3>Test d'Orientation</h3>
+                    <span class="test-type-badge">ORIENTATION</span>
+                </div>
+                <p class="test-description">Test d'orientation temporelle et spatiale</p>
+                <div class="test-meta">
+                    <span class="test-duration">15 min</span>
+                    <span class="test-questions">8 questions</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
     <!-- Charts and Data Visualization -->
-    <section class="data-visualization">
+    <section *ngIf="!isLoading()" class="data-visualization">
         <div class="chart-card">
             <div class="chart-header">
-                <h2 class="chart-title">Unique Visitor</h2>
+                <h2 class="chart-title">Activité des Tests</h2>
             </div>
             <div class="chart-body">
                 <svg class="line-chart" viewBox="0 0 600 250" preserveAspectRatio="xMidYMid meet">
@@ -79,11 +153,11 @@
                 <div class="chart-legend">
                     <div class="legend-item">
                         <span class="legend-dot" style="background-color: #4A90E2"></span>
-                        <span class="legend-label">Arts</span>
+                        <span class="legend-label">Tests complétés</span>
                     </div>
                     <div class="legend-item">
                         <span class="legend-dot" style="background-color: #00C9A7"></span>
-                        <span class="legend-label">Commerce</span>
+                        <span class="legend-label">Tests en cours</span>
                     </div>
                 </div>
             </div>
@@ -92,48 +166,48 @@
         <!-- Progress circles -->
         <div class="progress-cards">
             <div class="progress-card">
-                <h3 class="progress-card-title">Customers</h3>
+                <h3 class="progress-card-title">Progression Tests</h3>
                 <div class="progress-stats">
                     <div class="progress-stat-main">
-                        <span class="stat-number">826</span>
+                        <span class="stat-number">{{ getCompletedTestsForMedecin() }}</span>
                         <span class="stat-change stat-positive">
                             <lucide-icon [img]="icons.TrendingUp" size="16"></lucide-icon>
-                            8.2%
+                            {{ getTestCompletionPercentage() }}%
                         </span>
                     </div>
-                    <app-progress-circle [percentage]="67" label="" [size]="140"></app-progress-circle>
+                    <app-progress-circle [percentage]="getTestCompletionPercentage()" label="" [size]="140"></app-progress-circle>
                     <div class="progress-breakdown">
                         <div class="breakdown-item">
                             <span class="breakdown-dot" style="background-color: #4A90E2"></span>
-                            <span class="breakdown-label">674 New</span>
+                            <span class="breakdown-label">{{ getCompletedTestsForMedecin() }} Complétés</span>
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-dot" style="background-color: #7E7F9A"></span>
-                            <span class="breakdown-label">182 Return</span>
+                            <span class="breakdown-label">{{ getInProgressTestsForMedecin() }} En cours</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="progress-card">
-                <h3 class="progress-card-title">Customers</h3>
+                <h3 class="progress-card-title">Engagement Patients</h3>
                 <div class="progress-stats">
                     <div class="progress-stat-main">
-                        <span class="stat-number">826</span>
+                        <span class="stat-number">{{ getTotalPatients() }}</span>
                         <span class="stat-change stat-positive">
                             <lucide-icon [img]="icons.TrendingUp" size="16"></lucide-icon>
-                            8.2%
+                            Actifs
                         </span>
                     </div>
-                    <app-progress-circle [percentage]="73" label="" [size]="140"></app-progress-circle>
+                    <app-progress-circle [percentage]="85" label="" [size]="140"></app-progress-circle>
                     <div class="progress-breakdown">
                         <div class="breakdown-item">
                             <span class="breakdown-dot" style="background-color: #00C9A7"></span>
-                            <span class="breakdown-label">674 New</span>
+                            <span class="breakdown-label">{{ getEngagedPatients() }} Engagés</span>
                         </div>
                         <div class="breakdown-item">
                             <span class="breakdown-dot" style="background-color: #7E7F9A"></span>
-                            <span class="breakdown-label">182 Return</span>
+                            <span class="breakdown-label">{{ getNewPatients() }} Nouveaux</span>
                         </div>
                     </div>
                 </div>
