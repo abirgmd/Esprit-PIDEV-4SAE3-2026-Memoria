@@ -1,4 +1,0 @@
-cd "c:\Users\mraya\Downloads\memoria\cognitive-test-backend-module"; .\mvnw.cmd spring-boot:run  
-
-
-maintenent je veux organisé le code effacer toutes les fichiers ou les dossier qui ne sont pas necessaires dans ce projet 
