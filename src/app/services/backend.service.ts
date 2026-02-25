@@ -3,12 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { Test, Question, TestSession, TestAnswer, GameData, TestType, MMSE_QUESTIONS, MOCK_QUESTIONS } from '../models/test-models';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class BackendService {
-  private readonly API_BASE_URL = 'http://localhost:8080/api';
+  private readonly API_BASE_URL = environment.apiUrl;
 
   constructor(private http: HttpClient) {}
 

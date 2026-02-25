@@ -1,42 +1,19 @@
-# Angular
-/dist/
-/bazel-out
-/get-test-mode.ts
 node_modules
-npm-debug.log
-yarn-error.log
 
-# IDEs and editors
+.angular/
+dist/
+
 .idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+.vscode/
+*.iml
 
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
+.windsurf/
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.js
-/typings
+# Backend build outputs
+**/target/
 
-# System
-.DS_Store
-Thumbs.db
-
-# Environment
-.env
-.env.local
-.env.*.local
+# Local Maven distribution artifacts (should not be versioned)
+cognitive-test-module-beckend/apache-maven-3.9.6/
+cognitive-test-module-beckend/maven_portable/
+cognitive-test-module-beckend/maven.zip
+cognitive-test-module-beckend/package.log

@@ -1,0 +1,75 @@
+<div class="test-container" [class.complete]="isComplete()">
+    @if (!isComplete()) {
+    <!-- Header -->
+    <div class="test-header">
+        <div class="header-left">
+            <h1 class="test-title">TEST D'ORIENTATION</h1>
+            <div class="subtitle">Évaluation de l'orientation temporelle et spatiale</div>
+        </div>
+        <div class="timer-box">
+            <span class="timer-icon">⏱️</span>
+            <span class="timer-text">{{ formattedTime() }}</span>
+        </div>
+    </div>
+
+    <!-- Patient + Score -->
+    <div class="patient-row">
+        <span class="patient-label">Patient : <strong>{{ patientName() }}</strong></span>
+        <span class="score-badge">Score : {{ currentScore() }} / {{ totalQuestions() }}</span>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section">
+        <div class="progress-labels">
+            <span>Question {{ currentIndex() + 1 }} / {{ totalQuestions() }}</span>
+            <span>{{ progressPercentage() }}% complété</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" [style.width.%]="progressPercentage()"></div>
+        </div>
+    </div>
+
+    <!-- Question -->
+    <div class="question-card">
+        <div class="question-number">Question {{ currentIndex() + 1 }}</div>
+        <h2 class="question-text">{{ currentQuestion().questionText }}</h2>
+
+        @if (currentQuestion().type === 'mcq') {
+        <div class="options-grid">
+            @for (opt of currentQuestion().options || []; track opt) {
+            <button class="option-btn" [class.selected]="isSelected(opt)" (click)="selectOption(opt)">
+                {{ opt }}
+            </button>
+            }
+        </div>
+        } @else if (currentQuestion().type === 'text') {
+        <div class="text-input-wrapper">
+            <input type="text" class="text-input" placeholder="Tapez votre réponse ici..."
+                [value]="getAnswer(currentQuestion().id)" (input)="setAnswer($event, currentQuestion().id)" />
+        </div>
+        }
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+        <button class="btn-prev" [disabled]="currentIndex() === 0" (click)="goPrev()">← Précédent</button>
+        <button class="btn-next" (click)="goNext()">
+            {{ isLastQuestion() ? 'Terminer' : 'Suivant →' }}
+        </button>
+    </div>
+
+    } @else {
+    <!-- Results -->
+    <div class="results-card">
+        <div class="results-icon">🧭</div>
+        <h2 class="results-title">Test d'Orientation Terminé !</h2>
+        <div class="score-circle" [class.high]="finalScore() >= 8"
+            [class.medium]="finalScore() >= 5 && finalScore() < 8" [class.low]="finalScore() < 5">
+            <span class="score-value">{{ finalScore() }}</span>
+            <span class="score-max">/ {{ totalQuestions() }}</span>
+        </div>
+        <p class="results-time">Durée : {{ formattedTime() }}</p>
+        <button class="btn-next" (click)="returnToDashboard()">Retour aux tests</button>
+    </div>
+    }
+</div>

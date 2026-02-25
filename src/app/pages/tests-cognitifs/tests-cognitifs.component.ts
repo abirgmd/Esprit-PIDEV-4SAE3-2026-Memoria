@@ -409,7 +409,7 @@ export class TestsCognitifsComponent implements OnInit {
         if (patients.length > 0 && patients[0].medecin) {
           const medecinId = patients[0].medecin.id;
           console.log('[DEBUG] Using medecinId:', medecinId);
-          
+
           // Utiliser l'ID du médecin trouvé
           this.assignationService.getAssignationsByMedecin(medecinId).pipe(
             catchError(() => of([]))
@@ -475,7 +475,7 @@ export class TestsCognitifsComponent implements OnInit {
         // Utiliser une valeur par défaut pour l'âge car AccompagnantDTO n'a pas de dateNaissance
         this.aidantData.patientAge = 75; // Valeur par défaut pour la démo
         this.selectedRole.set('aidant');
-        
+
         // Charger les tests du patient lié à cet aidant via le nouvel endpoint
         this.loadAidantPatientTests(id);
       }
@@ -489,10 +489,10 @@ export class TestsCognitifsComponent implements OnInit {
     this.assignationService.getAllAssignations().subscribe({
       next: (allAssignments: any[]) => {
         // Chercher une assignment où cet aidant est l'accompagnant
-        const assignmentWithAidant = allAssignments.find((assign: any) => 
+        const assignmentWithAidant = allAssignments.find((assign: any) =>
           assign.accompagnantId === aidantId && assign.patientId
         );
-        
+
         if (assignmentWithAidant) {
           // Trouver le patient associé
           const patient = this.patientsList().find(p => p.id === assignmentWithAidant.patientId);
@@ -688,52 +688,35 @@ export class TestsCognitifsComponent implements OnInit {
     const status = String(assignment.status || 'ASSIGNED');
     if (status === 'COMPLETED') return;
 
+    const patientId = assignment.patientId || this.aidantData.patientId;
+    const baseQueryParams = {
+      testId: assignment.test?.id,
+      patientId: patientId,
+      assignationId: assignment.id
+    };
+
     // Check if this is a 5 mots test
     if (assignment.test?.titre?.toLowerCase().includes('5 mots') || assignment.test?.id === 3) {
-      // Navigate to 5 mots test with aidant context
-      const patientId = assignment.patientId || this.aidantData.patientId;
-      this.router.navigate(['/test-5mots'], { 
-        queryParams: { 
-          testId: assignment.test.id, 
-          patientId: patientId,
-          assignationId: assignment.id
-        } 
-      });
+      this.router.navigate(['/test-5mots'], { queryParams: baseQueryParams });
       return;
     }
 
     // Check if this is a visages test
     if (assignment.test?.titre?.toLowerCase().includes('visages') || assignment.test?.id === 4) {
-      // Navigate to visages test with aidant context
-      const patientId = assignment.patientId || this.aidantData.patientId;
-      this.router.navigate(['/test-visages'], { 
-        queryParams: { 
-          testId: assignment.test.id, 
-          patientId: patientId,
-          assignationId: assignment.id
-        } 
-      });
+      this.router.navigate(['/test-visages'], { queryParams: baseQueryParams });
       return;
     }
 
     // Check if this is a mots croises test
     if (assignment.test?.titre?.toLowerCase().includes('mots croises') || assignment.test?.id === 6) {
-      // Navigate to mots croises test with aidant context
-      const patientId = assignment.patientId || this.aidantData.patientId;
-      this.router.navigate(['/test-mots-croises'], { 
-        queryParams: { 
-          testId: assignment.test.id, 
-          patientId: patientId,
-          assignationId: assignment.id
-        } 
-      });
+      this.router.navigate(['/test-mots-croises'], { queryParams: baseQueryParams });
       return;
     }
 
-    // Navigation vers /cognitive-test/:testId selon les spécifications
+    // Navigate to dedicated test components with patientId/assignationId
     const testId = assignment.test?.id ?? assignment.testId;
     if (testId) {
-      this.router.navigate(['/cognitive-test', testId]);
+      this.router.navigate(['/cognitive-test', testId], { queryParams: { patientId, assignationId: assignment.id } });
       return;
     }
 
@@ -741,7 +724,7 @@ export class TestsCognitifsComponent implements OnInit {
     const type = String(assignment.test?.type || 'MEMORY');
     const route = this.mapAidantTestTypeToRoute(type);
     if (route) {
-      this.router.navigate([route]);
+      this.router.navigate([route], { queryParams: { patientId, assignationId: assignment.id } });
       return;
     }
 
@@ -773,7 +756,7 @@ export class TestsCognitifsComponent implements OnInit {
       // Récupérer le patient sélectionné pour trouver son médecin
       const selectedPatient = this.selectedPatientData;
       let soignantId = 16; // Fallback
-      
+
       if (selectedPatient && (selectedPatient as any).medecin) {
         soignantId = (selectedPatient as any).medecin.id;
         console.log('[DEBUG] Using patient medecinId:', soignantId);
@@ -851,35 +834,25 @@ export class TestsCognitifsComponent implements OnInit {
   }
 
   startPatientTest(assignment: any): void {
+    const patientId = this.selectedPatientForDashboard()?.id || assignment.patientId;
+    const baseQueryParams = {
+      testId: assignment.test?.id,
+      patientId: patientId,
+      assignationId: assignment.id
+    };
+
     // Navigate to the appropriate test based on test type or ID
     if (assignment.test?.titre?.toLowerCase().includes('5 mots') || assignment.test?.id === 3) {
-      // Navigate to 5 mots test
-      this.router.navigate(['/test-5mots'], { 
-        queryParams: { 
-          testId: assignment.test.id, 
-          patientId: this.selectedPatientForDashboard()?.id || assignment.patientId 
-        } 
-      });
+      this.router.navigate(['/test-5mots'], { queryParams: baseQueryParams });
     } else if (assignment.test?.titre?.toLowerCase().includes('visages') || assignment.test?.id === 4) {
-      // Navigate to visages test
-      this.router.navigate(['/test-visages'], { 
-        queryParams: { 
-          testId: assignment.test.id, 
-          patientId: this.selectedPatientForDashboard()?.id || assignment.patientId 
-        } 
-      });
+      this.router.navigate(['/test-visages'], { queryParams: baseQueryParams });
     } else if (assignment.test?.titre?.toLowerCase().includes('mots croises') || assignment.test?.id === 6) {
-      // Navigate to mots croises test
-      this.router.navigate(['/test-mots-croises'], { 
-        queryParams: { 
-          testId: assignment.test.id, 
-          patientId: this.selectedPatientForDashboard()?.id || assignment.patientId 
-        } 
-      });
+      this.router.navigate(['/test-mots-croises'], { queryParams: baseQueryParams });
     } else {
-      // Navigate to regular test runner
-      this.router.navigate(['/cognitive-test', assignment.test.id]);
+      // Navigate to test component (routes for IDs 1,10,17,19,20 go to dedicated components)
+      this.router.navigate(['/cognitive-test', assignment.test.id], {
+        queryParams: { patientId, assignationId: assignment.id }
+      });
     }
   }
 }
-

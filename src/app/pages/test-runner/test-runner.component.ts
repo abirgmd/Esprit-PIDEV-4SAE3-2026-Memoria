@@ -96,96 +96,98 @@ interface TestResultRequest {
           </div>
         } @else {
           <!-- Question Display -->
-          <div class="question-section">
-            <!-- Question Image -->
-            @if (currentQuestion()?.questionImageUrl) {
-              <div class="question-image-container">
-                <img [src]="currentQuestion()?.questionImageUrl" alt="Question image" class="question-image">
-              </div>
-            }
-            <h2 class="question-text">{{ currentQuestion()?.questionText }}</h2>
-            
-            <!-- Answers Container - Text or Image based -->
-            <div class="answers-container" [class.image-answers]="hasImageAnswers()">
-              @for (answer of currentQuestion()?.answers; track answer.id; let idx = $index) {
-                @if (answer.imageUrl) {
-                  <!-- Image Answer Card -->
-                  <div 
-                    class="image-answer-card"
-                    [class.selected]="currentQuestion()?.selectedAnswerId === answer.id"
-                    [class.correct]="currentQuestion()?.isValidated && answer.isCorrect"
-                    [class.incorrect]="currentQuestion()?.isValidated && currentQuestion()?.selectedAnswerId === answer.id && !answer.isCorrect"
-                    [class.disabled]="currentQuestion()?.isValidated"
-                    (click)="selectAnswer(answer.id)">
-                    <div class="answer-image-wrapper">
-                      <img [src]="answer.imageUrl" [alt]="answer.answerText" class="answer-image">
+          @if (currentQuestion(); as q) {
+            <div class="question-section">
+              <!-- Question Image -->
+              @if (q.questionImageUrl) {
+                <div class="question-image-container">
+                  <img [src]="q.questionImageUrl" alt="Question image" class="question-image">
+                </div>
+              }
+              <h2 class="question-text">{{ q.questionText }}</h2>
+              
+              <!-- Answers Container - Text or Image based -->
+              <div class="answers-container" [class.image-answers]="hasImageAnswers()">
+                @for (answer of q.answers; track answer.id; let idx = $index) {
+                  @if (answer.imageUrl) {
+                    <!-- Image Answer Card -->
+                    <div 
+                      class="image-answer-card"
+                      [class.selected]="q.selectedAnswerId === answer.id"
+                      [class.correct]="q.isValidated && answer.isCorrect"
+                      [class.incorrect]="q.isValidated && q.selectedAnswerId === answer.id && !answer.isCorrect"
+                      [class.disabled]="q.isValidated"
+                      (click)="selectAnswer(answer.id)">
+                      <div class="answer-image-wrapper">
+                        <img [src]="answer.imageUrl" [alt]="answer.answerText" class="answer-image">
+                      </div>
+                      <span class="answer-label">{{ answer.answerText }}</span>
+                      @if (q.isValidated && answer.isCorrect) {
+                        <div class="validation-icon correct-icon">✓</div>
+                      }
+                      @if (q.isValidated && q.selectedAnswerId === answer.id && !answer.isCorrect) {
+                        <div class="validation-icon incorrect-icon">✗</div>
+                      }
                     </div>
-                    <span class="answer-label">{{ answer.answerText }}</span>
-                    @if (currentQuestion()?.isValidated && answer.isCorrect) {
-                      <div class="validation-icon correct-icon">✓</div>
-                    }
-                    @if (currentQuestion()?.isValidated && currentQuestion()?.selectedAnswerId === answer.id && !answer.isCorrect) {
-                      <div class="validation-icon incorrect-icon">✗</div>
-                    }
-                  </div>
-                } @else {
-                  <!-- Text Answer Card -->
-                  <div 
-                    class="text-answer-card"
-                    [class.selected]="currentQuestion()?.selectedAnswerId === answer.id"
-                    [class.correct]="currentQuestion()?.isValidated && answer.isCorrect"
-                    [class.incorrect]="currentQuestion()?.isValidated && currentQuestion()?.selectedAnswerId === answer.id && !answer.isCorrect"
-                    [class.disabled]="currentQuestion()?.isValidated"
-                    (click)="selectAnswer(answer.id)">
-                    <div class="answer-letter">{{ getLetter(idx) }}</div>
-                    <span class="answer-text">{{ answer.answerText }}</span>
-                    @if (currentQuestion()?.isValidated && answer.isCorrect) {
-                      <div class="validation-icon correct-icon">✓</div>
-                    }
-                    @if (currentQuestion()?.isValidated && currentQuestion()?.selectedAnswerId === answer.id && !answer.isCorrect) {
-                      <div class="validation-icon incorrect-icon">✗</div>
-                    }
-                  </div>
+                  } @else {
+                    <!-- Text Answer Card -->
+                    <div 
+                      class="text-answer-card"
+                      [class.selected]="q.selectedAnswerId === answer.id"
+                      [class.correct]="q.isValidated && answer.isCorrect"
+                      [class.incorrect]="q.isValidated && q.selectedAnswerId === answer.id && !answer.isCorrect"
+                      [class.disabled]="q.isValidated"
+                      (click)="selectAnswer(answer.id)">
+                      <div class="answer-letter">{{ getLetter(idx) }}</div>
+                      <span class="answer-text">{{ answer.answerText }}</span>
+                      @if (q.isValidated && answer.isCorrect) {
+                        <div class="validation-icon correct-icon">✓</div>
+                      }
+                      @if (q.isValidated && q.selectedAnswerId === answer.id && !answer.isCorrect) {
+                        <div class="validation-icon incorrect-icon">✗</div>
+                      }
+                    </div>
+                  }
                 }
+              </div>
+
+              <!-- Validation Feedback -->
+              @if (q.isValidated) {
+                <div class="validation-feedback" [class.correct]="q.isCorrect" [class.incorrect]="!q.isCorrect">
+                  @if (q.isCorrect) {
+                    <span>✓ Bonne réponse !</span>
+                  } @else {
+                    <span>✗ Réponse incorrecte</span>
+                  }
+                </div>
               }
             </div>
 
-            <!-- Validation Feedback -->
-            @if (currentQuestion()?.isValidated) {
-              <div class="validation-feedback" [class.correct]="currentQuestion()?.isCorrect" [class.incorrect]="!currentQuestion()?.isCorrect">
-                @if (currentQuestion()?.isCorrect) {
-                  <span>✓ Bonne réponse !</span>
-                } @else {
-                  <span>✗ Réponse incorrecte</span>
-                }
-              </div>
-            }
-          </div>
-
-          <!-- Navigation -->
-          <div class="navigation-section">
-            <button 
-              class="btn-previous"
-              [disabled]="currentQuestionIndex() === 0"
-              (click)="goToPrevious()">
-              Précédent
-            </button>
-            @if (!currentQuestion()?.isValidated && currentQuestion()?.selectedAnswerId !== undefined) {
-              <button class="btn-validate" (click)="validateAnswer()">
-                Valider
-              </button>
-            } @else if (currentQuestion()?.isValidated) {
+            <!-- Navigation -->
+            <div class="navigation-section">
               <button 
-                class="btn-next"
-                (click)="goToNext()">
-                {{ isLastQuestion() ? 'Terminer' : 'Suivant' }}
+                class="btn-previous"
+                [disabled]="currentQuestionIndex() === 0"
+                (click)="goToPrevious()">
+                Précédent
               </button>
-            } @else {
-              <button class="btn-next" disabled>
-                Valider
-              </button>
-            }
-          </div>
+              @if (!q.isValidated && q.selectedAnswerId !== undefined) {
+                <button class="btn-validate" (click)="validateAnswer()">
+                  Valider
+                </button>
+              } @else if (q.isValidated) {
+                <button 
+                  class="btn-next"
+                  (click)="goToNext()">
+                  {{ isLastQuestion() ? 'Terminer' : 'Suivant' }}
+                </button>
+              } @else {
+                <button class="btn-next" disabled>
+                  Valider
+                </button>
+              }
+            </div>
+          }
         }
       } @else {
         <!-- Results Display -->
@@ -757,12 +759,12 @@ export class TestRunnerComponent implements OnInit {
 
   private loadTestData(): void {
     const testId = this.testId();
-    
+
     this.http.get<TestWithQuestions>(`${this.apiUrl}/tests/${testId}`).subscribe({
       next: (test) => {
         this.testTitle.set(test.testName || 'Test Cognitif');
         this.testType.set(test.testType || '');
-        
+
         // Check if this is a 5 mots test and redirect
         if (test.is5MotsTest && test.redirectUrl) {
           console.log('5 mots test detected, redirecting to:', test.redirectUrl);
@@ -783,12 +785,12 @@ export class TestRunnerComponent implements OnInit {
           window.location.href = test.redirectUrl;
           return;
         }
-        
+
         if (test.testType === 'GAME' || (test.testName && test.testName.toUpperCase().includes('JEU'))) {
           this.isGameMode.set(true);
           return;
         }
-        
+
         this.processQuestionsFromDto(test.questions || [], test.testName || '');
       },
       error: (err) => {
@@ -817,7 +819,7 @@ export class TestRunnerComponent implements OnInit {
       if (answers.length === 0) {
         answers = this.generateAnswersForQuestion(q.questionText);
       }
-      
+
       return {
         id: q.id,
         questionText: q.questionText,
@@ -836,7 +838,7 @@ export class TestRunnerComponent implements OnInit {
   private generateAnswersForQuestion(questionText: string): AnswerOption[] {
     const text = questionText.toLowerCase();
     const now = new Date();
-    
+
     if (text.includes('date') || text.includes('jour')) {
       const today = now.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
       const yesterday = new Date(now);
@@ -845,7 +847,7 @@ export class TestRunnerComponent implements OnInit {
       tomorrow.setDate(tomorrow.getDate() + 1);
       const twoDaysAgo = new Date(now);
       twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-      
+
       return [
         { id: 1, answerText: today, isCorrect: true },
         { id: 2, answerText: yesterday.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }), isCorrect: false },
@@ -919,7 +921,7 @@ export class TestRunnerComponent implements OnInit {
       if (month >= 3 && month <= 5) season = 'Printemps';
       else if (month >= 6 && month <= 8) season = 'Été';
       else if (month >= 9 && month <= 11) season = 'Automne';
-      
+
       return [
         { id: 1, answerText: season, isCorrect: true },
         { id: 2, answerText: 'Printemps', isCorrect: season === 'Printemps' },
@@ -944,27 +946,33 @@ export class TestRunnerComponent implements OnInit {
 
   private useMockQuestions(testName: string): void {
     const isMMSE = testName.toUpperCase().includes('MMSE');
-    
+
     const mockQuestions: QuestionState[] = isMMSE ? [
-      { id: 1, questionText: 'Dans quel pays sommes-nous ?', answers: [
-        { id: 1, answerText: 'France', isCorrect: true },
-        { id: 2, answerText: 'Belgique', isCorrect: false },
-        { id: 3, answerText: 'Suisse', isCorrect: false },
-        { id: 4, answerText: 'Canada', isCorrect: false }
-      ], selectedAnswerId: undefined, isValidated: false },
-      { id: 2, questionText: 'Quelle est la capitale de la France ?', answers: [
-        { id: 5, answerText: 'Paris', isCorrect: true },
-        { id: 6, answerText: 'Lyon', isCorrect: false },
-        { id: 7, answerText: 'Marseille', isCorrect: false },
-        { id: 8, answerText: 'Bordeaux', isCorrect: false }
-      ], selectedAnswerId: undefined, isValidated: false }
+      {
+        id: 1, questionText: 'Dans quel pays sommes-nous ?', answers: [
+          { id: 1, answerText: 'France', isCorrect: true },
+          { id: 2, answerText: 'Belgique', isCorrect: false },
+          { id: 3, answerText: 'Suisse', isCorrect: false },
+          { id: 4, answerText: 'Canada', isCorrect: false }
+        ], selectedAnswerId: undefined, isValidated: false
+      },
+      {
+        id: 2, questionText: 'Quelle est la capitale de la France ?', answers: [
+          { id: 5, answerText: 'Paris', isCorrect: true },
+          { id: 6, answerText: 'Lyon', isCorrect: false },
+          { id: 7, answerText: 'Marseille', isCorrect: false },
+          { id: 8, answerText: 'Bordeaux', isCorrect: false }
+        ], selectedAnswerId: undefined, isValidated: false
+      }
     ] : [
-      { id: 1, questionText: 'Dans quel pays sommes-nous ?', answers: [
-        { id: 1, answerText: 'France', isCorrect: true },
-        { id: 2, answerText: 'Belgique', isCorrect: false },
-        { id: 3, answerText: 'Suisse', isCorrect: false },
-        { id: 4, answerText: 'Canada', isCorrect: false }
-      ], selectedAnswerId: undefined, isValidated: false }
+      {
+        id: 1, questionText: 'Dans quel pays sommes-nous ?', answers: [
+          { id: 1, answerText: 'France', isCorrect: true },
+          { id: 2, answerText: 'Belgique', isCorrect: false },
+          { id: 3, answerText: 'Suisse', isCorrect: false },
+          { id: 4, answerText: 'Canada', isCorrect: false }
+        ], selectedAnswerId: undefined, isValidated: false
+      }
     ];
 
     if (isMMSE && mockQuestions.length < 30) {
@@ -1026,8 +1034,8 @@ export class TestRunnerComponent implements OnInit {
     const currentIdx = this.currentQuestionIndex();
     this.questions.update(qs => {
       const updated = [...qs];
-      updated[currentIdx] = { 
-        ...updated[currentIdx], 
+      updated[currentIdx] = {
+        ...updated[currentIdx],
         isValidated: true,
         isCorrect: isCorrect
       };
@@ -1060,7 +1068,7 @@ export class TestRunnerComponent implements OnInit {
     this.questions().forEach(q => {
       const isCorrect = q.isCorrect || false;
       if (isCorrect) correctCount++;
-      
+
       if (q.selectedAnswerId !== undefined) {
         answers.push({
           questionId: q.id,

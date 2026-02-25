@@ -1,0 +1,102 @@
+<div class="test-container" [class.complete]="isComplete()">
+    @if (!isComplete()) {
+    <!-- Header -->
+    <div class="test-header">
+        <div class="header-left">
+            <h1 class="test-title">PUZZLES SIMPLES</h1>
+            <div class="puzzle-steps">
+                @for (p of puzzles; track p.id; let i = $index) {
+                <span class="step-dot" [class.active]="activeStep() === i" [class.done]="activeStep() > i">{{ i + 1
+                    }}</span>
+                }
+            </div>
+        </div>
+        <div class="timer-box">
+            <span class="timer-icon">⏱️</span>
+            <span class="timer-text">{{ formattedTime() }}</span>
+        </div>
+    </div>
+
+    <!-- Patient + Score -->
+    <div class="patient-row">
+        <span class="patient-label">Patient : <strong>{{ patientName() }}</strong></span>
+        <span class="score-badge">Puzzle {{ activeStep() + 1 }} / {{ totalPuzzles }}</span>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-section">
+        <div class="progress-labels">
+            <span><strong>{{ currentPuzzle().title }}</strong> — {{ currentPuzzle().description }}</span>
+            <span>{{ progressPercentage() }}%</span>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" [style.width.%]="progressPercentage()"></div>
+        </div>
+    </div>
+
+    <!-- Puzzle Area -->
+    <div class="puzzle-area">
+        <!-- Drop Zones (Target) -->
+        <div class="drop-zones-section">
+            <h3 class="zone-title">Zone d'assemblage</h3>
+            <div class="drop-zones-grid">
+                @for (zone of dropZones; track $index; let i = $index) {
+                <div class="drop-zone" [class.occupied]="dropZones[i] !== null" [class.correct]="isZoneCorrect(i)"
+                    (dragover)="onDragOver($event)" (drop)="onDropOnZone($event, i)">
+                    @if (getDropZonePiece(i); as piece) {
+                    <div class="piece-in-zone" [style.background]="piece.color" draggable="true"
+                        (dragstart)="onDragStart(piece.id)">
+                        <span class="piece-emoji">{{ piece.emoji }}</span>
+                        <span class="piece-label">{{ piece.label }}</span>
+                        @if (isZoneCorrect(i)) {
+                        <span class="correct-badge">✓</span>
+                        }
+                    </div>
+                    } @else {
+                    <div class="empty-zone-hint">Glissez ici</div>
+                    }
+                </div>
+                }
+            </div>
+        </div>
+
+        <!-- Available Pieces (Pool) -->
+        <div class="pieces-pool-section" (dragover)="onDragOver($event)" (drop)="onDropOnPool($event)">
+            <h3 class="zone-title">Pièces disponibles</h3>
+            <div class="pieces-pool">
+                @for (piece of getAvailablePieces(); track piece.id) {
+                <div class="puzzle-piece" [style.background]="piece.color" draggable="true"
+                    (dragstart)="onDragStart(piece.id)">
+                    <span class="piece-emoji">{{ piece.emoji }}</span>
+                    <span class="piece-label">{{ piece.label }}</span>
+                </div>
+                }
+                @if (getAvailablePieces().length === 0) {
+                <div class="pool-empty">Toutes les pièces sont placées !</div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+        <button class="btn-prev" [disabled]="activeStep() === 0" (click)="goPrevPuzzle()">← Précédent</button>
+        <button class="btn-next" (click)="goNextPuzzle()">
+            {{ activeStep() === totalPuzzles - 1 ? 'Terminer' : 'Puzzle Suivant →' }}
+        </button>
+    </div>
+
+    } @else {
+    <!-- Results -->
+    <div class="results-card">
+        <div class="results-icon">🧩</div>
+        <h2 class="results-title">Puzzles Terminés !</h2>
+        <div class="score-circle high">
+            <span class="score-value">{{ finalScore() }}</span>
+            <span class="score-max">pts</span>
+        </div>
+        <p class="results-time">Durée : {{ formattedTime() }}</p>
+        <button class="btn-next" (click)="returnToDashboard()">Retour aux tests</button>
+    </div>
+    }
+</div>

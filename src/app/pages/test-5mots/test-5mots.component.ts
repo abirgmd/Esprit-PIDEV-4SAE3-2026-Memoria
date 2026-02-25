@@ -63,8 +63,8 @@ interface TestResult {
         @case ('ENCODAGE') {
           <div class="phase-container encodage">
             <div class="word-display-card">
-              <div class="word-text">{{ currentEncodageWord()?.word }}</div>
-              <div class="word-category">► C'est {{ currentEncodageWord()?.category }}</div>
+              <div class="word-text">{{ currentEncodageWord().word }}</div>
+              <div class="word-category">► C'est {{ currentEncodageWord().category }}</div>
             </div>
             
             <div class="instruction">

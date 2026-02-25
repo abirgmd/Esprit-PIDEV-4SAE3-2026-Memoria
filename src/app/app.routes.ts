@@ -8,15 +8,17 @@ import { GestionTestsComponent } from './pages/gestion-tests/gestion-tests.compo
 import { PersonalizedTestFormComponent } from './pages/personalized-test-form/personalized-test-form.component';
 import { TestResultsComponent } from './pages/test-results/test-results.component';
 import { AnalysesComponent } from './pages/analyses/analyses.component';
-import { AlertsDashboardComponent } from './pages/alerts/alerts-dashboard/alerts-dashboard.component';
-import { CreateAlertComponent } from './pages/alerts/create-alert/create-alert.component';
-import { AlertDetailsComponent } from './pages/alerts/alert-details/alert-details.component';
 import { CalendarViewComponent } from './pages/calendar-view/calendar-view.component';
 import { ActivitiesComponent } from './pages/activities/activities.component';
 import { TestRunnerComponent } from './pages/test-runner/test-runner.component';
 import { Test5MotsComponent } from './pages/test-5mots/test-5mots.component';
 import { TestVisagesComponent } from './pages/test-visages/test-visages.component';
 import { MotsCroisesComponent } from './pages/mots-croises/mots-croises.component';
+import { TestMmseComponent } from './pages/test-mmse/test-mmse.component';
+import { TestOrientationSimplifieComponent } from './pages/test-orientation-simplifie/test-orientation-simplifie.component';
+import { TestPuzzlesSimplesComponent } from './pages/test-puzzles-simples/test-puzzles-simples.component';
+import { TestReconnaissanceProchesComponent } from './pages/test-reconnaissance-proches/test-reconnaissance-proches.component';
+import { TestTriCategoriesComponent } from './pages/test-tri-categories/test-tri-categories.component';
 
 export const APP_ROUTES: Routes = [
   {
@@ -31,18 +33,20 @@ export const APP_ROUTES: Routes = [
       { path: 'personalized-test', component: PersonalizedTestFormComponent },
       { path: 'gestion-tests', component: GestionTestsComponent },
 
+      { path: 'cognitive-test/1', component: TestMmseComponent },
+      { path: 'cognitive-test/10', component: TestOrientationSimplifieComponent },
+      { path: 'cognitive-test/17', component: TestPuzzlesSimplesComponent },
+      { path: 'cognitive-test/19', component: TestTriCategoriesComponent },
+      { path: 'cognitive-test/20', component: TestReconnaissanceProchesComponent },
       { path: 'cognitive-test/:testId', component: TestRunnerComponent },
       { path: 'test-5mots', component: Test5MotsComponent },
       { path: 'test-visages', component: TestVisagesComponent },
       { path: 'test-mots-croises', component: MotsCroisesComponent },
 
       { path: 'analyses', component: AnalysesComponent },
-      { path: 'alertes', component: AlertsDashboardComponent },
-      { path: 'alertes/create', component: CreateAlertComponent },
-      { path: 'alertes/:id', component: AlertDetailsComponent },
       { path: 'calendar', component: CalendarViewComponent },
       { path: 'activites', component: ActivitiesComponent },
-      
+
       // Test Results Route
       { path: 'test-results/:sessionId', component: TestResultsComponent },
 
