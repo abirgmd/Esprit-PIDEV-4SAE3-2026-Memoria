@@ -431,6 +431,25 @@ public ResponseEntity<Map<String, Object>> getSoignantByPatient(@PathVariable Lo
         return ResponseEntity.ok(assignationService.getAssignationsByAidant(accompagnantId));
     }
 
+    @GetMapping("/aidant/{accompagnantId}/planning")
+    public ResponseEntity<List<AidantPlanningItemDto>> getPlanningByAidant(@PathVariable Long accompagnantId) {
+        List<AidantPlanningItemDto> dto = assignationService.getPlanningByAidant(accompagnantId).stream()
+                .map(a -> new AidantPlanningItemDto(
+                        a.getId(),
+                        a.getPatientId(),
+                        a.getAccompagnantId(),
+                        a.getSoignantId(),
+                        a.getTest() != null ? a.getTest().getId() : null,
+                        a.getTest() != null ? a.getTest().getTitre() : null,
+                        a.getTest() != null && a.getTest().getType() != null ? a.getTest().getType().name() : null,
+                        a.getStatus() != null ? a.getStatus().name() : null,
+                        a.getDateAssignation(),
+                        a.getDateLimite()))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dto);
+    }
+
     @PostMapping("/demarrer/{assignId}")
     public ResponseEntity<TestResult> start(@PathVariable Long assignId, @RequestParam Long accompagnantId) {
         return ResponseEntity.ok(assignationService.startTest(assignId, accompagnantId));

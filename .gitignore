@@ -1,19 +1,94 @@
-node_modules
+# Frontend dependencies and build outputs
+cognitive-test-module-frontend/node_modules/
+cognitive-test-module-frontend/.angular/
+cognitive-test-module-frontend/dist/
 
-.angular/
-dist/
-
-.idea/
-.vscode/
-*.iml
-
-.windsurf/
+# IDE files
+cognitive-test-module-frontend/.idea/
+cognitive-test-module-frontend/.vscode/
+cognitive-test-module-frontend/*.iml
+cognitive-test-module-frontend/.windsurf/
 
 # Backend build outputs
-**/target/
+cognitive-test-module-beckend/target/
+cognitive-test-module-beckend/package.log
 
 # Local Maven distribution artifacts (should not be versioned)
 cognitive-test-module-beckend/apache-maven-3.9.6/
 cognitive-test-module-beckend/maven_portable/
 cognitive-test-module-beckend/maven.zip
-cognitive-test-module-beckend/package.log
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Dependency directories
+node_modules/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+.env.test
+.env.local
+.env.production
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# next.js build output
+.next
+
+# nuxt.js build output
+.nuxt
+
+# vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test

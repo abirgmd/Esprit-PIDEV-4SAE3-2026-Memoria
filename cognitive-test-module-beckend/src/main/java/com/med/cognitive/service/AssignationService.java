@@ -65,6 +65,10 @@ public class AssignationService {
         return assignRepository.findByAccompagnantIdAndStatus(accompagnantId, AssignStatus.ASSIGNED);
     }
 
+    public List<PatientTestAssign> getPlanningByAidant(Long accompagnantId) {
+        return assignRepository.findByAccompagnantId(accompagnantId);
+    }
+
     public List<PatientTestAssign> getAssignationsByPatient(Long patientId) {
         return assignRepository.findByPatientId(patientId);
     }

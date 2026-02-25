@@ -1,6 +1,7 @@
 package com.med.cognitive.controller;
 
 import com.med.cognitive.dto.AidantPatientTestDto;
+import com.med.cognitive.dto.AccompagnantDTO;
 import com.med.cognitive.entity.Accompagnant;
 import com.med.cognitive.entity.Patient;
 import com.med.cognitive.entity.PatientTestAssign;
@@ -21,6 +22,27 @@ public class AidantController {
 
     private final AccompagnantRepository accompagnantRepository;
     private final PatientTestAssignRepository assignRepository;
+
+    @GetMapping("/all")
+    public ResponseEntity<List<AccompagnantDTO>> getAllAidants() {
+        List<Accompagnant> aidants = accompagnantRepository.findAll();
+        List<AccompagnantDTO> dtos = aidants.stream().map(a -> {
+            AccompagnantDTO dto = new AccompagnantDTO();
+            dto.setId(a.getId());
+            dto.setNom(a.getNom());
+            dto.setPrenom(a.getPrenom());
+            dto.setEmail(a.getEmail());
+            dto.setTelephone(a.getTelephone());
+            dto.setRole(a.getRole());
+            dto.setActif(a.isActif());
+            dto.setRelation(a.getRelation());
+            if (a.getPatient() != null) {
+                dto.setPatientId(a.getPatient().getId());
+            }
+            return dto;
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
 
     @GetMapping("/patient-tests/{aidantId}")
     public ResponseEntity<List<AidantPatientTestDto>> getAidantPatientTests(@PathVariable Long aidantId) {

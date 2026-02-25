@@ -15,6 +15,8 @@ public interface PatientTestAssignRepository extends JpaRepository<PatientTestAs
 
     List<PatientTestAssign> findByPatientIdIn(List<Long> patientIds);
 
+    List<PatientTestAssign> findByAccompagnantId(Long accompagnantId);
+
     List<PatientTestAssign> findByAccompagnantIdAndStatus(Long accompagnantId, AssignStatus status);
 
     List<PatientTestAssign> findByTestId(Long testId);
