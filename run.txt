@@ -1,0 +1,1 @@
+PS C:\Users\mraya\Downloads\memoria> cd "c:\Users\mraya\Downloads\memoria\cognitive-test-module-beckend" ; .\mvnw.cmd spring-boot:run
