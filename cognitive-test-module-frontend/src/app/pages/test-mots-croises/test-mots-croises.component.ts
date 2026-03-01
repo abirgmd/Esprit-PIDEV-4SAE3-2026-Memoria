@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { CrosswordTestService, CrosswordAnswerDto, CrosswordResultDto } from '../../services/crossword-test.service';
 
 interface WordDefinition {
   id: string;
@@ -24,6 +25,7 @@ interface GridCell {
 }
 
 interface TestResult {
+  resultId?: number;
   patientId: number;
   testId: number;
   score: number;
@@ -76,7 +78,8 @@ export class TestMotsCroisesComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private crosswordTestService: CrosswordTestService
   ) {}
 
   ngOnInit(): void {
@@ -423,12 +426,49 @@ export class TestMotsCroisesComponent implements OnInit {
   }
 
   saveResults(result: TestResult): void {
-    this.http.post(`${this.apiUrl}/test-results`, result).subscribe({
+    // Convert TestResult to CrosswordResultDto
+    const crosswordResult: CrosswordResultDto = {
+      testId: this.currentTestId(),
+      patientId: this.currentPatientId(),
+      score: result.score,
+      totalQuestions: result.totalQuestions,
+      completedAt: new Date(),
+      answers: result.responses.map(resp => ({
+        questionId: parseInt(resp.wordId),
+        answer: resp.userInput,
+        patientId: this.currentPatientId(),
+        testId: this.currentTestId()
+      }))
+    };
+
+    this.crosswordTestService.submitTest(crosswordResult).subscribe({
       next: (response) => {
-        console.log('Test results saved:', response);
+        console.log('Crossword test results saved:', response);
+        this.testResults.set({
+          ...result,
+          resultId: response.resultId
+        });
       },
       error: (err) => {
-        console.error('Error saving results:', err);
+        console.error('Error saving crossword results:', err);
+      }
+    });
+  }
+
+  saveSingleAnswer(wordId: string, answer: string): void {
+    const crosswordAnswer: CrosswordAnswerDto = {
+      questionId: parseInt(wordId),
+      answer: answer,
+      patientId: this.currentPatientId(),
+      testId: this.currentTestId()
+    };
+
+    this.crosswordTestService.saveAnswer(crosswordAnswer).subscribe({
+      next: (response) => {
+        console.log('Answer saved:', response);
+      },
+      error: (err) => {
+        console.error('Error saving answer:', err);
       }
     });
   }

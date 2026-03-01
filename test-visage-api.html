@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Visage API</title>
+</head>
+<body>
+    <h1>Test Visage API</h1>
+    <button onclick="testScore()">Test Score API</button>
+    <div id="result"></div>
+
+    <script>
+        async function testScore() {
+            const scoreData = {
+                testId: 4,
+                patientId: 1,
+                score: 8
+            };
+
+            try {
+                console.log('Sending data:', scoreData);
+                const response = await fetch('http://localhost:8089/api/visage/submit-score', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(scoreData)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response ok:', response.ok);
+
+                const result = await response.text();
+                console.log('Response text:', result);
+
+                document.getElementById('result').innerHTML = `
+                    <h3>Result:</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Response: ${result}</p>
+                `;
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <h3>Error:</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

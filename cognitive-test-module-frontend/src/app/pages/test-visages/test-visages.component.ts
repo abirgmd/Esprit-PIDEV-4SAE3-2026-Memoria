@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { VisageTestService, VisageAnswerDto, VisageResultDto } from '../../services/visage-test.service';
 
 interface VisageData {
   id: number;
@@ -15,11 +16,19 @@ interface VisageData {
   answered: boolean;
 }
 
+interface VisageScoreRequest {
+  testId: number;
+  patientId: number;
+  score: number;
+}
+
 interface TestResult {
+  resultId?: number;
   patientId: number;
   testId: number;
   score: number;
   totalQuestions: number;
+  timeTaken: number;
   responses: Array<{
     imageId: number;
     characteristic: string;
@@ -38,7 +47,7 @@ interface TestResult {
 })
 export class TestVisagesComponent implements OnInit {
   private apiUrl = environment.apiUrl;
-  private currentPatientId: number = 0;
+  private currentPatientId: number = 1; // Corriger: mettre un ID patient valide
   private currentTestId: number = 4;
 
   // State signals
@@ -58,7 +67,8 @@ export class TestVisagesComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private http: HttpClient
+    private http: HttpClient,
+    private visageTestService: VisageTestService
   ) {}
 
   ngOnInit(): void {
@@ -119,7 +129,7 @@ export class TestVisagesComponent implements OnInit {
         imageUrl: 'assets/image/homme-chauve.jpg',
         questionText: 'Cet homme est-il chauve ?',
         characteristic: 'chauve',
-        correctAnswer: true,
+        correctAnswer: false,
         answered: false
       },
       {
@@ -135,7 +145,7 @@ export class TestVisagesComponent implements OnInit {
         imageUrl: 'assets/image/homme-moustachu.jpg',
         questionText: 'Cet homme a-t-il une moustache ?',
         characteristic: 'moustache',
-        correctAnswer: true,
+        correctAnswer: false,
         answered: false
       }
     ];
@@ -156,56 +166,33 @@ export class TestVisagesComponent implements OnInit {
 
   answerVisage(userAnswer: boolean): void {
     if (this.isAnswering() || this.testCompleted()) return;
-
     this.isAnswering.set(true);
-
+    
     const current = this.currentVisage();
     if (!current) return;
+    
+    // Update visage data
+    const updatedVisages = this.visages().map(v => {
+      if (v.id === current.id) {
+        // Convert userAnswer (boolean) to string for comparison
+        const userAnswerStr = userAnswer ? 'true' : 'false';
+        return {
+          ...v,
+          userAnswer: userAnswer,
+          answered: true,
+          isCorrect: userAnswerStr === v.correctAnswer.toString()
+        };
+      }
+      return v;
+    });
 
-    // Logique simple: comparer la réponse utilisateur avec la réponse correcte
-    const isCorrect = userAnswer === current.correctAnswer;
-
-    // Update visage with answer
-    const updatedVisages = this.visages().map(visage => 
-      visage.id === current.id 
-        ? {
-            ...visage,
-            userAnswer,
-            isCorrect,
-            answered: true
-          }
-        : visage
-    );
     this.visages.set(updatedVisages);
-
-    // Save answer to backend
-    this.saveAnswer(current.id, userAnswer, isCorrect);
 
     // Wait a moment to show feedback, then move to next
     setTimeout(() => {
       this.nextVisage();
       this.isAnswering.set(false);
     }, 1500);
-  }
-
-  saveAnswer(imageId: number, userAnswer: boolean, isCorrect: boolean): void {
-    const answerData = {
-      patientId: this.currentPatientId,
-      testId: this.currentTestId,
-      questionId: imageId,
-      answer: userAnswer,
-      isCorrect: isCorrect,
-      timeTakenSeconds: 0
-    };
-
-    this.http.post(`${this.apiUrl}/test-answers`, answerData).subscribe({
-      next: (response) => {
-        console.log('Answer saved:', response);
-      },
-      error: (err) => {
-        console.error('Error saving answer:', err);
-      }
-    });
   }
 
   nextVisage(): void {
@@ -224,27 +211,33 @@ export class TestVisagesComponent implements OnInit {
     this.score.set(correctAnswers);
     this.testCompleted.set(true);
 
-    // Save final result
-    const result: TestResult = {
-      patientId: this.currentPatientId,
+    // Save final score using simple endpoint
+    this.saveFinalScore();
+  }
+
+  saveFinalScore(): void {
+    const scoreData: VisageScoreRequest = {
       testId: this.currentTestId,
-      score: correctAnswers,
-      totalQuestions: this.totalVisages(),
-      responses: this.visages().map(v => ({
-        imageId: v.id,
-        characteristic: v.characteristic,
-        correctAnswer: v.correctAnswer,
-        userAnswer: v.userAnswer!,
-        isCorrect: v.isCorrect!
-      }))
+      patientId: this.currentPatientId,
+      score: this.score()
     };
 
-    this.http.post(`${this.apiUrl}/test-results`, result).subscribe({
+    console.log('=== SAVING FINAL SCORE ===');
+    console.log('API URL:', this.apiUrl);
+    console.log('Score Data:', scoreData);
+    console.log('Score value:', this.score());
+    console.log('Test ID:', this.currentTestId);
+    console.log('Patient ID:', this.currentPatientId);
+
+    this.http.post(`${this.apiUrl}/visage/submit-score`, scoreData).subscribe({
       next: (response) => {
-        console.log('Test result saved:', response);
+        console.log('✅ Final score saved successfully:', response);
       },
       error: (err) => {
-        console.error('Error saving result:', err);
+        console.error('❌ Error saving final score:', err);
+        console.error('Error status:', err.status);
+        console.error('Error message:', err.message);
+        console.error('Error URL:', err.url);
       }
     });
   }
