@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, Router } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '../../auth/auth.service';
 
 @Component({
   selector: 'app-sidebar-diagnostic',
@@ -18,18 +18,13 @@ export class SidebarDiagnosticComponent implements OnInit {
   constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-    const user = this.authService.getUser();
+    const user = this.authService.getCurrentUser();
     this.userRole = user?.role ?? null;
     this.userName = user ? `${user.prenom} ${user.nom}` : '';
   }
 
   onLogout(): void {
-    this.authService.logout().subscribe({
-      next: () => {},
-      error: () => {
-        localStorage.removeItem('memoria_user');
-        window.location.href = '/home';
-      }
-    });
+    this.authService.logout();
+    this.router.navigate(['/home']);
   }
 }

@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/accompagnants")
-@CrossOrigin(origins = "${app.cors.allowed-origins}")
 public class AccompagnantController {
 
     private final AccompagnantService service;

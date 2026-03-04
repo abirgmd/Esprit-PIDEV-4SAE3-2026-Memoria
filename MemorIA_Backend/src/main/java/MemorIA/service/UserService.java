@@ -3,6 +3,8 @@ package MemorIA.service;
 import MemorIA.dto.SignupRequest;
 import MemorIA.entity.User;
 import MemorIA.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.http.HttpStatus;
@@ -13,6 +15,8 @@ import java.util.Optional;
 
 @Service
 public class UserService {
+
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -137,7 +141,11 @@ public class UserService {
 
         user.setActif(true);
         User saved = userRepository.save(user);
-        emailService.sendAccountConfirmation(saved.getEmail(), saved.getPrenom() + " " + saved.getNom());
+        try {
+            emailService.sendAccountConfirmation(saved.getEmail(), saved.getPrenom() + " " + saved.getNom());
+        } catch (Exception e) {
+            log.warn("Email confirmation could not be sent to {}: {}", saved.getEmail(), e.getMessage());
+        }
         return saved;
     }
 

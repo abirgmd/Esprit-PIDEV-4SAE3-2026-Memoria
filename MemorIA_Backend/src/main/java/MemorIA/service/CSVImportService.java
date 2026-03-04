@@ -9,6 +9,8 @@ import MemorIA.repository.ReponseRepository;
 import MemorIA.repository.UserRepository;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +25,8 @@ import java.util.Map;
 
 @Service
 public class CSVImportService {
+
+    private static final Logger log = LoggerFactory.getLogger(CSVImportService.class);
 
     private final QuestionRepository questionRepository;
     private final ReponseRepository reponseRepository;
@@ -40,7 +44,7 @@ public class CSVImportService {
      * Importe les questions ET réponses depuis un fichier CSV
      * Format attendu: question_text,reponse_text,user_id
      */
-    public Map<String, Object> importQuestionsWithReponsesFromCSV(MultipartFile file) throws IOException, CsvException {
+    public Map<String, Object> importQuestionsWithReponsesFromCSV(MultipartFile file) throws IOException {
         List<Question> importedQuestions = new ArrayList<>();
         List<Reponse> importedReponses = new ArrayList<>();
         Map<String, Question> questionMap = new HashMap<>();
@@ -49,7 +53,12 @@ public class CSVImportService {
                 new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8));
              CSVReader csvReader = new CSVReader(reader)) {
 
-            List<String[]> rows = csvReader.readAll();
+            List<String[]> rows;
+            try {
+                rows = csvReader.readAll();
+            } catch (CsvException e) {
+                throw new IOException("Failed to parse CSV file: " + e.getMessage(), e);
+            }
             
             // Ignorer la première ligne (header)
             boolean isFirstRow = true;
@@ -67,7 +76,7 @@ public class CSVImportService {
                 
                 try {
                     String questionText = row[0].trim();
-                    String reponseText = row.length > 1 ? row[1].trim() : "";
+                    String reponseText = row[1].trim();
                     
                     // Déterminer userId (final)
                     final Long userId = (row.length >= 3 && !row[2].trim().isEmpty()) 
@@ -105,16 +114,14 @@ public class CSVImportService {
                     }
                     
                 } catch (NumberFormatException e) {
-                    System.err.println("Invalid user_id in row: " + String.join(",", row));
+                    log.warn("Invalid user_id in row: {}", String.join(",", row));
                 } catch (RuntimeException e) {
-                    System.err.println("Error processing row: " + e.getMessage());
+                    log.warn("Error processing row: {}", e.getMessage());
                 }
             }
         }
         
         Map<String, Object> result = new HashMap<>();
-        result.put("questions", importedQuestions);
-        result.put("reponses", importedReponses);
         result.put("questionsCount", importedQuestions.size());
         result.put("reponsesCount", importedReponses.size());
         
@@ -130,10 +137,6 @@ public class CSVImportService {
         }
         
         String filename = file.getOriginalFilename();
-        if (filename == null || !filename.endsWith(".csv")) {
-            return false;
-        }
-        
-        return true;
+        return filename != null && filename.endsWith(".csv");
     }
 }

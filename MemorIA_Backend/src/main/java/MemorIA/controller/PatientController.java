@@ -17,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/patients")
-@CrossOrigin(origins = "${app.cors.allowed-origins}")
 public class PatientController {
 
     private final PatientService service;

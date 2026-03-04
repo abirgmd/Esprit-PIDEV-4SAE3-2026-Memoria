@@ -68,7 +68,7 @@ export class ProfilePatientComponent {
         this.authService.markProfileCompleted();
         this.successMessage = 'Profil patient enregistre.';
         this.isSubmitting = false;
-        setTimeout(() => this.router.navigate(['/home']), 800);
+        setTimeout(() => this.router.navigate(['/diagnostic']), 800);
       },
       error: () => {
         this.errorMessage = 'Impossible de sauvegarder le profil patient.';

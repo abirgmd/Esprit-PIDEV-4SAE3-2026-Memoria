@@ -10,6 +10,8 @@ import MemorIA.repository.UserRepository;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -22,6 +24,8 @@ import java.util.Map;
 
 @Service
 public class ExcelImportService {
+
+    private static final Logger log = LoggerFactory.getLogger(ExcelImportService.class);
 
     private final QuestionRepository questionRepository;
     private final ReponseRepository reponseRepository;
@@ -108,7 +112,7 @@ public class ExcelImportService {
                     try {
                         questionType = QuestionType.valueOf(typeStr.toUpperCase());
                     } catch (IllegalArgumentException e) {
-                        System.err.println("Type invalide '" + typeStr + "' à la ligne " + rowIndex + ". Utilisation de TEXT par défaut.");
+                        log.warn("Type invalide '{}' à la ligne {}. Utilisation de TEXT par défaut.", typeStr, rowIndex);
                         questionType = QuestionType.TEXT;
                     }
                 }
@@ -125,32 +129,36 @@ public class ExcelImportService {
                     continue;
                 }
 
-                // --- Enregistrer la question ---
-                Question question = null;
-                if (!questionText.isEmpty()) {
-                    question = questionMap.get(questionText);
+                try {
+                    // --- Enregistrer la question ---
+                    Question question = null;
+                    if (!questionText.isEmpty()) {
+                        question = questionMap.get(questionText);
 
-                    if (question == null) {
-                        question = new Question();
-                        question.setQuestionText(questionText);
-                        question.setType(questionType);
-                        question.setUser(user);
+                        if (question == null) {
+                            question = new Question();
+                            question.setQuestionText(questionText);
+                            question.setType(questionType);
+                            question.setUser(user);
 
-                        question = questionRepository.save(question);
-                        questionMap.put(questionText, question);
-                        importedQuestions.add(question);
+                            question = questionRepository.save(question);
+                            questionMap.put(questionText, question);
+                            importedQuestions.add(question);
+                        }
                     }
-                }
 
-                // --- Enregistrer la réponse ---
-                if (!reponseText.isEmpty() && question != null) {
-                    Reponse reponse = new Reponse();
-                    reponse.setReponseText(reponseText);
-                    reponse.setReponse(isCorrect);
-                    reponse.setQuestion(question);
+                    // --- Enregistrer la réponse ---
+                    if (!reponseText.isEmpty() && question != null) {
+                        Reponse reponse = new Reponse();
+                        reponse.setReponseText(reponseText);
+                        reponse.setReponse(isCorrect);
+                        reponse.setQuestion(question);
 
-                    Reponse savedReponse = reponseRepository.save(reponse);
-                    importedReponses.add(savedReponse);
+                        Reponse savedReponse = reponseRepository.save(reponse);
+                        importedReponses.add(savedReponse);
+                    }
+                } catch (Exception e) {
+                    log.warn("Erreur ligne {} — ignorée: {}", rowIndex, e.getMessage());
                 }
             }
         } finally {
@@ -162,8 +170,6 @@ public class ExcelImportService {
         Map<String, Object> result = new HashMap<>();
         result.put("questionsCount", importedQuestions.size());
         result.put("reponsesCount", importedReponses.size());
-        result.put("questions", importedQuestions);
-        result.put("reponses", importedReponses);
 
         return result;
     }

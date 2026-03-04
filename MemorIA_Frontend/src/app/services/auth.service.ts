@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap } from 'rxjs';
+import { environment } from '../../environments/environment';
 
 export interface User {
   id: number;
@@ -16,7 +17,7 @@ export interface User {
 })
 export class AuthService {
 
-  private apiUrl = 'http://localhost:8080/api/users/login';
+  private apiUrl = `${environment.apiUrl}/api/users/login`;
   private storageKey = 'memoria_user';
 
   constructor(private http: HttpClient, private router: Router) {}
@@ -30,7 +31,7 @@ export class AuthService {
   }
 
   logout(): Observable<any> {
-    return this.http.post('http://localhost:8080/api/users/logout', {}).pipe(
+    return this.http.post(`${environment.apiUrl}/api/users/logout`, {}).pipe(
       tap(() => {
         localStorage.removeItem(this.storageKey);
         this.router.navigate(['/home']);

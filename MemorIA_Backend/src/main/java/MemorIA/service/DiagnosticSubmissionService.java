@@ -237,11 +237,11 @@ public class DiagnosticSubmissionService {
         analysis.append("- Durée totale: ").append(diagnostic.getDureeMinutes()).append(" minutes\n\n");
         
         analysis.append("### 3. Interprétation\n");
-        if (diagnostic.getRiskLevel().equals("LOW")) {
+        if ("LOW".equals(diagnostic.getRiskLevel())) {
             analysis.append("Les performances cognitives sont dans la norme. Aucun signe préoccupant détecté.\n");
-        } else if (diagnostic.getRiskLevel().equals("MEDIUM")) {
+        } else if ("MEDIUM".equals(diagnostic.getRiskLevel())) {
             analysis.append("Quelques difficultés mineures observées. Un suivi régulier est recommandé.\n");
-        } else if (diagnostic.getRiskLevel().equals("HIGH")) {
+        } else if ("HIGH".equals(diagnostic.getRiskLevel())) {
             analysis.append("Des difficultés significatives ont été observées. Une évaluation médicale approfondie est recommandée.\n");
         } else {
             analysis.append("Des difficultés importantes ont été détectées. Une consultation médicale urgente est fortement recommandée.\n");
@@ -260,20 +260,13 @@ public class DiagnosticSubmissionService {
      * @return Le nombre de notifications envoyées
      */
     private int sendNotificationsToDoctors(Rapport rapport, User patient) {
-        // Récupérer tous les docteurs actifs
-        List<User> doctors = userRepository.findByRoleAndActif("DOCTOR", true);
+        // Récupérer tous les soignants actifs
+        List<User> doctors = userRepository.findByRoleAndActif("SOIGNANT", true);
         
-        // Si aucun docteur avec "DOCTOR", essayer "MEDECIN"
+        // Si aucun soignant actif trouvé, récupérer tous les soignants et filtrer
         if (doctors.isEmpty()) {
-            doctors = userRepository.findByRoleAndActif("MEDECIN", true);
-        }
-        
-        // Si toujours aucun docteur, essayer tous les actifs avec ces rôles
-        if (doctors.isEmpty()) {
-            List<User> allDoctors = userRepository.findByRole("DOCTOR");
-            allDoctors.addAll(userRepository.findByRole("MEDECIN"));
-            doctors = allDoctors.stream()
-                    .filter(u -> u.getActif() != null && u.getActif())
+            doctors = userRepository.findByRole("SOIGNANT").stream()
+                    .filter(u -> Boolean.TRUE.equals(u.getActif()))
                     .toList();
         }
         
@@ -309,7 +302,7 @@ public class DiagnosticSubmissionService {
      * Plus le patient prend de temps, plus le score peut être pénalisé (optionnel)
      */
     private Double adjustScoreBasedOnTime(Double baseScore, Double tempsReponseSecondes) {
-        if (tempsReponseSecondes == null || baseScore == null || baseScore == 0.0) {
+        if (tempsReponseSecondes == null || baseScore == null || baseScore.equals(0.0)) {
             return baseScore;
         }
 

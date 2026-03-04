@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { AuthUser, LoginRequest } from './auth.model';
 import { SignupRequest } from '../models/signup.model';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private readonly apiUrl = 'http://localhost:8087/api/auth';
+  private readonly apiUrl = `${environment.apiUrl}/api/auth`;
   private readonly storageKey = 'memoria_auth_user';
 
   constructor(private readonly http: HttpClient) {}

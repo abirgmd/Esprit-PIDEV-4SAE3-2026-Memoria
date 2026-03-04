@@ -11,7 +11,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/administrateurs")
-@CrossOrigin(origins = "${app.cors.allowed-origins}")
 public class AdministrateurController {
 
     private final AdministrateurService service;

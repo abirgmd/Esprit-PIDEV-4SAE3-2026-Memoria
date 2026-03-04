@@ -19,7 +19,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/diagnostics")
-@CrossOrigin(origins = "*")
 public class DiagnosticController {
 
     private final DiagnosticService diagnosticService;

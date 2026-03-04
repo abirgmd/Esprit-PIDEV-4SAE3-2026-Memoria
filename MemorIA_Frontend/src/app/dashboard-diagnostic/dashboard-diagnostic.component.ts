@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../auth/auth.service';
 import jsPDF from 'jspdf';
+import { environment } from '../../environments/environment';
 
 interface ImportQuestion {
   questionText: string;
@@ -20,7 +21,7 @@ interface ImportQuestion {
 })
 export class DashboardDiagnosticComponent implements OnInit {
 
-  private apiUrl = 'http://localhost:8080';
+  private apiUrl = environment.apiUrl;
 
   // Notifications
   notifications: any[] = [];
@@ -84,14 +85,8 @@ export class DashboardDiagnosticComponent implements OnInit {
   }
 
   onLogout(): void {
-    this.authService.logout().subscribe({
-      next: () => {},
-      error: () => {
-        // Even if the backend call fails, clear local and redirect
-        localStorage.removeItem('memoria_user');
-        window.location.href = '/home';
-      }
-    });
+    this.authService.logout();
+    window.location.href = '/home';
   }
 
   // =====================
@@ -633,7 +628,7 @@ export class DashboardDiagnosticComponent implements OnInit {
     this.isUploading = true;
     this.uploadMessage = '';
 
-    const user = this.authService.getUser();
+    const user = this.authService.getCurrentUser();
     const userId = user ? user.id : 1;
 
     if (this.csvFile) {

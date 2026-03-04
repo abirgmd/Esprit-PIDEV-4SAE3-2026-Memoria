@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 import { Chart, registerables } from 'chart.js';
+import { environment } from '../../environments/environment';
 
 Chart.register(...registerables);
 
@@ -55,9 +56,9 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
       this.router.navigate(['/login']);
       return;
     }
-    // DOCTOR → global stats across all patients
+    // SOIGNANT → global stats across all patients
     // PATIENT → only their own stats
-    if (user.role === 'DOCTOR') {
+    if (user.role === 'SOIGNANT') {
       this.loadGlobalStatistics();
     } else {
       this.loadStatistics(user.id);
@@ -68,7 +69,7 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
 
   loadGlobalStatistics(): void {
     this.loading = true;
-    this.http.get<DiagnosticStatistics>('http://localhost:8080/api/diagnostics/statistics').subscribe({
+    this.http.get<DiagnosticStatistics>(`${environment.apiUrl}/api/diagnostics/statistics`).subscribe({
       next: (data) => {
         this.statistics = data;
         this.loading = false;
@@ -83,7 +84,7 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
 
   loadStatistics(userId: number): void {
     this.loading = true;
-    this.http.get<DiagnosticStatistics>(`http://localhost:8080/api/diagnostics/user/${userId}/statistics`).subscribe({
+    this.http.get<DiagnosticStatistics>(`${environment.apiUrl}/api/diagnostics/user/${userId}/statistics`).subscribe({
       next: (data) => {
         this.statistics = data;
         this.loading = false;

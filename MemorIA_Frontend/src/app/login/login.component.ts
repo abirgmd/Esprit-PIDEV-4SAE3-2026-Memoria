@@ -38,15 +38,24 @@ export class LoginComponent {
     this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: (user) => {
         this.isSubmitting = false;
-        if (user.role.toUpperCase() === 'ADMINISTRATEUR') {
+        const role = user.role.toUpperCase();
+        if (role === 'ADMINISTRATEUR') {
           this.router.navigate(['/users']);
+          return;
+        }
+        if (role === 'PATIENT') {
+          this.router.navigate(['/diagnostic']);
           return;
         }
         if (!user.profileCompleted) {
           this.router.navigate([this.getProfileRoute(user.role)]);
           return;
         }
-        this.router.navigate(['/home']);
+        if (role === 'SOIGNANT') {
+          this.router.navigate(['/dashboard_diagnostic']);
+        } else {
+          this.router.navigate(['/home']);
+        }
       },
       error: (error) => {
         this.isSubmitting = false;

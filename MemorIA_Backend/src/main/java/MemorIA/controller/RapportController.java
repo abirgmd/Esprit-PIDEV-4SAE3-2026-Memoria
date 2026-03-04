@@ -10,7 +10,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/rapports")
-@CrossOrigin(origins = "*")
 public class RapportController {
 
     private final RapportService rapportService;

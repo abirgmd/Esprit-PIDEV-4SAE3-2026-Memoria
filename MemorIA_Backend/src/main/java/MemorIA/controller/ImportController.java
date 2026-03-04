@@ -2,7 +2,6 @@ package MemorIA.controller;
 
 import MemorIA.service.CSVImportService;
 import MemorIA.service.ExcelImportService;
-import com.opencsv.exceptions.CsvException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +13,6 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/import")
-@CrossOrigin(origins = "*")
 public class ImportController {
 
     private final CSVImportService csvImportService;
@@ -39,7 +37,7 @@ public class ImportController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            if (file == null || file.isEmpty()) {
+            if (file.isEmpty()) {
                 response.put("error", "File must not be empty.");
                 return ResponseEntity.badRequest().body(response);
             }
@@ -57,10 +55,7 @@ public class ImportController {
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
             
         } catch (IOException e) {
-            response.put("error", "Error reading CSV file: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        } catch (CsvException e) {
-            response.put("error", "Error parsing CSV file: " + e.getMessage());
+            response.put("error", "Error reading or parsing CSV file: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             response.put("error", "Unexpected error: " + e.getMessage());
@@ -84,11 +79,11 @@ public class ImportController {
         Map<String, Object> response = new HashMap<>();
 
         try {
-            if (file == null || file.isEmpty()) {
+            if (file.isEmpty()) {
                 response.put("error", "File must not be empty.");
                 return ResponseEntity.badRequest().body(response);
             }
-            if (userId == null || userId <= 0) {
+            if (userId <= 0) {
                 response.put("error", "userId must be a positive number.");
                 return ResponseEntity.badRequest().body(response);
             }
@@ -107,6 +102,14 @@ public class ImportController {
             
         } catch (IOException e) {
             response.put("error", "Error reading Excel file: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        } catch (RuntimeException e) {
+            String msg = e.getMessage() != null ? e.getMessage() : "Runtime error";
+            if (msg.contains("non trouvé") || msg.contains("not found")) {
+                response.put("error", msg);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+            response.put("error", "Unexpected error: " + msg);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         } catch (Exception e) {
             response.put("error", "Unexpected error: " + e.getMessage());
