@@ -1,0 +1,14 @@
+# Dépendances
+node_modules/
+dist/
+.angular/
+
+# Java
+target/
+*.class
+.mvn/
+
+# IDE
+.idea/
+.vscode/
+*.iml

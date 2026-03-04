@@ -1,0 +1,37 @@
+<div class="profile-page">
+  <h1>Profil Accompagnant</h1>
+  <p>Completez vos informations d accompagnement.</p>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <label>Lien avec le patient
+      <select formControlName="lienPatient">
+        <option value="familial">Familial</option>
+        <option value="professionnel">Professionnel</option>
+      </select>
+    </label>
+    <label>Date de naissance <input type="date" formControlName="dateNaissance" /></label>
+    <label>Adresse <input type="text" formControlName="adresse" /></label>
+    <label>Code postal <input type="text" formControlName="codePostal" /></label>
+    <label>Ville <input type="text" formControlName="ville" /></label>
+    <label>Telephone de secours <input type="text" formControlName="telephoneSecours" /></label>
+    <label>Situation professionnelle
+      <select formControlName="situationPro">
+        <option value="">Non precise</option>
+        <option value="salarie">Salarie</option>
+        <option value="retraite">Retraite</option>
+        <option value="sans_activite">Sans activite</option>
+      </select>
+    </label>
+    <label>Frequence d accompagnement
+      <select formControlName="frequenceAccompagnement">
+        <option value="quotidien">Quotidien</option>
+        <option value="hebdo">Hebdomadaire</option>
+        <option value="mensuel">Mensuel</option>
+      </select>
+    </label>
+
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+    <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}</button>
+  </form>
+</div>

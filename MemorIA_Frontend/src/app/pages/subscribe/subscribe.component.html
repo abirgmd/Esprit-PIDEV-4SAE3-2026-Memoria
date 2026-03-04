@@ -1,0 +1,127 @@
+<div class="subscribe-page">
+  <div class="subscribe-container">
+    <div class="header">
+      <div class="logo-icon"><i class="fas fa-brain"></i></div>
+      <h1>Accédez à MemorIA</h1>
+      <p class="subtitle">Choisissez votre abonnement pour accéder à la messagerie et à la communauté</p>
+    </div>
+
+    <div class="success-banner" *ngIf="successMessage">
+      <i class="fas fa-check-circle"></i>
+      <span>{{ successMessage }}</span>
+      <i class="fas fa-spinner fa-spin"></i>
+    </div>
+
+    <div class="error-banner" *ngIf="errorMessage">
+      <i class="fas fa-exclamation-circle"></i>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <!-- Plans Grid -->
+    <div class="plans-grid" *ngIf="!isLoading && !showPaymentForm">
+      <div class="plan-card" *ngFor="let plan of plans"
+           [class.popular]="isPopular(plan.planType)"
+           (click)="selectPlan(plan)">
+        <div class="popular-badge" *ngIf="isPopular(plan.planType)">
+          <i class="fas fa-star"></i> Populaire
+        </div>
+        <div class="saving-badge" *ngIf="getSaving(plan.planType)">
+          {{ getSaving(plan.planType) }}
+        </div>
+        <div class="plan-icon">
+          <i [class]="getPlanIcon(plan.planType)"></i>
+        </div>
+        <h3 class="plan-name">{{ plan.name }}</h3>
+        <div class="plan-price">
+          <span class="currency">€</span>
+          <span class="amount">{{ plan.price }}</span>
+          <span class="period">{{ getPlanPeriod(plan.planType) }}</span>
+        </div>
+        <ul class="plan-features">
+          <li><i class="fas fa-check"></i> Accès à la messagerie</li>
+          <li><i class="fas fa-check"></i> Accès à la communauté</li>
+          <li><i class="fas fa-check"></i> Partage de fichiers</li>
+          <li><i class="fas fa-check"></i> Messages vocaux</li>
+          <li><i class="fas fa-check"></i> Support prioritaire</li>
+        </ul>
+        <button class="select-btn">Choisir ce plan</button>
+      </div>
+    </div>
+
+    <!-- Payment Form -->
+    <div class="payment-form-container" *ngIf="showPaymentForm && selectedPlan">
+      <div class="form-header">
+        <button class="back-to-plans" (click)="cancelPayment()">
+          <i class="fas fa-arrow-left"></i> Retour
+        </button>
+        <h2>Paiement – {{ selectedPlan.name }}</h2>
+        <div class="form-price">{{ selectedPlan.price }}€ {{ getPlanPeriod(selectedPlan.planType) }}</div>
+      </div>
+
+      <div class="card-form">
+        <div class="form-group">
+          <label><i class="fas fa-credit-card"></i> Numéro de carte</label>
+          <input type="text"
+                 [(ngModel)]="cardNumber"
+                 (input)="formatCardNumber($event)"
+                 placeholder="4242 4242 4242 4242"
+                 maxlength="19"
+                 class="card-input">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Mois</label>
+            <input type="text"
+                   [(ngModel)]="expMonth"
+                   placeholder="MM"
+                   maxlength="2"
+                   class="card-input small">
+          </div>
+          <div class="form-group">
+            <label>Année</label>
+            <input type="text"
+                   [(ngModel)]="expYear"
+                   placeholder="AAAA"
+                   maxlength="4"
+                   class="card-input small">
+          </div>
+          <div class="form-group">
+            <label>CVC</label>
+            <input type="text"
+                   [(ngModel)]="cvc"
+                   placeholder="123"
+                   maxlength="4"
+                   class="card-input small">
+          </div>
+        </div>
+
+        <div class="test-note">
+          <i class="fas fa-info-circle"></i>
+          Carte de test : <strong>4242 4242 4242 4242</strong> | MM/AAAA : <strong>12/2026</strong> | CVC : <strong>123</strong>
+        </div>
+
+        <button class="pay-btn"
+                [disabled]="isProcessing"
+                (click)="processPayment()">
+          <span *ngIf="!isProcessing">
+            <i class="fas fa-lock"></i> Payer {{ selectedPlan.price }}€
+          </span>
+          <span *ngIf="isProcessing">
+            <i class="fas fa-spinner fa-spin"></i> Traitement en cours...
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Chargement des plans...</span>
+    </div>
+
+    <div class="footer-note">
+      <i class="fas fa-lock"></i>
+      <span>Paiement sécurisé via Stripe. Annulez à tout moment.</span>
+    </div>
+  </div>
+</div>
