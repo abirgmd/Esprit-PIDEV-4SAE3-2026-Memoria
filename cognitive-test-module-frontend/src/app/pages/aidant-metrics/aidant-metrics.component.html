@@ -1,0 +1,125 @@
+<div class="p-6 bg-gray-50 min-h-screen">
+  <h1 class="text-2xl font-bold mb-6 flex items-center gap-2">
+    <lucide-icon [name]="icons.BarChart3"></lucide-icon>
+    Métriques Aidant
+  </h1>
+
+  @if (!metrics()) {
+    <div class="text-gray-500">Chargement des métriques...</div>
+  } @else {
+    <!-- Filtre de période -->
+    <div class="bg-white rounded-lg shadow p-4 mb-6">
+      <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+        <lucide-icon [name]="icons.Filter"></lucide-icon>
+        Période
+      </h2>
+      <div class="flex gap-4">
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="period" value="current" [checked]="selectedPeriod() === 'current'" (change)="selectedPeriod.set('current')">
+          <span>Mois en cours</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="period" value="6" [checked]="selectedPeriod() === '6'" (change)="selectedPeriod.set('6')">
+          <span>6 derniers mois</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="period" value="12" [checked]="selectedPeriod() === '12'" (change)="selectedPeriod.set('12')">
+          <span>12 derniers mois</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="radio" name="period" value="all" [checked]="selectedPeriod() === 'all'" (change)="selectedPeriod.set('all')">
+          <span>Tout</span>
+        </label>
+      </div>
+      <button class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" (click)="exportToCSV()">
+        <lucide-icon [name]="icons.BarChart3" size="16"></lucide-icon>
+        Exporter en CSV
+      </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <!-- Total assigné -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center gap-2 text-blue-600 mb-1">
+          <lucide-icon [name]="icons.Users"></lucide-icon>
+          <span class="text-sm font-medium">Total assigné</span>
+        </div>
+        <div class="text-2xl font-bold">{{ metrics()?.totalAssigned }}</div>
+      </div>
+
+      <!-- Total complété -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center gap-2 text-green-600 mb-1">
+          <lucide-icon [name]="icons.CheckCircle"></lucide-icon>
+          <span class="text-sm font-medium">Total complété</span>
+        </div>
+        <div class="text-2xl font-bold">{{ metrics()?.totalCompleted }}</div>
+      </div>
+
+      <!-- Taux de réussite -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center gap-2 text-purple-600 mb-1">
+          <lucide-icon [name]="icons.TrendingUp"></lucide-icon>
+          <span class="text-sm font-medium">Taux réussite</span>
+        </div>
+        <div class="text-2xl font-bold">{{ successRate()?.toFixed(1) ?? 0 }}%</div>
+      </div>
+
+      <!-- Score moyen (moyenne des scores des tests complétés) -->
+      <div class="bg-white rounded-lg shadow p-4">
+        <div class="flex items-center gap-2 text-orange-600 mb-1">
+          <lucide-icon [name]="icons.BarChart3"></lucide-icon>
+          <span class="text-sm font-medium">Score moyen (tests complétés)</span>
+        </div>
+        <div class="text-2xl font-bold">
+          @if (avgScore() > 0) {
+            {{ avgScore() | number:'1.1-1' }}
+          } @else {
+            0
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Détails par type de test -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <lucide-icon [name]="icons.BarChart3"></lucide-icon>
+          Score moyen par type de test
+        </h2>
+        @if (avgScoreByTypeEntries().length > 0) {
+          <ul class="space-y-2">
+            @for (entry of avgScoreByTypeEntries(); track entry[0]; let i = $index) {
+              <li class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="font-medium text-gray-700">{{ entry[0] }}</span>
+                <span class="text-blue-600 font-bold">{{ entry[1] | number:'1.1-1' }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="text-gray-400 text-center py-8">Aucune donnée</div>
+        }
+      </div>
+
+      <!-- Évolution mensuelle -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <lucide-icon [name]="icons.Calendar"></lucide-icon>
+          Évolution mensuelle (tests complétés)
+        </h2>
+        @if (monthlyCountsEntries().length > 0) {
+          <ul class="space-y-2">
+            @for (entry of monthlyCountsEntries(); track entry[0]; let i = $index) {
+              <li class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="font-medium text-gray-700">{{ entry[0] }}</span>
+                <span class="text-green-600 font-bold">{{ entry[1] }}</span>
+              </li>
+            }
+          </ul>
+        } @else {
+          <div class="text-gray-400 text-center py-8">Aucune donnée</div>
+        }
+      </div>
+    </div>
+  }
+</div>

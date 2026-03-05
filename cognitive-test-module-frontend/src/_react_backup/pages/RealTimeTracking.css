@@ -1,0 +1,475 @@
+.tracking-container {
+  padding: 24px;
+  max-width: 1600px;
+  margin: 0 auto;
+  height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.page-header > div:nth-child(2) {
+  flex: 1;
+}
+
+.tracking-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: rgba(76, 175, 80, 0.1);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #4CAF50;
+}
+
+.pulse-icon {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Tracking Grid */
+.tracking-grid {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 24px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Map Card */
+.map-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.map-controls {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
+}
+
+.map-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.map-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.map-btn-active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.map-display {
+  flex: 1;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #64748b;
+  text-align: center;
+  padding: 40px;
+}
+
+.map-display svg {
+  color: #475569;
+  opacity: 0.5;
+}
+
+.map-display p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #334155;
+}
+
+.map-display span {
+  font-size: 14px;
+  color: #64748b;
+}
+
+.coordinates {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  color: #475569;
+  font-weight: 600;
+}
+
+.map-legend {
+  display: flex;
+  gap: 20px;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  background: var(--color-background);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+.legend-marker {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-marker.home {
+  background: #4CAF50;
+}
+
+.legend-marker.allowed {
+  background: #2196F3;
+}
+
+.legend-marker.restricted {
+  background: #F44336;
+}
+
+.legend-marker.patient {
+  background: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(84, 26, 117, 0.3);
+}
+
+/* Tracking Sidebar */
+.tracking-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+.selector-card,
+.status-card,
+.zone-status-card,
+.patients-list-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.selector-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.patient-selector {
+  width: 100%;
+  padding: 12px 16px;
+  background: var(--color-background);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.patient-selector:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.status-title {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.status-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: var(--color-background);
+  border-radius: 8px;
+}
+
+.status-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(84, 26, 117, 0.1);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-icon.signal-excellent {
+  background: rgba(76, 175, 80, 0.1);
+  color: #4CAF50;
+}
+
+.status-icon.signal-good {
+  background: rgba(33, 150, 243, 0.1);
+  color: #2196F3;
+}
+
+.status-icon.signal-fair {
+  background: rgba(255, 152, 0, 0.1);
+  color: #FF9800;
+}
+
+.status-icon.signal-poor {
+  background: rgba(244, 67, 54, 0.1);
+  color: #F44336;
+}
+
+.status-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin-bottom: 2px;
+}
+
+.status-value {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+/* Zone Status */
+.current-zone {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 10px;
+  align-items: center;
+}
+
+.zone-safe {
+  background: rgba(76, 175, 80, 0.1);
+  border: 2px solid rgba(76, 175, 80, 0.3);
+}
+
+.zone-violation {
+  background: rgba(244, 67, 54, 0.1);
+  border: 2px solid rgba(244, 67, 54, 0.3);
+}
+
+.zone-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.zone-safe .zone-icon {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.zone-violation .zone-icon {
+  background: rgba(244, 67, 54, 0.2);
+  color: #F44336;
+}
+
+.zone-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.zone-status-label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.violation-text {
+  color: #F44336;
+}
+
+.safe-text {
+  color: #4CAF50;
+}
+
+.no-zone {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  background: var(--color-background);
+  border: 2px dashed var(--color-border);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+/* Patients List */
+.patients-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.patient-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  background: var(--color-background);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.patient-item:hover {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+}
+
+.patient-selected {
+  background: rgba(84, 26, 117, 0.05);
+  border-color: var(--color-primary);
+}
+
+.patient-marker {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(84, 26, 117, 0.1);
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.patient-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.patient-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 4px;
+}
+
+.patient-status {
+  display: flex;
+  gap: 12px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.status-violation {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #F44336;
+}
+
+.status-ok {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #4CAF50;
+}
+
+.patient-battery {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+  .tracking-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tracking-sidebar {
+    max-height: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .tracking-container {
+    padding: 16px;
+    height: auto;
+  }
+
+  .map-legend {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .tracking-status {
+    width: 100%;
+    justify-content: center;
+  }
+}

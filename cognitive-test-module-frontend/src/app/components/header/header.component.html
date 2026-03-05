@@ -1,0 +1,44 @@
+<header class="main-header">
+  <!-- Search bar -->
+  <div class="header-search">
+    <lucide-icon [img]="icons.Search" class="search-icon" size="20"></lucide-icon>
+    <input
+      type="search"
+      placeholder="Rechercher un patient, un test..."
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+      class="search-input"
+      aria-label="Rechercher"
+    />
+  </div>
+
+  <!-- Actions -->
+  <div class="header-actions">
+    <!-- Notifications -->
+    <button class="header-action-btn" aria-label="Notifications">
+      <lucide-icon [img]="icons.Bell" size="20"></lucide-icon>
+      <span *ngIf="notificationCount() > 0" class="badge badge-accent">
+        {{ notificationCount() }}
+      </span>
+    </button>
+
+    <!-- Messages -->
+    <button class="header-action-btn" aria-label="Messages">
+      <lucide-icon [img]="icons.Mail" size="20"></lucide-icon>
+      <span *ngIf="messageCount() > 0" class="badge badge-info">
+        {{ messageCount() }}
+      </span>
+    </button>
+
+    <!-- User profile -->
+    <button class="header-profile" aria-label="Profil utilisateur">
+      <div class="profile-avatar">
+        <lucide-icon [img]="icons.User" size="20"></lucide-icon>
+      </div>
+      <div class="profile-info">
+        <span class="profile-name">Dr. Martin</span>
+        <span class="profile-role">Médecin</span>
+      </div>
+    </button>
+  </div>
+</header>

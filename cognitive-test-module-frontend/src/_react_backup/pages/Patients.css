@@ -1,0 +1,250 @@
+.patients-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.page-subtitle {
+  color: var(--text-light);
+  margin-top: var(--spacing-xs);
+  font-size: 0.9375rem;
+}
+
+.filters-bar {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
+}
+
+.search-box {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: 10px var(--spacing-sm);
+  background-color: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.search-box svg {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.search-input-simple {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 0.9375rem;
+  color: var(--text-dark);
+}
+
+.search-input-simple::placeholder {
+  color: var(--text-light);
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 10px 20px;
+  border-radius: var(--radius-lg);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+.btn-secondary {
+  background-color: white;
+  color: var(--text-medium);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.875rem;
+}
+
+/* Table */
+.table-card {
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+.patients-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.patients-table thead {
+  background-color: var(--bg-primary);
+}
+
+.patients-table th {
+  padding: var(--spacing-sm) var(--spacing-md);
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.patients-table td {
+  padding: var(--spacing-md);
+  border-top: 1px solid var(--border);
+  font-size: 0.9375rem;
+  color: var(--text-dark);
+}
+
+.patients-table tbody tr {
+  transition: background-color 0.2s ease;
+}
+
+.patients-table tbody tr:hover {
+  background-color: var(--hover-light);
+}
+
+.patient-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.patient-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+  flex-shrink: 0;
+}
+
+.patient-name {
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.score-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background-color: var(--bg-primary);
+  border-radius: 12px;
+  font-weight: 600;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.875rem;
+}
+
+.trend-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trend-down {
+  color: var(--accent);
+}
+
+.trend-up {
+  color: var(--success);
+}
+
+.trend-stable {
+  color: var(--text-light);
+  font-size: 1.5rem;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.status-normal {
+  background-color: rgba(0, 99, 93, 0.1);
+  color: var(--success);
+}
+
+.status-surveillance {
+  background-color: rgba(230, 168, 0, 0.1);
+  color: var(--warning);
+}
+
+.status-critique {
+  background-color: rgba(203, 21, 39, 0.1);
+  color: var(--accent);
+}
+
+.appointment-date {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  color: var(--text-medium);
+}
+
+.appointment-date svg {
+  flex-shrink: 0;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1023px) {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filters-bar {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 767px) {
+  .table-responsive {
+    overflow-x: scroll;
+  }
+
+  .patients-table {
+    min-width: 900px;
+  }
+}

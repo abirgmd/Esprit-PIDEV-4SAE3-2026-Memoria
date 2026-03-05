@@ -1,0 +1,948 @@
+<div class="tests-container">
+    <!-- Role Selection Interface -->
+    <div *ngIf="!selectedRole()" class="role-selection-container">
+        <header class="role-header">
+            <h1 class="role-title">Module Tests Cognitifs</h1>
+            <p class="role-subtitle">Sélectionnez votre rôle pour accéder aux fonctionnalités adaptées</p>
+        </header>
+
+        <div class="roles-grid">
+            <!-- Médecin -->
+            <div class="role-card role-medecin" (click)="selectedRole.set('medecin')">
+                <div class="role-icon-wrapper">
+                    <lucide-icon [img]="icons.Stethoscope" size="40"></lucide-icon>
+                </div>
+                <h2 class="role-card-title">Médecin</h2>
+                <p class="role-card-description">Gestion complète des patients, tests cognitifs, décisions cliniques et
+                    système de stages</p>
+                <div class="role-key-features">
+                    <span class="feature-title">Fonctionnalités clés:</span>
+                    <ul class="feature-list">
+                        <li class="feature-item">Dashboard avec vue par stages (1, 2, 3)</li>
+                        <li class="feature-item">Gestion des tests et assignations</li>
+                        <li class="feature-item">Décisions cliniques et IA</li>
+                        <li class="feature-item">Rapports et analyses détaillées</li>
+                        <li class="feature-item">Calendrier et planification</li>
+                    </ul>
+                </div>
+                <button class="btn-role-access" (click)="selectedRole.set('medecin')">
+                    Accéder <lucide-icon [img]="icons.ChevronRight" size="18"></lucide-icon>
+                </button>
+            </div>
+
+            <!-- Aidant / Suivant -->
+            <div class="role-card role-aidant" (click)="openSelectionModal('AIDANT')">
+                <div class="role-icon-wrapper">
+                    <lucide-icon [img]="icons.Users" size="40"></lucide-icon>
+                </div>
+                <h2 class="role-card-title">Aidant / Suivant</h2>
+                <p class="role-card-description">Suivi du patient, recommandations et assistance quotidienne selon le
+                    stage</p>
+                <div class="role-key-features">
+                    <span class="feature-title">Fonctionnalités clés:</span>
+                    <ul class="feature-list">
+                        <li class="feature-item">Vue stage du patient</li>
+                        <li class="feature-item">Recommandations personnalisées</li>
+                        <li class="feature-item">Journal de bord quotidien</li>
+                        <li class="feature-item">Alertes et notifications</li>
+                        <li class="feature-item">Ressources et support</li>
+                    </ul>
+                </div>
+                <button class="btn-role-access" (click)="$event.stopPropagation(); openSelectionModal('AIDANT')">
+                    Accéder <lucide-icon [img]="icons.ChevronRight" size="18"></lucide-icon>
+                </button>
+            </div>
+
+            <!-- Patient -->
+            <div class="role-card role-patient" (click)="openSelectionModal('PATIENT')">
+                <div class="role-icon-wrapper">
+                    <lucide-icon [img]="icons.UserCircle" size="40"></lucide-icon>
+                </div>
+                <h2 class="role-card-title">Patient</h2>
+                <p class="role-card-description">Interface simplifiée pour passer les tests et consulter les résultats
+                </p>
+                <div class="role-key-features">
+                    <span class="feature-title">Fonctionnalités clés:</span>
+                    <ul class="feature-list">
+                        <li class="feature-item">Tests interactifs et ludiques</li>
+                        <li class="feature-item">Mon état cognitif</li>
+                        <li class="feature-item">Mes recommandations</li>
+                        <li class="feature-item">Prochains rendez-vous</li>
+                        <li class="feature-item">Progression personnelle</li>
+                    </ul>
+                </div>
+                <button class="btn-role-access" (click)="$event.stopPropagation(); openSelectionModal('PATIENT')">
+                    Accéder <lucide-icon [img]="icons.ChevronRight" size="18"></lucide-icon>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Médecin Dashboard Content -->
+    <div *ngIf="selectedRole() === 'medecin'">
+        <div class="dashboard-header">
+            <div>
+                <div class="breadcrumb">
+                    <button class="btn-back" (click)="selectedRole.set(null)">
+                        <lucide-icon [img]="icons.ChevronRight" size="14"
+                            style="transform: rotate(180deg);"></lucide-icon>
+                        Retour
+                    </button>
+                </div>
+                <h1 class="dashboard-title">Dashboard Médecin</h1>
+                <p class="dashboard-subtitle">Gestion des patients et suivi cognitif par stages</p>
+            </div>
+            <div class="header-actions">
+                <button class="btn-secondary-light" (click)="openCalendar()">
+                    <lucide-icon [img]="icons.Calendar" size="18"></lucide-icon>
+                    Calendrier
+                </button>
+                <button class="btn-primary-purple" (click)="showNewTestModal.set(true)">
+                    <lucide-icon [img]="icons.Plus" size="18"></lucide-icon>
+                    Assigner Test
+                </button>
+            </div>
+        </div>
+
+        <!-- Top Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon purple">
+                    <lucide-icon [img]="icons.Users" size="24"></lucide-icon>
+                </div>
+                <div class="stat-data">
+                    <span class="stat-value">{{ dashboardStats.totalPatients }}</span>
+                    <span class="stat-label">Total Patients</span>
+                    <span class="stat-trend purple">+{{ dashboardStats.newThisMonth }} ce mois</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-dot green"></div>
+                <div class="stat-data">
+                    <span class="stat-value">{{ dashboardStats.stage1 }}</span>
+                    <span class="stat-label">Stage 1 — Stable</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-dot orange"></div>
+                <div class="stat-data">
+                    <span class="stat-value">{{ dashboardStats.stage2 }}</span>
+                    <span class="stat-label">Stage 2 — Surveillance</span>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-dot red"></div>
+                <div class="stat-data">
+                    <span class="stat-value">{{ dashboardStats.stage3 }}</span>
+                    <span class="stat-label">Stage 3 — Critique</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-main-content">
+            <!-- Alertes Critiques -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <lucide-icon [img]="icons.AlertTriangle" size="18"></lucide-icon>
+                        Alertes Critiques
+                    </h2>
+                    <a href="#" class="view-all">Voir tout →</a>
+                </div>
+                <div class="alerts-list">
+                    <div *ngFor="let alert of criticalAlerts" class="alert-item" [ngClass]="alert.color">
+                        <div class="alert-user">
+                            <span class="user-name">{{ alert.name }}</span>
+                            <span class="user-stage badge-red">{{ alert.stage }}</span>
+                        </div>
+                        <div class="alert-metrics">
+                            <div class="metric">
+                                <span class="metric-label">SCORE:</span>
+                                <span class="metric-value">{{ alert.score }}</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">TENDANCE:</span>
+                                <span class="metric-value trend-down">
+                                    <lucide-icon [img]="icons.TrendingDown" size="14"></lucide-icon>
+                                    {{ alert.trend }}
+                                </span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">ALERTES:</span>
+                                <span class="alert-count">{{ alert.alerts }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Décisions Récentes -->
+            <div class="content-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <lucide-icon [img]="icons.Activity" size="18"></lucide-icon>
+                        Décisions Récentes
+                    </h2>
+                    <a href="#" class="view-all">Voir tout →</a>
+                </div>
+                <div class="decisions-list">
+                    <div *ngFor="let decision of recentDecisions" class="decision-item">
+                        <div class="decision-header">
+                            <span class="decision-patient">{{ decision.patient }}</span>
+                            <span class="decision-status" [ngClass]="decision.status.toLowerCase()">{{ decision.status
+                                }}</span>
+                        </div>
+                        <div class="decision-urgency">{{ decision.urgency }}</div>
+                        <p class="decision-desc">{{ decision.description }}</p>
+                        <div class="decision-footer">
+                            <span class="decision-type">{{ decision.type }}</span>
+                            <span class="decision-date">{{ decision.date }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Rapides -->
+        <div class="quick-actions-section">
+            <h2 class="section-title">Actions rapides</h2>
+            <div class="actions-grid">
+                <div class="action-card">
+                    <lucide-icon [img]="icons.Users" size="32" class="purple"></lucide-icon>
+                    <span>Vue par Stages</span>
+                </div>
+                <div class="action-card" (click)="router.navigate(['/gestion-tests'])">
+                    <lucide-icon [img]="icons.FlaskConical" size="32" class="teal"></lucide-icon>
+                    <span>Gérer les Tests</span>
+                </div>
+                <div class="action-card" (click)="showDoctorAssignmentsModal.set(true)">
+                    <lucide-icon [img]="icons.ClipboardList" size="32" class="orange"></lucide-icon>
+                    <span>Assignations</span>
+                </div>
+                <div class="action-card" (click)="router.navigate(['/medecin-metrics'])">
+                    <lucide-icon [img]="icons.BarChart" size="32" class="blue"></lucide-icon>
+                    <span>Rapports</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aidant Dashboard Content -->
+    <div *ngIf="selectedRole() === 'aidant'" class="dashboard-aidant">
+        <header class="dashboard-header-simple">
+            <div class="breadcrumb">
+                <button class="btn-back" (click)="selectedRole.set(null)">
+                    <lucide-icon [img]="icons.ChevronRight" size="14" style="transform: rotate(180deg);"></lucide-icon>
+                    Retour
+                </button>
+            </div>
+            <h1 class="welcome-title">Bonjour ! 👋</h1>
+            <p class="welcome-subtitle">Vous accompagnez {{ aidantData.patientName }}</p>
+        </header>
+
+        <section class="patient-summary-card">
+            <div class="card-header-row">
+                <div class="patient-info">
+                    <h2 class="patient-name-large">{{ aidantData.patientName }} <span class="age-badge">{{
+                            aidantData.patientAge }} ans</span></h2>
+                </div>
+                <div class="status-badge-container">
+                    <span class="status-pill orange">
+                        <span class="dot"></span>
+                        {{ aidantData.stage }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="score-overview-grid">
+                <div class="score-stat">
+                    <span class="stat-label">SCORE ACTUEL (MMSE)</span>
+                    <ng-container *ngIf="aidantPatientMmseScore() as score">
+                        <ng-container *ngIf="score.hasPassedTest">
+                            <span class="stat-value">{{ score.mmseScore | number:'1.0-0' }}/30</span>
+                        </ng-container>
+                        <ng-container *ngIf="!score.hasPassedTest">
+                            <span class="stat-value">0%</span>
+                        </ng-container>
+                    </ng-container>
+                    <ng-container *ngIf="!aidantPatientMmseScore()">
+                        <span class="stat-value">-</span>
+                    </ng-container>
+                </div>
+                <div class="score-stat">
+                    <span class="stat-label">TENDANCE</span>
+                    <span class="stat-value trend-down-text">
+                        <lucide-icon [img]="icons.TrendingDown" size="16"></lucide-icon>
+                        {{ aidantData.trend }}
+                    </span>
+                </div>
+                <div class="score-stat">
+                    <span class="stat-label">PROCHAIN TEST</span>
+                    <span class="stat-value">{{ aidantData.nextTest }}</span>
+                </div>
+            </div>
+
+            <ng-container *ngIf="aidantPatientMmseScore() as score">
+                <ng-container *ngIf="!score.hasPassedTest">
+                    <div class="status-alert-box orange">
+                        <lucide-icon [img]="icons.Info" size="20"></lucide-icon>
+                        <div class="alert-content">
+                            <h3 class="alert-title">Ce patient n'a pas passé le test MMSE</h3>
+                            <p class="alert-desc">Veuillez planifier un test MMSE pour évaluer les fonctions cognitives du patient.</p>
+                        </div>
+                    </div>
+                </ng-container>
+                <ng-container *ngIf="score.hasPassedTest">
+                    <div class="status-alert-box orange">
+                        <lucide-icon [img]="icons.Info" size="20"></lucide-icon>
+                        <div class="alert-content">
+                            <h3 class="alert-title">{{ aidantData.statusMessage }}</h3>
+                            <p class="alert-desc">{{ aidantData.statusDesc }}</p>
+                        </div>
+                    </div>
+                </ng-container>
+            </ng-container>
+
+            <button class="btn-full-details">
+                Voir les détails complets <lucide-icon [img]="icons.ChevronRight" size="18"></lucide-icon>
+            </button>
+        </section>
+
+        <div class="aidant-bottom-grid">
+            <!-- Mes Tâches -->
+            <div class="bottom-section-card">
+                <div class="section-card-header">
+                    <h3 class="card-title">
+                        <lucide-icon [img]="icons.CheckCircle2" size="20"></lucide-icon>
+                        Mes Tâches
+                    </h3>
+                    <span class="counter-badge red">3</span>
+                </div>
+                <div class="tasks-list-aidant">
+                    <div *ngFor="let task of aidantData.tasks" class="task-item-aidant" [ngClass]="task.color">
+                        <div class="task-checkbox"></div>
+                        <div class="task-details">
+                            <span class="task-title-text">{{ task.title }}</span>
+                            <div class="task-meta-aidant">
+                                <span class="urgency-label" [ngClass]="task.color">{{ task.urgency }}</span>
+                                <span class="task-date">Échéance: {{ task.date }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tests & Rendez-vous -->
+            <div class="bottom-section-card">
+                <div class="section-card-header">
+                    <h3 class="card-title">
+                        <lucide-icon [img]="icons.Calendar" size="20"></lucide-icon>
+                        Tests & Rendez-vous
+                    </h3>
+                    <span class="counter-badge blue">{{ patientAssignments().length + 1 }}</span>
+                </div>
+                <div class="appointment-content-aidant">
+                    <!-- Tests Assignés -->
+                    <div *ngIf="patientAssignments().length > 0" class="tests-list-aidant-scrollable">
+                        <div *ngFor="let assignment of patientAssignments()" class="appointment-card-inner clickable"
+                            (click)="handleAidantAssignmentClick(assignment)">
+                            <div class="calendar-icon-mock">
+                                <lucide-icon [img]="icons.Brain" size="32" class="blue-text"></lucide-icon>
+                            </div>
+                            <div class="appointment-details-text">
+                                <span class="appoint-date">{{ assignment.test?.titre || 'Test Cognitif' }}</span>
+                                <span class="appoint-time">{{ assignment.test?.type || 'MEMORY' }}</span>
+                                <span class="appoint-desc" *ngIf="assignment.dateLimite">Échéance: {{ assignment.dateLimite | date:'dd/MM/yyyy' }}</span>
+                                <span class="appoint-loc" *ngIf="assignment.test?.durationMinutes">Durée: {{ assignment.test.durationMinutes }} min</span>
+                            </div>
+                            <div class="aidant-test-cta">
+                                <button class="btn-start-assignment" (click)="$event.stopPropagation(); handleAidantAssignmentClick(assignment)">
+                                    {{ assignment.status === 'IN_PROGRESS' ? 'Continuer' : 'Commencer' }}
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Rendez-vous -->
+                        <div class="appointment-card-inner">
+                            <div class="calendar-icon-mock">
+                                <lucide-icon [img]="icons.Calendar" size="32" class="blue-text"></lucide-icon>
+                            </div>
+                            <div class="appointment-details-text">
+                                <span class="appoint-date">{{ aidantData.appointment.date }}</span>
+                                <span class="appoint-time">{{ aidantData.appointment.time }}</span>
+                                <span class="appoint-desc">{{ aidantData.appointment.description }}</span>
+                                <span class="appoint-loc">{{ aidantData.appointment.location }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-outline-action" (click)="openCalendar()">
+                        Voir le calendrier
+                    </button>
+                    <button class="btn-outline-action" (click)="router.navigate(['/aidant-metrics'], { queryParams: { aidantId: activeAidantId() } })">
+                        <lucide-icon [img]="icons.BarChart" size="16"></lucide-icon>
+                        Métriques
+                    </button>
+
+                    <!-- Empty State -->
+                    <div *ngIf="patientAssignments().length === 0" class="empty-tests-state">
+                        <lucide-icon [img]="icons.ClipboardList" size="24" class="empty-icon"></lucide-icon>
+                        <span class="empty-text">Aucun test assigné</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ressources Utiles -->
+            <div class="bottom-section-card">
+                <div class="section-card-header">
+                    <h3 class="card-title">
+                        <lucide-icon [img]="icons.FileText" size="20"></lucide-icon>
+                        Ressources Utiles
+                    </h3>
+                </div>
+                <div class="resources-list-aidant">
+                    <div *ngFor="let res of aidantData.resources" class="resource-item-aidant">
+                        <div class="resource-icon-box">
+                            <lucide-icon [img]="res.icon" size="20"></lucide-icon>
+                        </div>
+                        <div class="resource-text">
+                            <span class="res-title">{{ res.title }}</span>
+                            <span class="res-desc">{{ res.desc }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Patient Dashboard Content -->
+    <div *ngIf="selectedRole() === 'patient'" class="dashboard-patient">
+        <header class="dashboard-header-simple">
+            <div class="breadcrumb">
+                <button class="btn-back" (click)="selectedRole.set(null)">
+                    <lucide-icon [img]="icons.ChevronRight" size="14" style="transform: rotate(180deg);"></lucide-icon>
+                    Retour
+                </button>
+            </div>
+            <h1 class="welcome-title">Bonjour, {{ selectedPatientForDashboard()?.prenom || 'Patient' }} ! 👋</h1>
+            <p class="welcome-subtitle">Voici votre tableau de bord</p>
+        </header>
+
+        <section class="patient-main-status-card">
+            <div class="card-inner-patient">
+                <div class="card-header-patient">
+                    <h2 class="patient-section-title">Mon État Cognitif</h2>
+                    <span class="status-pill-patient">
+                        <span class="dot"></span>
+                        {{ patientData.stage }}
+                    </span>
+                </div>
+
+                <div class="score-display-patient">
+                    <div class="score-label-container">
+                        <span class="label">Votre score actuel (MMSE)</span>
+                        <ng-container *ngIf="patientMmseScore() as score">
+                            <ng-container *ngIf="score.hasPassedTest">
+                                <span class="value">{{ score.mmseScore | number:'1.0-0' }}/30</span>
+                            </ng-container>
+                            <ng-container *ngIf="!score.hasPassedTest">
+                                <span class="value">0%</span>
+                            </ng-container>
+                        </ng-container>
+                        <ng-container *ngIf="!patientMmseScore()">
+                            <span class="value">-</span>
+                        </ng-container>
+                    </div>
+                    <div class="progress-bar-patient">
+                        <ng-container *ngIf="patientMmseScore() as score">
+                            <ng-container *ngIf="score.hasPassedTest">
+                                <div class="fill" [style.width.%]="(score.mmseScore / 30 * 100)"></div>
+                            </ng-container>
+                            <ng-container *ngIf="!score.hasPassedTest">
+                                <div class="fill" style="width: 0%"></div>
+                            </ng-container>
+                        </ng-container>
+                        <ng-container *ngIf="!patientMmseScore()">
+                            <div class="fill" style="width: 0%"></div>
+                        </ng-container>
+                    </div>
+                    <div class="score-values">
+                        <ng-container *ngIf="patientMmseScore() as score">
+                            <ng-container *ngIf="score.hasPassedTest">
+                                <span class="score-main">{{ score.mmseScore | number:'1.0-0' }}/30</span>
+                                <span class="score-perc">{{ (score.mmseScore / 30 * 100) | number:'1.0-0' }}%</span>
+                            </ng-container>
+                            <ng-container *ngIf="!score.hasPassedTest">
+                                <span class="score-main">0%</span>
+                                <span class="score-perc">0%</span>
+                            </ng-container>
+                        </ng-container>
+                        <ng-container *ngIf="!patientMmseScore()">
+                            <span class="score-main">-</span>
+                            <span class="score-perc">-</span>
+                        </ng-container>
+                    </div>
+                </div>
+
+                <ng-container *ngIf="patientMmseScore() as score">
+                    <ng-container *ngIf="!score.hasPassedTest">
+                        <div class="doctor-note-box">
+                            <div class="note-icon">⚠️</div>
+                            <p class="note-text">Ce patient n'a pas passé le test MMSE. Veuillez planifier un test MMSE pour évaluer les fonctions cognitives.</p>
+                        </div>
+                    </ng-container>
+                    <ng-container *ngIf="score.hasPassedTest">
+                        <div class="doctor-note-box">
+                            <div class="note-icon">📚</div>
+                            <p class="note-text">{{ patientData.doctorNote }}</p>
+                        </div>
+                    </ng-container>
+                </ng-container>
+
+                <button class="btn-patient-info">
+                    En savoir plus sur mon suivi <lucide-icon [img]="icons.ChevronRight" size="18"></lucide-icon>
+                </button>
+            </div>
+        </section>
+
+        <div class="patient-bottom-grid">
+            <!-- Mes Tests à Faire -->
+            <div class="bottom-section-card">
+                <div class="section-card-header">
+                    <h3 class="card-title">
+                        <lucide-icon [img]="icons.Clock" size="20"></lucide-icon>
+                        Mes Tests à Faire
+                    </h3>
+                    <span class="counter-badge blue" *ngIf="patientAssignments().length > 0">{{
+                        patientAssignments().length }}</span>
+                </div>
+                <div class="tests-list-patient">
+                    <!-- Real assignments from backend -->
+                    <div *ngFor="let assign of patientAssignments()" class="test-to-do-card" [ngClass]="{
+                        'test-card-assigned': assign.status === 'ASSIGNED',
+                        'test-card-in-progress': assign.status === 'IN_PROGRESS',
+                        'test-card-completed': assign.status === 'COMPLETED'
+                    }">
+                        <div class="test-card-top">
+                            <div class="test-type-icon-wrapper">
+                                <lucide-icon [img]="getTestStyle(assign.test?.type).icon" size="20"></lucide-icon>
+                            </div>
+                            <div class="test-card-header-info">
+                                <h4 class="test-to-do-title">{{ assign.test?.titre || 'Test Cognitif' }}</h4>
+                                <span class="test-type-badge">{{ assign.test?.type }}</span>
+                            </div>
+                            <span class="status-badge" [ngClass]="{
+                                'status-assigned': assign.status === 'ASSIGNED',
+                                'status-in-progress': assign.status === 'IN_PROGRESS',
+                                'status-completed': assign.status === 'COMPLETED'
+                            }">{{ assign.status === 'ASSIGNED' ? 'À faire' : assign.status === 'IN_PROGRESS' ? 'En
+                                cours' : 'Terminé' }}</span>
+                        </div>
+
+                        <p class="test-to-do-desc">{{ assign.test?.description || 'Évaluation cognitive assignée par
+                            votre médecin.' }}</p>
+
+                        <div class="test-to-do-meta">
+                            <span class="meta-item" *ngIf="assign.test?.durationMinutes">
+                                <lucide-icon [img]="icons.Clock" size="14"></lucide-icon>
+                                {{ assign.test.durationMinutes }} min
+                            </span>
+                            <span class="meta-item deadline-item" *ngIf="assign.dateLimite">
+                                📅 À faire avant le {{ assign.dateLimite | date:'dd/MM/yyyy' }}
+                            </span>
+                        </div>
+
+                        <p class="test-instructions" *ngIf="assign.instructions">
+                            📋 {{ assign.instructions }}
+                        </p>
+
+                        <button class="btn-start-test" [disabled]="assign.status === 'COMPLETED'"
+                            (click)="startPatientTest(assign)"
+                            [ngClass]="{'btn-completed': assign.status === 'COMPLETED'}">
+                            {{ assign.status === 'COMPLETED' ? '✅ Terminé' : assign.status === 'IN_PROGRESS' ? '▶
+                            Continuer le test' : '🚀 Commencer le test' }}
+                        </button>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div *ngIf="patientAssignments().length === 0" class="empty-assignments">
+                        <lucide-icon [img]="icons.CheckCircle2" size="40" class="empty-icon"></lucide-icon>
+                        <p>Aucun test assigné pour le moment.</p>
+                        <span>Votre médecin vous assignera des tests prochainement.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mes Recommandations -->
+            <div class="bottom-section-card">
+                <div class="section-card-header">
+                    <h3 class="card-title">
+                        <lucide-icon [img]="icons.Brain" size="20"></lucide-icon>
+                        Mes Recommandations
+                    </h3>
+                </div>
+                <div class="recommendations-list-patient">
+                    <div *ngFor="let rec of patientData.recommendations" class="rec-item-patient">
+                        <div class="rec-icon-box">
+                            <lucide-icon [img]="rec.icon" size="20"></lucide-icon>
+                        </div>
+                        <div class="rec-text">
+                            <span class="rec-title">{{ rec.title }}</span>
+                            <span class="rec-desc">{{ rec.desc }}</span>
+                        </div>
+                    </div>
+                    <button class="btn-outline-action full-width">
+                        Voir toutes les recommandations
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="patient-footer-appointment">
+            <div class="footer-appoint-content">
+                <div class="footer-icon-box">
+                    <lucide-icon [img]="icons.Calendar" size="24"></lucide-icon>
+                </div>
+                <div class="footer-text">
+                    <span class="footer-label">PROCHAIN RENDEZ-VOUS</span>
+                    <span class="footer-value">{{ patientData.nextAppointment.date }}</span>
+                    <span class="footer-loc">{{ patientData.nextAppointment.location }}</span>
+                </div>
+            </div>
+            <button class="btn-detail-footer" (click)="openCalendar()">Calendrier</button>
+        </div>
+    </div>
+
+    <!-- Other Roles Content placeholder removed as it is now implemented -->
+
+    <!-- MODAL ASSIGNER NOUVEAU TEST -->
+    <div *ngIf="showNewTestModal()" class="modal-overlay" (click)="handleCloseModal()">
+        <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+            <div class="modal-header-premium">
+                <div class="header-title-group">
+                    <lucide-icon [img]="icons.Plus" size="24" class="purple-text"></lucide-icon>
+                    <h2 class="modal-title-premium">Assigner un nouveau test</h2>
+                </div>
+                <button class="btn-close-modal" (click)="handleCloseModal()">
+                    <lucide-icon [img]="icons.XMark" size="24"></lucide-icon>
+                </button>
+            </div>
+
+            <div class="modal-body-scrollable">
+                <!-- RECHERCHER UN PATIENT -->
+                <div class="form-section-premium">
+                    <label class="label-premium">🔍 RECHERCHER UN PATIENT</label>
+                    <div class="search-input-wrapper">
+                        <input type="text" class="input-premium" placeholder="Nom du patient..."
+                            [ngModel]="searchQuery()"
+                            (ngModelChange)="searchQuery.set($event); selectedPatientId.set(null)">
+                        <lucide-icon [img]="icons.Search" size="20" class="search-icon-inside"></lucide-icon>
+                        <!-- Dynamic Results -->
+                        <div *ngIf="filteredPatients.length > 0 && !selectedPatientId()"
+                            class="search-results-dropdown">
+                            <div *ngFor="let patient of filteredPatients" class="result-item"
+                                (click)="selectPatient(patient)">
+                                <span class="patient-dot"></span>
+                                <span class="patient-result-name">{{ patient.prenom }} {{ patient.nom }}</span>
+                            </div>
+                            <div class="result-add-new">
+                                <lucide-icon [img]="icons.Plus" size="16"></lucide-icon>
+                                Ajouter un nouveau patient
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- QUICK PATIENT SELECTION -->
+                <div class="form-section-premium">
+                    <label class="label-premium">👥 SÉLECTION RAPIDE</label>
+
+                    <div *ngIf="patientsList().length > 0" class="quick-patients-grid">
+                        <div *ngFor="let patient of patientsList()" class="quick-patient-card"
+                            [ngClass]="{'active': selectedPatientId() === patient.id.toString()}"
+                            (click)="selectPatient(patient)">
+                            <div class="patient-avatar-small">
+                                {{ patient.prenom.charAt(0) }}{{ patient.nom.charAt(0) }}
+                            </div>
+                            <span class="quick-patient-name">{{ patient.prenom }} {{ patient.nom }}</span>
+                            <div class="check-overlay" *ngIf="selectedPatientId() === patient.id.toString()">
+                                <lucide-icon [img]="icons.CheckCircle2" size="16"></lucide-icon>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- EMPTY STATE / LOADING -->
+                    <div *ngIf="patientsList().length === 0" class="empty-patients-state">
+                        <div class="empty-content">
+                            <lucide-icon [img]="icons.AlertTriangle" size="24" class="empty-icon"></lucide-icon>
+                            <div class="empty-text">
+                                <span class="empty-title">Aucun patient trouvé</span>
+                                <span class="empty-subtitle">Vérifiez la connexion au module utilisateur ou ajoutez un
+                                    patient manuellement.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STADE DU PATIENT -->
+                <div class="form-section-premium">
+                    <label class="label-premium">📊 STADE DU PATIENT</label>
+                    <div class="radio-group-premium">
+                        <label class="radio-item-premium" [ngClass]="{'active': testStage() === 'STABLE'}">
+                            <input type="radio" name="stage" value="STABLE" [ngModel]="testStage()"
+                                (ngModelChange)="testStage.set($event); selectedTestType.set(null); selectedTestId.set(null)">
+                            <span class="radio-pill stable">Stable (léger)</span>
+                        </label>
+                        <label class="radio-item-premium" [ngClass]="{'active': testStage() === 'MOYEN'}">
+                            <input type="radio" name="stage" value="MOYEN" [ngModel]="testStage()"
+                                (ngModelChange)="testStage.set($event); selectedTestType.set(null); selectedTestId.set(null)">
+                            <span class="radio-pill moyen">Moyen</span>
+                        </label>
+                        <label class="radio-item-premium" [ngClass]="{'active': testStage() === 'CRITIQUE'}">
+                            <input type="radio" name="stage" value="CRITIQUE" [ngModel]="testStage()"
+                                (ngModelChange)="testStage.set($event); selectedTestType.set(null); selectedTestId.set(null)">
+                            <span class="radio-pill critique">Critique</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- TYPE DE TEST -->
+                <div class="form-section-premium" *ngIf="testStage()">
+                    <label class="label-premium">🧪 TYPE DE TEST</label>
+                    <select class="select-premium" [ngModel]="selectedTestType()"
+                        (ngModelChange)="selectedTestType.set($event); selectedTestId.set(null)">
+                        <option [value]="null" disabled selected>Choisir un type...</option>
+                        <option *ngFor="let type of availableTestTypes" [value]="type">{{ type }}</option>
+                    </select>
+                </div>
+
+                <!-- TEST SPECIFIQUE -->
+                <div class="form-section-premium" *ngIf="selectedTestType()">
+                    <label class="label-premium">📋 SÉLECTIONNER LE TEST</label>
+                    <select class="select-premium" [ngModel]="selectedTestId()"
+                        (ngModelChange)="selectedTestId.set($event)">
+                        <option [value]="null" disabled selected>Choisir un test...</option>
+                        <option *ngFor="let test of availableSpecificTests" [value]="test.titre">{{ test.titre }}
+                        </option>
+                    </select>
+                </div>
+
+                <!-- DATE LIMITE -->
+                <div class="form-section-half">
+                    <div class="form-section-premium">
+                        <label class="label-premium">⏰ DATE LIMITE</label>
+                        <input type="date" class="input-premium" [ngModel]="testDeadline()"
+                            (ngModelChange)="testDeadline.set($event)">
+                        <span class="helper-text-premium">À passer avant cette date</span>
+                    </div>
+                </div>
+
+                <!-- NOTES -->
+                <div class="form-section-premium">
+                    <label class="label-premium">📝 NOTES / INSTRUCTIONS (optionnel)</label>
+                    <textarea class="textarea-premium" placeholder="..." [ngModel]="testNotes()"
+                        (ngModelChange)="testNotes.set($event)"></textarea>
+                </div>
+
+                <!-- TESTS PERSONNALISÉS -->
+                <div class="form-section-premium personalized-section">
+                    <label class="label-premium">🎯 TESTS PERSONNALISÉS (Remplis par le médecin)</label>
+                    <div class="personalized-tests-container">
+                        <!-- STABLE -->
+                        <div class="personalized-stage-group">
+                            <div class="personalized-stage-header stable">
+                                <span class="stage-dot stable"></span>
+                                STABLE
+                            </div>
+                            <div class="personalized-tests-list">
+                                <label *ngFor="let test of personalizedTests.STABLE" class="personalized-test-item">
+                                    <input type="checkbox" [checked]="test.selected"
+                                        (change)="togglePersonalizedTest('STABLE', test.name)">
+                                    <span class="custom-checkbox"></span>
+                                    <span class="test-label">{{ test.name }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- MOYEN -->
+                        <div class="personalized-stage-group">
+                            <div class="personalized-stage-header moyen">
+                                <span class="stage-dot moyen"></span>
+                                MOYEN
+                            </div>
+                            <div class="personalized-tests-list">
+                                <label *ngFor="let test of personalizedTests.MOYEN" class="personalized-test-item">
+                                    <input type="checkbox" [checked]="test.selected"
+                                        (change)="togglePersonalizedTest('MOYEN', test.name)">
+                                    <span class="custom-checkbox"></span>
+                                    <span class="test-label">{{ test.name }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- CRITIQUE -->
+                        <div class="personalized-stage-group">
+                            <div class="personalized-stage-header critique">
+                                <span class="stage-dot critique"></span>
+                                CRITIQUE
+                            </div>
+                            <div class="personalized-tests-list">
+                                <label *ngFor="let test of personalizedTests.CRITIQUE" class="personalized-test-item">
+                                    <input type="checkbox" [checked]="test.selected"
+                                        (change)="togglePersonalizedTest('CRITIQUE', test.name)">
+                                    <span class="custom-checkbox"></span>
+                                    <span class="test-label">{{ test.name }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer-premium">
+                <button class="btn-modal-secondary" (click)="handleCloseModal()">ANNULER</button>
+                <button class="btn-modal-primary" [disabled]="!isFormValid()" [ngClass]="{'disabled': !isFormValid()}"
+                    (click)="handleAssignTest()">
+                    ASSIGNER LE TEST
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELECTION PERSONNE (PATIENT OU AIDANT) -->
+    <div *ngIf="showSelectionModal()" class="modal-overlay" (click)="handleCloseSelectionModal()">
+        <div class="modal-content selection-modal" (click)="$event.stopPropagation()">
+            <div class="modal-header-premium">
+                <div class="header-title-group">
+                    <lucide-icon [img]="selectionType() === 'PATIENT' ? icons.UserCircle : icons.Users" size="24"
+                        class="purple-text"></lucide-icon>
+                    <h2 class="modal-title-premium">
+                        Sélectionner {{ selectionType() === 'PATIENT' ? 'le patient' : 'l\'accompagnant' }}
+                    </h2>
+                </div>
+                <button class="btn-close-modal" (click)="handleCloseSelectionModal()">
+                    <lucide-icon [img]="icons.XMark" size="24"></lucide-icon>
+                </button>
+            </div>
+
+            <div class="modal-body-scrollable">
+                <div class="selection-grid">
+                    <ng-container *ngIf="selectionType() === 'PATIENT'">
+                        <div *ngFor="let p of patientsList()" class="selection-item-card"
+                            [ngClass]="{'selected': selectedPersonId() === p.id}" (click)="selectedPersonId.set(p.id)">
+                            <div class="selection-avatar">{{ p.prenom.charAt(0) }}{{ p.nom.charAt(0) }}</div>
+                            <div class="selection-info">
+                                <span class="selection-name">{{ p.prenom }} {{ p.nom }}</span>
+                                <span class="selection-sub">Patient ID: {{ p.id }}</span>
+                            </div>
+                            <div class="selection-check" *ngIf="selectedPersonId() === p.id">
+                                <lucide-icon [img]="icons.CheckCircle2" size="20"></lucide-icon>
+                            </div>
+                        </div>
+                    </ng-container>
+
+                    <ng-container *ngIf="selectionType() === 'AIDANT'">
+                        <div *ngFor="let a of aidantsList()" class="selection-item-card"
+                            [ngClass]="{'selected': selectedPersonId() === a.id}" (click)="selectedPersonId.set(a.id)">
+                            <div class="selection-avatar aidant">{{ a.prenom.charAt(0) }}{{ a.nom.charAt(0) }}</div>
+                            <div class="selection-info">
+                                <span class="selection-name">{{ a.prenom }} {{ a.nom }}</span>
+                                <span class="selection-sub">{{ a.role }}</span>
+                            </div>
+                            <div class="selection-check" *ngIf="selectedPersonId() === a.id">
+                                <lucide-icon [img]="icons.CheckCircle2" size="20"></lucide-icon>
+                            </div>
+                        </div>
+                    </ng-container>
+                </div>
+
+                <div *ngIf="(selectionType() === 'PATIENT' && patientsList().length === 0) || (selectionType() === 'AIDANT' && aidantsList().length === 0)"
+                    class="empty-selection">
+                    <p>Aucune personne trouvée dans la base de données.</p>
+                </div>
+            </div>
+
+            <div class="modal-footer-premium">
+                <button class="btn-modal-secondary" (click)="handleCloseSelectionModal()">ANNULER</button>
+                <button class="btn-modal-primary" [disabled]="!selectedPersonId()"
+                    [ngClass]="{'disabled': !selectedPersonId()}" (click)="confirmSelection()">
+                    CONFIRMER ET ACCÉDER
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL ASSIGNATIONS MÉDECIN -->
+<div *ngIf="showDoctorAssignmentsModal()" class="modal-overlay" (click)="showDoctorAssignmentsModal.set(false)">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <div class="modal-header-premium">
+            <div class="header-title-group">
+                <lucide-icon [img]="icons.ClipboardList" size="24" class="purple-text"></lucide-icon>
+                <h2 class="modal-title-premium">Mes Assignations de Tests</h2>
+            </div>
+            <button class="btn-close-modal" (click)="showDoctorAssignmentsModal.set(false)">
+                <lucide-icon [img]="icons.XMark" size="24"></lucide-icon>
+            </button>
+        </div>
+
+        <div class="modal-body-scrollable">
+            <!-- Empty state -->
+            <div *ngIf="doctorAssignments().length === 0" class="empty-assignments">
+                <lucide-icon [img]="icons.ClipboardList" size="40" class="empty-icon"></lucide-icon>
+                <p>Aucune assignation trouvée.</p>
+                <span>Utilisez le bouton "Assigner Test" pour créer une nouvelle assignation.</span>
+            </div>
+
+            <!-- Assignments list -->
+            <div *ngIf="doctorAssignments().length > 0" class="assignments-table-container">
+                <table class="assignments-table">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Test</th>
+                            <th>Date Assignation</th>
+                            <th>Date Limite</th>
+                            <th>Statut</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let assign of doctorAssignments()" class="assignment-row">
+                            <td class="patient-cell">
+                                <div class="patient-avatar-small">{{ getPatientName(assign.patientId).charAt(0) }}</div>
+                                <span>{{ getPatientName(assign.patientId) }}</span>
+                            </td>
+                            <td>
+                                <span class="test-name-cell">{{ assign.test?.titre || 'Test Inconnu' }}</span>
+                                <span class="test-type-badge">{{ assign.test?.type }}</span>
+                            </td>
+                            <td class="date-cell">
+                                {{ assign.dateAssignation | date:'dd/MM/yyyy HH:mm' }}
+                            </td>
+                            <td class="date-cell">
+                                <span *ngIf="assign.dateLimite">{{ assign.dateLimite | date:'dd/MM/yyyy' }}</span>
+                                <span *ngIf="!assign.dateLimite" class="no-date">—</span>
+                            </td>
+                            <td>
+                                <span class="meta-item status-badge" [ngClass]="{
+                                    'status-assigned': assign.status === 'ASSIGNED',
+                                    'status-in-progress': assign.status === 'IN_PROGRESS',
+                                    'status-completed': assign.status === 'COMPLETED'
+                                }">{{ assign.status }}</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="modal-footer-premium">
+            <button class="btn-modal-secondary" (click)="showDoctorAssignmentsModal.set(false)">FERMER</button>
+            <button class="btn-modal-primary"
+                (click)="showDoctorAssignmentsModal.set(false); showNewTestModal.set(true)">
+                <lucide-icon [img]="icons.Plus" size="16"></lucide-icon>
+                NOUVELLE ASSIGNATION
+            </button>
+        </div>
+    </div>
+</div>

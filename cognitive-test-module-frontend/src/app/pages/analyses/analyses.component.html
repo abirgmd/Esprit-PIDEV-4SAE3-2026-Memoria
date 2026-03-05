@@ -1,0 +1,84 @@
+<div class="analyses-container">
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Analyses & Rapports</h1>
+            <p class="page-subtitle">Visualisez et exportez les données d'analyse</p>
+        </div>
+        <button class="btn btn-primary">
+            <lucide-icon [img]="icons.Download" size="20"></lucide-icon>
+            Exporter les données
+        </button>
+    </div>
+
+    <div class="analyses-grid">
+        <div class="analysis-card">
+            <div class="analysis-icon">
+                <lucide-icon [img]="icons.BarChart3" size="32"></lucide-icon>
+            </div>
+            <h3 class="analysis-title">Graphiques & Tendances</h3>
+            <p class="analysis-description">
+                Visualisez l'évolution des scores cognitifs dans le temps
+            </p>
+            <button class="btn btn-secondary">Voir les graphiques</button>
+        </div>
+
+        <div class="analysis-card">
+            <div class="analysis-icon">
+                <lucide-icon [img]="icons.FileText" size="32"></lucide-icon>
+            </div>
+            <h3 class="analysis-title">Rapports détaillés</h3>
+            <p class="analysis-description">
+                Générez des rapports complets pour chaque patient
+            </p>
+            <button class="btn btn-secondary">Générer un rapport</button>
+        </div>
+    </div>
+
+    <!-- Recent Decisions / Reports -->
+    <div class="mt-8">
+        <h2 class="section-title mb-4">Derniers Rapports Générés</h2>
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead class="bg-gray-50 text-gray-600 text-sm">
+                    <tr>
+                        <th class="p-4 font-medium">Date</th>
+                        <th class="p-4 font-medium">Type</th>
+                        <th class="p-4 font-medium">Risque</th>
+                        <th class="p-4 font-medium">Confiance</th>
+                        <th class="p-4 font-medium">Explication</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    <tr *ngFor="let decision of recentDecisions()" class="hover:bg-gray-50">
+                        <td class="p-4 text-sm text-gray-500">
+                            {{ decision.createdAt ? (decision.createdAt | date:'shortDate') : 'N/A' }}
+                        </td>
+                        <td class="p-4">
+                            <span
+                                class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                {{ decision.decisionType }}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                                [ngClass]="getRiskColor(decision.riskLevel)">
+                                {{ decision.riskLevel }}
+                            </span>
+                        </td>
+                        <td class="p-4 text-sm text-gray-600">
+                            {{ decision.confidence ? (decision.confidence * 100 | number:'1.0-0') + '%' : '-' }}
+                        </td>
+                        <td class="p-4 text-sm text-gray-600 max-w-xs truncate" [title]="decision.explanation">
+                            {{ decision.explanation }}
+                        </td>
+                    </tr>
+                    <tr *ngIf="recentDecisions().length === 0">
+                        <td colspan="5" class="p-8 text-center text-gray-500">
+                            Aucun rapport disponible.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,154 @@
+<div class="activities-container">
+    <!-- Header -->
+    <div class="page-header">
+        <div>
+            <h1 class="page-title">Activités & Publications</h1>
+            <p class="page-subtitle">
+                Découvrez les activités thérapeutiques et publications de la communauté
+            </p>
+        </div>
+        <a *ngIf="userRole() === 'doctor'" routerLink="/activites/create" class="btn btn-primary">
+            <lucide-icon [img]="icons.Plus" size="18"></lucide-icon>
+            <span>Créer une activité</span>
+        </a>
+    </div>
+
+    <!-- Stats -->
+    <div class="activities-stats">
+        <div class="stat-card">
+            <lucide-icon [img]="icons.Calendar" size="24"></lucide-icon>
+            <div>
+                <p class="stat-value">{{ stats().therapeutic }}</p>
+                <p class="stat-label">Activités thérapeutiques</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <lucide-icon [img]="icons.MessageCircle" size="24"></lucide-icon>
+            <div>
+                <p class="stat-value">{{ stats().publication }}</p>
+                <p class="stat-label">Publications</p>
+            </div>
+        </div>
+        <div class="stat-card">
+            <lucide-icon [img]="icons.Users" size="24"></lucide-icon>
+            <div>
+                <p class="stat-value">{{ stats().participants }}</p>
+                <p class="stat-label">Participants totaux</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="activities-filters">
+        <lucide-icon [img]="icons.Filter" size="18"></lucide-icon>
+        <button class="filter-btn" [class.filter-btn-active]="filter() === 'all'" (click)="setFilter('all')">
+            Toutes
+        </button>
+        <button class="filter-btn" [class.filter-btn-active]="filter() === 'therapeutic'"
+            (click)="setFilter('therapeutic')">
+            Activités thérapeutiques
+        </button>
+        <button class="filter-btn" [class.filter-btn-active]="filter() === 'publication'"
+            (click)="setFilter('publication')">
+            Publications
+        </button>
+    </div>
+
+    <!-- Activities Feed -->
+    <div class="activities-feed">
+        <div *ngFor="let activity of filteredActivities()" class="activity-card">
+            <div class="activity-header">
+                <div class="activity-type-badge">
+                    <ng-container *ngIf="activity.type === 'therapeutic'; else pubIcon">
+                        <lucide-icon [img]="icons.Calendar" size="16"></lucide-icon> Activité thérapeutique
+                    </ng-container>
+                    <ng-template #pubIcon>
+                        <lucide-icon [img]="icons.MessageCircle" size="16"></lucide-icon> Publication
+                    </ng-template>
+                </div>
+                <span *ngIf="activity.status" [class]="'status-badge ' + getStatusBadge(activity.status)?.class">
+                    {{ getStatusBadge(activity.status)?.label }}
+                </span>
+            </div>
+
+            <h2 class="activity-title">{{ activity.title }}</h2>
+            <p class="activity-description">{{ activity.description }}</p>
+
+            <div class="activity-meta">
+                <div class="author-info">
+                    <div class="author-avatar">
+                        {{ activity.author.charAt(0) }}
+                    </div>
+                    <div>
+                        <div class="author-name">{{ activity.author }}</div>
+                        <div class="author-role">{{ activity.authorRole }}</div>
+                    </div>
+                </div>
+                <div class="category-tag">
+                    <lucide-icon [img]="getCategoryIcon(activity.category)" size="18"></lucide-icon>
+                    <span>{{ getCategoryLabel(activity.category) }}</span>
+                </div>
+            </div>
+
+            <div *ngIf="activity.type === 'therapeutic' && activity.participants !== undefined"
+                class="participants-bar">
+                <div class="participants-info">
+                    <lucide-icon [img]="icons.Users" size="16"></lucide-icon>
+                    <span>{{ activity.participants }}/{{ activity.maxParticipants }} participants</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill"
+                        [style.width.%]="((activity.participants || 0) / (activity.maxParticipants || 1)) * 100"></div>
+                </div>
+            </div>
+
+            <div class="activity-footer">
+                <div class="activity-stats">
+                    <div class="stat-item">
+                        <lucide-icon [img]="icons.Eye" size="16"></lucide-icon>
+                        <span>{{ activity.views }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <lucide-icon [img]="icons.Heart" size="16"></lucide-icon>
+                        <span>{{ activity.likes }}</span>
+                    </div>
+                    <div class="stat-item">
+                        <lucide-icon [img]="icons.MessageCircle" size="16"></lucide-icon>
+                        <span>{{ activity.comments }}</span>
+                    </div>
+                </div>
+
+                <div class="activity-actions">
+                    <button class="action-btn" [class.action-liked]="activity.isLiked"
+                        (click)="handleLike(activity.id)">
+                        <lucide-icon [img]="icons.Heart" size="18" [class.text-red-600]="activity.isLiked"
+                            [class.fill-current]="activity.isLiked"></lucide-icon>
+                        <span>J'aime</span>
+                    </button>
+                    <button class="action-btn">
+                        <lucide-icon [img]="icons.MessageCircle" size="18"></lucide-icon>
+                        <span>Commenter</span>
+                    </button>
+                    <a *ngIf="activity.type === 'therapeutic' && activity.status === 'scheduled'"
+                        [routerLink]="'/activites/' + activity.id + '/participate'" class="btn btn-primary btn-sm">
+                        Participer
+                    </a>
+                    <div *ngIf="userRole() === 'doctor'" class="admin-actions">
+                        <button class="action-btn-icon" title="Modifier">
+                            <lucide-icon [img]="icons.Edit" size="16"></lucide-icon>
+                        </button>
+                        <button class="action-btn-icon action-delete" title="Supprimer">
+                            <lucide-icon [img]="icons.Trash2" size="16"></lucide-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="activity-date">
+                <lucide-icon [img]="icons.Calendar" size="14"></lucide-icon>
+                <span>{{ formatDate(activity.date) }}</span>
+                <span *ngIf="activity.visibility === 'community'" class="visibility-badge">Communauté</span>
+            </div>
+        </div>
+    </div>
+</div>
