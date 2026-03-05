@@ -1,121 +1,410 @@
-# MemoriA
-🔐 Authentication & Email Security Integration
-📌 Overview
+Voici la documentation complète de MemoriA, enrichie avec :
 
-This branch implements a complete authentication security layer using Keycloak integrated with our Spring Boot backend.
-The goal was to externalize identity management while ensuring secure user authentication, email verification, and password recovery.
+🔐 Keycloak (authentification & gestion des rôles)
 
-This implementation strengthens the platform’s security architecture and aligns the project with modern enterprise authentication standards.
+🌐 Architecture microservices (Gateway + Eureka)
 
-🚀 Implemented Features
-✅ Keycloak Integration
+🛡 Sécurité JWT
 
-Realm configuration for the project environment
+📩 Email verification
 
-Secure client configuration
+🔁 Forgot password
 
-Role-based access management
+🚀 Préparation DevOps (Docker / Kubernetes)
 
-JWT-based authentication
+MemoriA — Plateforme Sécurisée de Suivi Cognitif Alzheimer
 
-📧 Email Authentication (Email Verification)
+Plateforme numérique sécurisée dédiée à l’évaluation cognitive des patients atteints de la maladie d’Alzheimer.
+Architecture microservices sécurisée avec Keycloak, API Gateway et Service Discovery.
 
-SMTP configuration inside Keycloak
+Table des matières
 
-Automatic verification email upon user registration
+Présentation du projet
 
-Mandatory email validation before login
+Architecture globale
 
-Manual resend verification option for users
+Architecture sécurité (Keycloak)
 
-This ensures:
+Architecture microservices
 
-Only valid email addresses can access the platform
+Stack technologique
 
-Reduced fake or spam account creation
+Installation et démarrage
 
-Increased overall system integrity
+Authentification & Autorisation
 
-🔑 Forgot Password Flow
+Entités et modèle de données
 
-Enabled Keycloak "Reset Credentials" flow
+API REST — Endpoints
 
-Configured secure reset email delivery
+Logique métier avancée
 
-Token-based password reset mechanism
+Interface utilisateur
 
-Expiration and validation fully handled by Keycloak
+Sécurité et bonnes pratiques
 
-No custom backend logic was required for:
+Architecture DevOps (CI/CD)
 
-Token generation
+1️⃣ Présentation du projet
+🎯 Objectif
 
-Email sending
+MemoriA permet :
 
-Password reset validation
+Aux médecins (ROLE_MEDECIN) de créer et assigner des tests cognitifs.
 
-All security processes are handled by Keycloak following OAuth2 and OpenID Connect standards.
+Aux aidants (ROLE_AIDANT) de suivre l’évolution cognitive du patient.
 
-🏗 Architecture Decision
+Aux patients (ROLE_PATIENT) de passer les tests.
 
-Instead of building authentication manually inside Spring Boot, we adopted a centralized identity provider approach using Keycloak.
+Aux administrateurs (ROLE_ADMIN) de gérer les utilisateurs.
 
-Benefits:
+2️⃣ Architecture Globale
+Frontend (Angular 18)
+        ↓
+API Gateway (Spring Cloud Gateway)
+        ↓
+---------------------------------------
+|  User Service                     |
+|  Cognitive Test Service           |
+|  Metrics Service                  |
+---------------------------------------
+        ↓
+PostgreSQL
+        ↓
+Keycloak (Authentication Server)
+        ↓
+Eureka (Service Discovery)
+3️⃣ Architecture Sécurité — Keycloak
+🔐 Authentification
 
-Separation of concerns (Authentication vs Business Logic)
+MemoriA utilise Keycloak comme serveur d'identité.
 
-Enterprise-grade security
+Fonctionnalités activées :
 
-Built-in email workflows
+JWT Access Token
 
-Scalability for future integrations (mobile app, microservices, etc.)
+Refresh Token
 
-Easy integration with frontend frameworks
+Email verification
 
-⚙️ Configuration Highlights
+Forgot password
 
-SMTP configured using secure TLS connection
+Gestion des rôles
 
-Email verification required for login
+RBAC (Role-Based Access Control)
 
-Forgot password flow activated
+👥 Rôles définis
+Rôle	Description
+ROLE_ADMIN	Administration système
+ROLE_MEDECIN	Création et analyse des tests
+ROLE_AIDANT	Consultation des métriques
+ROLE_PATIENT	Passage des tests
+🔑 Flux d’authentification
+Utilisateur → Keycloak Login Page
+          → JWT Token
+          → API Gateway (validation JWT)
+          → Microservices
+📩 Email Verification
 
-Required actions enabled for user validation
+Activée au niveau du realm
 
-Authentication flows tested successfully
+SMTP configuré
 
-🔒 Security Improvements Achieved
+Utilisateur ne peut pas se connecter si email non vérifié
 
-Enforced verified email login
+🔁 Forgot Password
 
-Secure password recovery mechanism
+Géré entièrement par Keycloak :
 
-Token-based authentication
+Reset password via email
 
-Centralized identity management
+Token temporaire sécurisé
 
-Reduced backend attack surface
+Expiration automatique
 
-🧠 Technical Stack Used
+Spring Boot ne gère jamais les mots de passe.
 
-Spring Boot
+4️⃣ Architecture Microservices
+🔎 Service Discovery
 
+Utilisation de Eureka Server.
+
+Chaque service s’enregistre automatiquement :
+
+user-service
+
+cognitive-test-service
+
+metrics-service
+
+api-gateway
+
+🌐 API Gateway
+
+Point d’entrée unique
+
+Validation JWT
+
+Routing dynamique
+
+Protection des endpoints
+
+Exemple :
+
+/api/users/** → user-service
+/api/tests/** → cognitive-test-service
+/api/metrics/** → metrics-service
+5️⃣ Stack Technologique
+Backend
+
+Java 17
+
+Spring Boot 3.2
+
+Spring Security 6
+
+Spring Cloud Gateway
+
+Spring Cloud Netflix Eureka
+
+Spring Data JPA
+
+Hibernate 6
+
+PostgreSQL 14+
+
+Maven
+
+Frontend
+
+Angular 18
+
+TypeScript 5.5
+
+Angular Material
+
+Chart.js
+
+RxJS
+
+TailwindCSS
+
+Sécurité
+
+Keycloak 24+
+
+OAuth2
+
+JWT
+
+RBAC
+
+DevOps
+
+Docker
+
+Docker Hub
+
+Jenkins
+
+Kubernetes
+
+Helm (prévu)
+
+6️⃣ Installation et Démarrage
+Base de données
+CREATE DATABASE "alzheimer-tests";
+Lancer Keycloak
+docker run -d \
+--name keycloak \
+-p 9090:8080 \
+-e KEYCLOAK_ADMIN=admin \
+-e KEYCLOAK_ADMIN_PASSWORD=admin \
+quay.io/keycloak/keycloak:latest \
+start-dev
+Lancer Eureka
+
+Port 8761
+
+http://localhost:8761
+Lancer API Gateway
+
+Port 8080
+
+Lancer Services
+
+user-service (8081)
+
+cognitive-test-service (8090)
+
+metrics-service (8091)
+
+7️⃣ Authentification & Autorisation
+🔒 Protection Backend
+
+Dans API Gateway :
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/MemoriA_realm
+🔑 Protection des endpoints
+
+Exemples :
+
+Endpoint	Rôle requis
+POST /api/cognitive-tests	ROLE_MEDECIN
+GET /api/metrics/aidant/**	ROLE_AIDANT
+POST /api/assignations	ROLE_MEDECIN
+GET /api/test-results/patient/**	ROLE_PATIENT
+8️⃣ Entités & Modèle de Données
+
+Relations principales :
+
+User (Keycloak)
+   ↓
+Patient
+   ↓
+Assignation
+   ↓
+TestResult (zScore)
+   ↓
+CognitiveScoreHistory
+9️⃣ API REST
+Tests cognitifs
+
+GET /api/cognitive-tests
+
+POST /api/cognitive-tests
+
+PUT /api/cognitive-tests/{id}
+
+DELETE /api/cognitive-tests/{id}
+
+Assignations
+
+POST /api/assignations
+
+POST /api/assignations/personalized
+
+Résultats
+
+GET /api/test-results/patient/{id}
+
+Métriques
+
+GET /api/metrics/aidant/{aidantId}/score-global
+
+🔟 Logique Métier Avancée
+📊 Calcul z-score
+scorePercentage = (scoreTotale / test.totalScore) × 100
+zScore = (scorePercentage - 70) / 15
+📈 Score Global Composite
+z_global = Σ(poids × z_moyen) / Σ(poids)
+🚦 Interprétation
+z_global	Statut
+> -1	Normal
+-2 à -1	Surveillance
+< -2	Alerte
+11️⃣ Interface Utilisateur
+
+Pages principales :
+
+/login (Keycloak)
+
+/dashboard
+
+/tests-cognitifs
+
+/aidant-metrics
+
+/personalized-test-form
+
+Score global affiché dynamiquement avec code couleur.
+
+12️⃣ Sécurité & Bonnes Pratiques
+
+HTTPS obligatoire en production
+
+Secrets stockés dans Kubernetes Secrets
+
+JWT validé uniquement au Gateway
+
+Pas de stockage de mot de passe dans Spring
+
+Rotation des clés activée dans Keycloak
+
+RBAC strict
+
+13️⃣ Architecture DevOps
+🔁 Pipeline CI/CD
+GitHub
+   ↓
+Jenkins
+   ↓
+Build Maven
+   ↓
+Docker Build
+   ↓
+Docker Push
+   ↓
+Kubernetes Deploy
+🐳 Docker
+
+Chaque service possède :
+
+Dockerfile
+
+Image versionnée
+
+Tag latest + version
+
+☸ Kubernetes
+
+Chaque service déployé via :
+
+Deployment
+
+Service
+
+ConfigMap
+
+Secret
+
+Ingress
+
+🎯 Architecture Finale
+Client
+  ↓
+Ingress (K8s)
+  ↓
+API Gateway
+  ↓
+Microservices
+  ↓
+PostgreSQL
+  ↓
 Keycloak
+🚀 Conclusion
 
-OAuth2 / OpenID Connect
+MemoriA est désormais :
 
-SMTP (TLS secured)
+✔ Sécurisé par Keycloak
+✔ Structuré en microservices
+✔ Scalabilité via Kubernetes
+✔ DevOps-ready
+✔ Conforme aux bonnes pratiques OAuth2
 
-JWT Tokens
+Si tu veux maintenant, je peux :
 
-📈 Impact on the Project
+🔥 Générer un diagramme architecture professionnel en image
 
-This implementation moves the project from a basic authentication setup to a production-ready security architecture.
+📄 Générer un PDF prêt à rendre
 
-It ensures:
+🧱 Générer docker-compose complet
 
-Higher user trust
+☸ Générer fichiers Kubernetes YAML
 
-Better compliance with security best practices
-
-Easier future scaling and deployment
+📊 Générer une présentation PowerPoint soutenance
