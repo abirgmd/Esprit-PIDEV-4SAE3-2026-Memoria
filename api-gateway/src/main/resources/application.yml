@@ -1,0 +1,79 @@
+server:
+  port: 8080   # Gateway is the single public entry point
+
+spring:
+  application:
+    name: api-gateway
+
+  # ── Keycloak JWT validation ──────────────────────────────────────────────
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9090/realms/my-realm
+
+  # ── Route definitions ────────────────────────────────────────────────────
+  cloud:
+    gateway:
+      routes:
+
+        # 1. Public auth routes — no JWT required (login, signup)
+        - id: auth-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - StripPrefix=0
+
+        # 2. Admin routes — JWT required + ADMIN role enforced at gateway
+        - id: admin-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/users/**
+          filters:
+            - StripPrefix=0
+
+        # 3. Patient routes
+        - id: patient-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/patients/**
+          filters:
+            - StripPrefix=0
+
+        # 4. Soignant / diagnostic routes
+        - id: soignant-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/diagnostics/**, /api/soignants/**, /api/rapports/**
+          filters:
+            - StripPrefix=0
+
+        # 5. All remaining API routes
+        - id: backend-all
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/**
+          filters:
+            - StripPrefix=0
+
+      # Forward the original Host header to the backend
+      default-filters:
+        - PreserveHostHeader
+
+      # Global CORS — covers all gateway routes
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:4200"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
