@@ -1,170 +1,37 @@
-<p-toast position="top-right" />
-
 <div class="profile-page">
+  <h1>Profil Patient</h1>
+  <p>Completez vos informations personnelles pour activer votre espace patient.</p>
 
-  <!-- Hero Banner -->
-  <div class="profile-hero patient-hero">
-    <div class="hero-content">
-      <div class="hero-avatar"><i class="pi pi-heart-fill"></i></div>
-      <div class="hero-text">
-        <h1>Profil Patient</h1>
-        <p>Bonjour <strong>{{ userName }}</strong> — Complétez vos informations pour accéder à votre espace de suivi.</p>
-      </div>
-    </div>
-    <div class="hero-badge"><i class="pi pi-shield"></i> Données sécurisées</div>
-  </div>
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <label>Date de naissance <input type="date" formControlName="dateNaissance" /></label>
+    <label>Sexe
+      <select formControlName="sexe">
+        <option value="M">M</option>
+        <option value="F">F</option>
+        <option value="Autre">Autre</option>
+      </select>
+    </label>
+    <label>Numero securite sociale <input type="text" formControlName="numeroSecuriteSociale" /></label>
+    <label>Adresse <input type="text" formControlName="adresse" /></label>
+    <label>Ville <input type="text" formControlName="ville" /></label>
+    <label>Groupe sanguin
+      <select formControlName="groupeSanguin">
+        <option value="">Non precise</option>
+        <option value="A_pos">A+</option>
+        <option value="A_neg">A-</option>
+        <option value="B_pos">B+</option>
+        <option value="B_neg">B-</option>
+        <option value="AB_pos">AB+</option>
+        <option value="AB_neg">AB-</option>
+        <option value="O_pos">O+</option>
+        <option value="O_neg">O-</option>
+      </select>
+    </label>
+    <label>Mutuelle <input type="text" formControlName="mutuelle" /></label>
+    <label>Numero police mutuelle <input type="text" formControlName="numeroPoliceMutuelle" /></label>
 
-  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="profile-form">
-
-    <!-- Section 1 : Identité -->
-    <div class="form-section">
-      <div class="section-header">
-        <div class="section-icon s-purple"><i class="pi pi-user"></i></div>
-        <div>
-          <h2>Informations personnelles</h2>
-          <p>Données d'identité requises pour votre dossier</p>
-        </div>
-      </div>
-      <div class="field-grid">
-
-        <div class="field">
-          <label>Date de naissance <span class="req">*</span></label>
-          <input pInputText type="date" formControlName="dateNaissance" style="width:100%" />
-          @if (form.get('dateNaissance')?.invalid && form.get('dateNaissance')?.touched) {
-            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
-          }
-        </div>
-
-        <div class="field">
-          <label>Sexe <span class="req">*</span></label>
-          <p-select
-            formControlName="sexe"
-            [options]="sexeOptions"
-            optionLabel="label"
-            optionValue="value"
-            [style]="{ width: '100%' }"
-          />
-          @if (form.get('sexe')?.invalid && form.get('sexe')?.touched) {
-            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
-          }
-        </div>
-
-        <div class="field full-width">
-          <label>Numéro de sécurité sociale <span class="req">*</span></label>
-          <p-iconfield>
-            <p-inputicon styleClass="pi pi-id-card" />
-            <input pInputText formControlName="numeroSecuriteSociale" placeholder="1 84 12 75 108 042 18" style="width:100%" />
-          </p-iconfield>
-          @if (form.get('numeroSecuriteSociale')?.invalid && form.get('numeroSecuriteSociale')?.touched) {
-            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
-          }
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Section 2 : Adresse -->
-    <div class="form-section">
-      <div class="section-header">
-        <div class="section-icon s-blue"><i class="pi pi-map-marker"></i></div>
-        <div>
-          <h2>Adresse</h2>
-          <p>Informations de localisation (optionnel)</p>
-        </div>
-      </div>
-      <div class="field-grid">
-
-        <div class="field full-width">
-          <label>Adresse</label>
-          <p-iconfield>
-            <p-inputicon styleClass="pi pi-home" />
-            <input pInputText formControlName="adresse" placeholder="Numéro et nom de rue" style="width:100%" />
-          </p-iconfield>
-        </div>
-
-        <div class="field">
-          <label>Ville</label>
-          <p-iconfield>
-            <p-inputicon styleClass="pi pi-building" />
-            <input pInputText formControlName="ville" placeholder="Votre ville" style="width:100%" />
-          </p-iconfield>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Section 3 : Médical -->
-    <div class="form-section">
-      <div class="section-header">
-        <div class="section-icon s-red"><i class="pi pi-heart"></i></div>
-        <div>
-          <h2>Informations médicales</h2>
-          <p>Couverture santé et données médicales (optionnel)</p>
-        </div>
-      </div>
-      <div class="field-grid">
-
-        <div class="field">
-          <label>Groupe sanguin</label>
-          <p-select
-            formControlName="groupeSanguin"
-            [options]="groupeSanguinOptions"
-            optionLabel="label"
-            optionValue="value"
-            [style]="{ width: '100%' }"
-          />
-        </div>
-
-        <div class="field">
-          <label>Mutuelle</label>
-          <p-iconfield>
-            <p-inputicon styleClass="pi pi-file-check" />
-            <input pInputText formControlName="mutuelle" placeholder="Nom de votre mutuelle" style="width:100%" />
-          </p-iconfield>
-        </div>
-
-        <div class="field full-width">
-          <label>Numéro de police mutuelle</label>
-          <p-iconfield>
-            <p-inputicon styleClass="pi pi-hashtag" />
-            <input pInputText formControlName="numeroPoliceMutuelle" placeholder="Numéro de contrat" style="width:100%" />
-          </p-iconfield>
-        </div>
-
-      </div>
-    </div>
-
-    <div class="form-footer">
-      <p-button type="submit" label="Enregistrer mon profil" icon="pi pi-check" [loading]="isSubmitting" size="large" />
-    </div>
-
+    <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+    <p class="success" *ngIf="successMessage">{{ successMessage }}</p>
+    <button type="submit" [disabled]="isSubmitting">{{ isSubmitting ? 'Enregistrement...' : 'Enregistrer' }}</button>
   </form>
-
-  <!-- ── Quick Actions ─────────────────────────────────────────────────────── -->
-  <div class="quick-actions">
-
-    <!-- Medical Record Card -->
-    <div class="action-card medical-card" (click)="goToMedicalRecord()" role="button" tabindex="0"
-         (keydown.enter)="goToMedicalRecord()">
-      <div class="action-icon s-teal"><i class="pi pi-file-edit"></i></div>
-      <div class="action-body">
-        <h3>Mon Dossier Médical</h3>
-        <p>Consultez, ajoutez ou modifiez vos informations médicales détaillées : diagnostic, médicaments, antécédents et plus.</p>
-      </div>
-      <div class="action-arrow"><i class="pi pi-chevron-right"></i></div>
-    </div>
-
-    <!-- Diagnostic Card -->
-    <div class="action-card diag-card" (click)="goToDiagnostic()" role="button" tabindex="0"
-         (keydown.enter)="goToDiagnostic()">
-      <div class="action-icon s-purple"><i class="pi pi-brain"></i></div>
-      <div class="action-body">
-        <h3>Test de diagnostic</h3>
-        <p>Réalisez votre test cognitif et consultez vos résultats de suivi.</p>
-      </div>
-      <div class="action-arrow"><i class="pi pi-chevron-right"></i></div>
-    </div>
-
-  </div>
-
 </div>

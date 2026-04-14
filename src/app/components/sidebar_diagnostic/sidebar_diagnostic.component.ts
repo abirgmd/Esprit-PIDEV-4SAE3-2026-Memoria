@@ -19,7 +19,7 @@ export class SidebarDiagnosticComponent implements OnInit {
 
   ngOnInit(): void {
     const user = this.authService.getCurrentUser();
-    this.userRole = user?.role ?? null;
+    this.userRole = user?.role?.toUpperCase() ?? null;
     this.userName = user ? `${user.prenom} ${user.nom}` : '';
   }
 

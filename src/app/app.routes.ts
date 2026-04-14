@@ -14,8 +14,10 @@ import { ProfileAccompagnantComponent } from './profile-accompagnant/profile-acc
 import { DashboardDiagnosticComponent } from './dashboard-diagnostic/dashboard-diagnostic.component';
 import { StastiqueDiagnosticComponent } from './stastique-diagnostic/stastique-diagnostic.component';
 import { ConfirmationComponent } from './confirmation/confirmation.component';
-import { MedicalRecordComponent } from './medical-record/medical-record.component';
-import { MedicalRecordFormComponent } from './medical-record-form/medical-record-form.component';
+import { MapComponent } from './map/map.component';
+import { TraitementComponent } from './traitement/traitement.component';
+import { HistoriquePositionComponent } from './historique-position/historique-position.component';
+import { DisponibiliteAccompagnantComponent } from './disponibilite-accompagnant/disponibilite-accompagnant.component';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -31,16 +33,8 @@ export const routes: Routes = [
   { path: 'profile/soignant', component: ProfileSoignantComponent, canActivate: [authGuard, roleGuard('SOIGNANT')] },
   { path: 'profile/accompagnant', component: ProfileAccompagnantComponent, canActivate: [authGuard, roleGuard('ACCOMPAGNANT')] },
   { path: 'confirmation', component: ConfirmationComponent, canActivate: [authGuard, roleGuard('PATIENT')] },
-
-  // ─── Medical Record routes ─────────────────────────────────────────────────
-  // Patient views their own record
-  { path: 'dossier-medical', component: MedicalRecordComponent, canActivate: [authGuard] },
-  // Create new record (must be before /:id to avoid being captured by it)
-  { path: 'dossier-medical/new', component: MedicalRecordFormComponent, canActivate: [authGuard] },
-  // Edit existing record (must be before /:id)
-  { path: 'dossier-medical/edit/:id', component: MedicalRecordFormComponent, canActivate: [authGuard] },
-  // View record by patient ID (soignant / admin)
-  { path: 'dossier-medical/patient/:patientId', component: MedicalRecordComponent, canActivate: [authGuard] },
-  // View record by dossier ID (must be last among dossier-medical routes)
-  { path: 'dossier-medical/:id', component: MedicalRecordComponent, canActivate: [authGuard] }
+  { path: 'map', component: MapComponent },
+  { path: 'traitement', component: TraitementComponent, canActivate: [authGuard, roleGuard('SOIGNANT')] },
+  { path: 'historique-positions', component: HistoriquePositionComponent },
+  { path: 'disponibilite', component: DisponibiliteAccompagnantComponent, canActivate: [authGuard, roleGuard('ACCOMPAGNANT')] }
 ];

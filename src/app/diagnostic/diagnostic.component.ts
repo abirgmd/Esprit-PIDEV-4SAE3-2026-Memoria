@@ -46,6 +46,7 @@ export class DiagnosticComponent implements OnInit, OnDestroy {
   isSpeaking = false;
   isListening = false;
   liveTranscript = '';
+  speechError = '';
   private recognition: any = null;
   private accumulatedTranscript = '';
 
@@ -378,21 +379,23 @@ export class DiagnosticComponent implements OnInit, OnDestroy {
   startListening(): void {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Speech Recognition is not supported by your browser. Please use Chrome.');
+      this.speechError = 'Speech recognition is not supported. Please use Chrome.';
       return;
     }
 
     // Seed accumulator from whatever is already typed
     this.accumulatedTranscript = this.currentQuestion.selectedAnswer || '';
     this.liveTranscript = '';
+    this.speechError = '';
 
     this.recognition = new SpeechRecognition();
-    this.recognition.lang = 'fr-FR';
-    this.recognition.continuous = true;      // keep listening until user stops
-    this.recognition.interimResults = true;  // show live preview while speaking
+    this.recognition.lang = 'en-US';
+    this.recognition.continuous = true;
+    this.recognition.interimResults = true;
 
     this.recognition.onresult = (event: any) => {
       this.ngZone.run(() => {
+        this.speechError = '';
         let interim = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const result = event.results[i];
@@ -411,7 +414,6 @@ export class DiagnosticComponent implements OnInit, OnDestroy {
 
     this.recognition.onend = () => {
       this.ngZone.run(() => {
-        // If user didn't manually stop, recognition ended on its own — restart to keep continuous
         if (this.isListening) {
           try { this.recognition.start(); } catch (_) { this.isListening = false; }
         }
@@ -420,20 +422,30 @@ export class DiagnosticComponent implements OnInit, OnDestroy {
 
     this.recognition.onerror = (event: any) => {
       this.ngZone.run(() => {
-        // 'no-speech' is benign — ignore it to stay alive
         if (event.error === 'no-speech') return;
+        if (event.error === 'aborted') return;
         this.isListening = false;
         this.liveTranscript = '';
+        if (event.error === 'not-allowed') {
+          this.speechError = 'Microphone access denied. Please allow microphone in your browser settings.';
+        } else {
+          this.speechError = `Microphone error: ${event.error}. Please try again.`;
+        }
       });
     };
 
-    this.recognition.start();
-    this.isListening = true;
+    try {
+      this.recognition.start();
+      this.isListening = true;
+    } catch (e) {
+      this.speechError = 'Could not start microphone. Please try again.';
+    }
   }
 
   stopListening(): void {
-    this.isListening = false;   // set first so onend doesn't restart
+    this.isListening = false;
     this.liveTranscript = '';
+    this.speechError = '';
     if (this.recognition) {
       this.recognition.stop();
       this.recognition = null;

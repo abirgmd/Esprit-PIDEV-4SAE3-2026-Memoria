@@ -200,6 +200,11 @@
           <div class="live-transcript" *ngIf="isListening && liveTranscript">
             <span class="live-transcript-text">{{ liveTranscript }}</span>
           </div>
+
+          <!-- Mic error message -->
+          <div class="mic-error" *ngIf="speechError">
+            <span>{{ speechError }}</span>
+          </div>
         </div>
       </div>
     </div>

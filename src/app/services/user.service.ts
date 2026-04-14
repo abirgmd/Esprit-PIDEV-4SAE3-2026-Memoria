@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { UserPayload, UserResponse } from '../models/user.model';
+export type { UserResponse } from '../models/user.model';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../environments/environment';
 
@@ -18,6 +19,14 @@ export class UserService {
 
   getUsers(): Observable<UserResponse[]> {
     return this.http.get<UserResponse[]>(this.apiUrl, { headers: this.adminHeaders() });
+  }
+
+  getByRole(role: string): Observable<UserResponse[]> {
+    return this.http.get<UserResponse[]>(`${this.apiUrl}/public/role/${role}`);
+  }
+
+  getAccompagnantsLibres(): Observable<UserResponse[]> {
+    return this.http.get<UserResponse[]>(`${this.apiUrl}/public/role/ACCOMPAGNANT/disponibilite/libres`);
   }
 
   createUser(payload: UserPayload): Observable<UserResponse> {

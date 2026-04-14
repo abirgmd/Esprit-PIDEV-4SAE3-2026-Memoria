@@ -2,9 +2,8 @@ import { Component, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angula
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { AuthService } from '../services/auth.service';
-import { Chart, registerables, TooltipItem } from 'chart.js';
-import { environment } from '../../environments/environment';
+import { AuthService } from '../auth/auth.service';
+import { Chart, registerables } from 'chart.js';
 
 Chart.register(...registerables);
 
@@ -51,14 +50,14 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
   ) {}
 
   ngOnInit(): void {
-    const user = this.authService.getUser();
+    const user = this.authService.getCurrentUser();
     if (!user) {
       this.router.navigate(['/login']);
       return;
     }
     // SOIGNANT → global stats across all patients
-    // PATIENT → only their own stats
-    if (user.role === 'SOIGNANT') {
+    // others → only their own stats
+    if (user.role.toUpperCase() === 'SOIGNANT') {
       this.loadGlobalStatistics();
     } else {
       this.loadStatistics(user.id);
@@ -69,14 +68,14 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
 
   loadGlobalStatistics(): void {
     this.loading = true;
-    this.http.get<DiagnosticStatistics>(`${environment.apiUrl}/api/diagnostics/statistics`).subscribe({
+    this.http.get<DiagnosticStatistics>('http://localhost:8080/api/diagnostics/statistics').subscribe({
       next: (data) => {
         this.statistics = data;
         this.loading = false;
         setTimeout(() => this.buildChart(), 0);
       },
       error: () => {
-        this.errorMessage = 'Impossible de charger les statistiques.';
+        this.errorMessage = 'Unable to load statistics. Please try again.';
         this.loading = false;
       }
     });
@@ -84,14 +83,14 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
 
   loadStatistics(userId: number): void {
     this.loading = true;
-    this.http.get<DiagnosticStatistics>(`${environment.apiUrl}/api/diagnostics/user/${userId}/statistics`).subscribe({
+    this.http.get<DiagnosticStatistics>(`http://localhost:8080/api/diagnostics/user/${userId}/statistics`).subscribe({
       next: (data) => {
         this.statistics = data;
         this.loading = false;
         setTimeout(() => this.buildChart(), 0);
       },
       error: () => {
-        this.errorMessage = 'Impossible de charger les statistiques.';
+        this.errorMessage = 'Unable to load statistics. Please try again.';
         this.loading = false;
       }
     });
@@ -143,17 +142,17 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
           },
           tooltip: {
             callbacks: {
-              title: (items: TooltipItem<'bar'>[]) => {
+              title: (items: import('chart.js').TooltipItem<'bar'>[]) => {
                 const idx = items[0].dataIndex;
                 const d = this.statistics!.diagnostics[idx];
                 return d.titre || `Diagnostic ${idx + 1}`;
               },
-              label: (item: TooltipItem<'bar'>) => {
+              label: (item: import('chart.js').TooltipItem<'bar'>) => {
                 const idx = item.dataIndex;
                 const d = this.statistics!.diagnostics[idx];
                 const lines = [`Score AI: ${item.raw}%`];
                 if (d.patientName) lines.push(`Patient: ${d.patientName}`);
-                if (d.riskLevel) lines.push(`Risque: ${d.riskLevel}`);
+                if (d.riskLevel) lines.push(`Risk: ${d.riskLevel}`);
                 if (d.dateDiagnostic) lines.push(`Date: ${new Date(d.dateDiagnostic).toLocaleDateString('fr-FR')}`);
                 return lines;
               }
@@ -164,7 +163,7 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
           x: {
             title: {
               display: true,
-              text: 'Numéro du Diagnostic',
+              text: 'Diagnostic Number',
               font: { size: 14, weight: 'bold' },
               color: '#374151'
             },
@@ -192,7 +191,7 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
 
   getRiskLabel(level: string): string {
     const labels: Record<string, string> = {
-      LOW: 'Faible', MEDIUM: 'Modéré', HIGH: 'Élevé', CRITICAL: 'Critique'
+      LOW: 'Low', MEDIUM: 'Moderate', HIGH: 'High', CRITICAL: 'Critical'
     };
     return labels[level] ?? level;
   }
@@ -206,6 +205,6 @@ export class StastiqueDiagnosticComponent implements OnInit, AfterViewInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/diagnostic']);
+    this.router.navigate(['/dashboard_diagnostic']);
   }
 }

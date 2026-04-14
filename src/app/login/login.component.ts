@@ -3,15 +3,11 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
-import { ButtonModule } from 'primeng/button';
-import { InputText } from 'primeng/inputtext';
-import { IconField } from 'primeng/iconfield';
-import { InputIcon } from 'primeng/inputicon';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, ButtonModule, InputText, IconField, InputIcon],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink],
   templateUrl: './login.component.html',
   styleUrl: './login.component.css'
 })
@@ -57,6 +53,8 @@ export class LoginComponent {
         }
         if (role === 'SOIGNANT') {
           this.router.navigate(['/dashboard_diagnostic']);
+        } else if (role === 'ACCOMPAGNANT') {
+          this.router.navigate(['/disponibilite']);
         } else {
           this.router.navigate(['/home']);
         }
@@ -77,8 +75,12 @@ export class LoginComponent {
 
   private getProfileRoute(role: string): string {
     const normalizedRole = role.toUpperCase();
-    if (normalizedRole === 'PATIENT') return '/profile/patient';
-    if (normalizedRole === 'SOIGNANT') return '/profile/soignant';
+    if (normalizedRole === 'PATIENT') {
+      return '/profile/patient';
+    }
+    if (normalizedRole === 'SOIGNANT') {
+      return '/profile/soignant';
+    }
     return '/profile/accompagnant';
   }
 }
