@@ -1,14 +1,44 @@
-import { Component, signal, effect, OnInit, inject } from '@angular/core';
+import { Component, signal, effect, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { LucideAngularModule, Brain, MessageSquare, Compass, Plus, Activity, Stethoscope, Users, UserCircle, ChevronRight, Calendar, AlertTriangle, TrendingDown, FileText, FlaskConical, ClipboardList, BarChart3, BookOpen, Phone, Users2, CheckCircle2, Clock, Info, ExternalLink, Search, X, Volume2, Pencil, Play } from 'lucide-angular';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { LucideAngularModule, Brain, MessageSquare, Compass, Plus, Activity, Stethoscope, Users, UserCircle, ChevronRight, Calendar, AlertTriangle, TrendingDown, FileText, FlaskConical, ClipboardList, BarChart3, BookOpen, Phone, Users2, CheckCircle2, Clock, Info, ExternalLink, Search, X, Volume2, Pencil, Play, ClipboardCheck } from 'lucide-angular';
 import { CognitiveTestService } from '../../services/cognitive-test.service';
 import { TestResultService } from '../../services/test-result.service';
 import { AssignationService } from '../../services/assignation.service';
 import { MmseScoreService, MMSEScoreResponse } from '../../services/mmse-score.service';
-import { CognitiveTest, TestResult, DifficultyLevel, PatientDTO, AccompagnantDTO, AssignationRequest } from '../../models/cognitive-models';
-import { catchError, of } from 'rxjs';
+import { MetricsService, ScoreGlobal } from '../../services/metrics.service';
+import { RecommendationService } from '../../services/recommendation.service';
+import { DecisionService } from '../../services/decision.service';
+import { NotificationService } from '../../services/notification.service';
+import { CognitiveTest, TestResult, DifficultyLevel, PatientDTO, AccompagnantDTO, AssignationRequest, Recommendation, PriorityLevel, RecommendStatus, Decision, DecisionType, TypeTestEnum } from '../../models/cognitive-models';
+import { NewRecommendationModalComponent } from '../../components/new-recommendation-modal/new-recommendation-modal.component';
+import { catchError, of, switchMap } from 'rxjs';
+
+/** Rendez-vous de consultation vidéo */
+export interface VideoAppointment {
+  id: string;
+  doctorName: string;
+  patientName: string;
+  patientId: number;
+  date: string; // ISO
+  status: 'scheduled' | 'active' | 'ended' | 'declined' | 'missed' | 'cancelled';
+  roomId: string;
+  report?: string;
+  proposedDate?: string;
+}
+
+/** Message dans la conversation aidant ↔ médecin */
+export interface RecMessage {
+  id: string;
+  recId: number;
+  text: string;
+  from: 'aidant' | 'medecin';
+  priority: 'NORMALE' | 'HAUTE';
+  sentAt: string;
+  read: boolean;
+}
 
 @Component({
   selector: 'app-tests-cognitifs',
@@ -17,22 +47,148 @@ import { catchError, of } from 'rxjs';
     CommonModule,
     RouterModule,
     FormsModule,
-    LucideAngularModule
+    LucideAngularModule,
+    MatDialogModule
   ],
   templateUrl: './tests-cognitifs.component.html',
   styleUrl: './tests-cognitifs.component.css'
 })
-export class TestsCognitifsComponent implements OnInit {
+export class TestsCognitifsComponent implements OnInit, OnDestroy {
   private cognitiveTestService = inject(CognitiveTestService);
   private testResultService = inject(TestResultService);
   private assignationService = inject(AssignationService);
   private mmseScoreService = inject(MmseScoreService);
+  private metricsService = inject(MetricsService);
+  private recommendationService = inject(RecommendationService);
+  private decisionService = inject(DecisionService);
+  private notifService = inject(NotificationService);
+  private dialog = inject(MatDialog);
   router = inject(Router);
+
+  // ─── Recommandations ───────────────────────────────────────
+  doctorId = signal<number | null>(null);
+  doctorRecommendations = signal<Recommendation[]>([]);
+  aidantRecommendations = signal<Recommendation[]>([]);
+  patientRecommendations = signal<Recommendation[]>([]);
+  PriorityLevel = PriorityLevel;
+  RecommendStatus = RecommendStatus;
+  DecisionType = DecisionType;
+  TypeTestEnum = TypeTestEnum;
+
+  // ─── Interface Aidant — Navigation & état ──────────────────
+  aidantActiveTab = signal<'accueil' | 'recommandations' | 'historique' | 'profil'>('accueil');
+  aidantStatusFilter = signal<RecommendStatus | null>(null);
+  aidantSelectedRec = signal<Recommendation | null>(null);
+  aidantRecPage = signal(1);
+  aidantRecNotesEditing = signal(false);
+  aidantRecNotesDraft = signal('');
+  readonly REC_PAGE_SIZE = 10;
+
+  // ── Étape 15 : Confirmation & Motif d'ignorance ──────────────────────
+  showConfirmModal = signal(false);
+  confirmConfig = signal<{
+    title: string;
+    message: string;
+    confirmLabel: string;
+    confirmClass: string;
+    onConfirm: () => void;
+  } | null>(null);
+  showDismissModal = signal(false);
+  dismissTargetRec = signal<Recommendation | null>(null);
+  dismissReason = signal<string>('');
+  dismissCustomNote = signal<string>('');
+  readonly DISMISS_REASONS = [
+    'Déjà réalisée avant prescription',
+    'Plus pertinente',
+    'Impossible à réaliser',
+    'Autre (préciser)'
+  ];
+
+  // ── Étape 16 : Recherche et filtres avancés ──────────────────────────
+  aidantSearchQuery = signal<string>('');
+  aidantPriorityFilter = signal<PriorityLevel | null>(null);
+
+  // ── Étape 17 : Notifications ─────────────────────────────────────────
+  aidantToasts = signal<{ id: string; rec: Recommendation; timeout?: any }[]>([]);
+  urgentPopupRec = signal<Recommendation | null>(null);
+  private seenRecIds = new Set<number>();
+  private notifPollingTimer: any = null;
+
+  // ── Étape 18 : Historique amélioré ──────────────────────────────────
+  histPeriodFilter = signal<'all' | 'week' | 'month' | 'year'>('all');
+  histStatusFilter = signal<'all' | 'completed' | 'dismissed'>('all');
+  showArchiveDetailModal = signal(false);
+  archiveDetailRec = signal<Recommendation | null>(null);
+
+  // ── Étape 19 : Décisions médicales ──────────────────────────────────
+  patientDecisions = signal<Decision[]>([]);
+  showDecisionsHistoryModal = signal(false);
+
+  // ── Étape 20 : Communication aidant ↔ médecin ───────────────────────
+  showContactModal = signal(false);
+  contactTargetRec = signal<Recommendation | null>(null);
+  contactMessage = signal('');
+
+  // ── Scroll Horizontal : Cartes Patients et Aidants ──────────────────
+  showPatientDetailModal = signal(false);
+  selectedPatientDetail = signal<any>(null);
+  patientsWithAidants = signal<any[]>([]);
+  contactPriority = signal<'NORMALE' | 'HAUTE'>('NORMALE');
+  contactMessages = signal<RecMessage[]>([]);
+  showConversationModal = signal(false);
+  conversationTargetRec = signal<Recommendation | null>(null);
+
+  // ── Interface messagerie médecin ─────────────────────────────────────
+  showDoctorConvModal = signal(false);
+  doctorConvRec = signal<Recommendation | null>(null);
+  doctorReplyText = signal('');
+  doctorReplyPriority = signal<'NORMALE' | 'HAUTE'>('NORMALE');
+  private doctorReadIds = new Set<string>();
+  private doctorMsgPollingTimer: any = null;
+
+  // ── Carte patient (scroll horizontal) ───────────────────────────────
+  selectedPatientCard = signal<any>(null);
+
+  // ── Étapes 21-22 : Consultation vidéo ────────────────────────────────
+  showVideoConfigModal = signal(false);
+  videoConfigStep = signal<'select-aidant' | 'configure'>('select-aidant');
+  videoSelectedAidant = signal<AccompagnantDTO | null>(null);
+  videoAidantSearch = signal('');
+  videoCallMode = signal<'immediate' | 'scheduled' | null>(null);
+  showDoctorVideoUI = signal(false);
+  doctorCamStream = signal<MediaStream | null>(null);
+  doctorMicMuted = signal(false);
+  doctorCamOff = signal(false);
+  videoCallConnected = signal(false);
+  videoCallActive = signal(false);
+  showVideoReportModal = signal(false);
+  videoReport = signal('');
+  scheduledCallDate = signal('');
+  scheduledCallTime = signal('');
+  currentRoomId = signal<string | null>(null);
+
+  // Aidant – réception appel
+  incomingCall = signal<{ roomId: string; doctorName: string; patientName: string } | null>(null);
+  showAidantVideoUI = signal(false);
+  aidantCamStream = signal<MediaStream | null>(null);
+  aidantTestMode = signal(false);
+  showProposeTimeModal = signal(false);
+  proposeDate = signal('');
+  proposeTime = signal('');
+  showDeclineCallModal = signal(false);
+  callDeclineReason = signal('');
+  private callStatePollingTimer: any = null;
+  private aidantCallPollingTimer: any = null;
+
+  // ── Étape 23 : Rappels rendez-vous ───────────────────────────────────
+  scheduledAppointments = signal<VideoAppointment[]>([]);
+  private reminderPollingTimer: any = null;
 
   showNewTestModal = signal(false);
   // MMSE score dynamique pour aidant et patient
   aidantPatientMmseScore = signal<MMSEScoreResponse | null>(null);
   patientMmseScore = signal<MMSEScoreResponse | null>(null);
+  aidantGlobalScore = signal<ScoreGlobal | null>(null);
   selectedRole = signal<string | null>(null);
 
   // New Test Form State
@@ -86,7 +242,8 @@ export class TestsCognitifsComponent implements OnInit {
     Search,
     XMark: X,
     Volume2,
-    Play
+    Play,
+    ClipboardCheck
   };
 
   dashboardStats = {
@@ -142,12 +299,12 @@ export class TestsCognitifsComponent implements OnInit {
     stage: 'STAGE 2 — SURVEILLANCE',
     currentScore: '22/30',
     percentage: 73.3,
-    doctorNote: 'Votre médecin suit votre mémoire de près. Ce n’est PAS une maladie grave. C’est une surveillance préventive. Faites vos exercices quotidiens et passez les tests demandés.',
+    doctorNote: "Votre médecin suit votre mémoire de près. Ce n'est PAS une maladie grave. C'est une surveillance préventive. Faites vos exercices quotidiens et passez les tests demandés.",
     testsToDo: [
-      { title: 'Test de Stroop', desc: 'Évaluation de l’attention sélective et de l’inhibition cognitive', duration: '10 min', deadline: '29/03/2026' }
+      { title: 'Test de Stroop', desc: "Évaluation de l'attention sélective et de l'inhibition cognitive", duration: '10 min', deadline: '29/03/2026' }
     ],
     recommendations: [
-      { title: 'Exercices de mémoire quotidiens', desc: '15 minutes par jour d’exercices cognitifs', icon: Brain },
+      { title: 'Exercices de mémoire quotidiens', desc: "15 minutes par jour d'exercices cognitifs", icon: Brain },
       { title: 'Rendez-vous médical', desc: 'Consultation de suivi le 25 février', icon: Stethoscope }
     ],
     nextAppointment: {
@@ -298,17 +455,20 @@ export class TestsCognitifsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadPatients();
+    this.loadAidants();
     this.loadTests();
     this.loadDoctorAssignments();
     // Charger le score MMSE pour patient (aidant sera chargé plus tard)
     this.loadMmseScoreForPatient();
+    // Charger les patients avec leurs aidants pour le scroll horizontal
+    setTimeout(() => this.loadPatientsWithAidants(), 1000);
   }
 
   loadMmseScoreForAidant() {
-    // Récupérer le patientId de l’aidant actif (si disponible)
+    // Récupérer le patientId de l'aidant actif (si disponible)
     const aidantId = this.activeAidantId();
     if (!aidantId) return;
-    // Chercher l’assignment de l’aidant pour récupérer le patientId
+    // Chercher l'assignment de l'aidant pour récupérer le patientId
     this.assignationService.getAllAssignations().pipe(
       catchError(() => of([]))
     ).subscribe((assignments: any[]) => {
@@ -445,6 +605,10 @@ export class TestsCognitifsComponent implements OnInit {
           const medecinId = patients[0].medecin.id;
           console.log('[DEBUG] Using medecinId:', medecinId);
 
+          // Stocker l'ID du médecin et charger ses recommandations
+          this.doctorId.set(medecinId);
+          this.loadDoctorRecommendations(medecinId);
+
           // Utiliser l'ID du médecin trouvé
           this.assignationService.getAssignationsByMedecin(medecinId).pipe(
             catchError(() => of([]))
@@ -478,11 +642,106 @@ export class TestsCognitifsComponent implements OnInit {
     return patient ? `${patient.prenom} ${patient.nom}` : `Patient #${patientId}`;
   }
 
+  /** Charge les patients avec leurs aidants associés pour le scroll horizontal */
+  loadPatientsWithAidants() {
+    const patients = this.patientsList();
+    const aidants = this.aidantsList();
+    
+    // Récupérer toutes les assignations pour construire map patient -> aidants
+    this.assignationService.getAllAssignations().pipe(
+      catchError(() => of([]))
+    ).subscribe((assignations: any[]) => {
+      const patientsData = patients.map(patient => {
+        // Trouver tous les aidants associés à ce patient
+        const aidantsForPatient = assignations
+          .filter(a => a.patientId === patient.id)
+          .map(a => a.accompagnantId)
+          .filter((id, index, self) => self.indexOf(id) === index); // unique
+        
+        const associatedAidants = aidants.filter(a => aidantsForPatient.includes(a.id));
+        
+        return {
+          ...patient,
+          aidants: associatedAidants.length > 0 ? associatedAidants : [],
+          score: Math.floor(Math.random() * 30), // Utiliser données réelles si disponibles
+          age: patient.dateNaissance ? this.calculateAge(patient.dateNaissance) : 0,
+          stage: 'STABLE' // À récupérer depuis les scores cognitifs réels
+        };
+      });
+      
+      this.patientsWithAidants.set(patientsData);
+      console.log('[DEBUG] Patients avec aidants chargés:', patientsData);
+    });
+  }
+
+  /** Ouvre la modale de détails du patient */
+  openPatientDetail(patient: any) {
+    this.selectedPatientDetail.set(patient);
+    this.showPatientDetailModal.set(true);
+  }
+
+  /** Ferme la modale de détails */
+  closePatientDetail() {
+    this.showPatientDetailModal.set(false);
+    setTimeout(() => this.selectedPatientDetail.set(null), 300);
+  }
+
+  /** Ouvre la conversation avec l'aidant du patient sélectionné */
+  openConversationWithPatientAidant() {
+    const patient = this.selectedPatientDetail();
+    if (!patient || !patient.aidants || patient.aidants.length === 0) {
+      this.notifService.showError('Aucun aidant assigné à ce patient');
+      return;
+    }
+
+    const aidant = patient.aidants[0]; // Utiliser le premier aidant
+    
+    // Essayer de trouver une recommandation existante avec cet aidant
+    const existingRec = this.doctorRecommendations().find((rec: any) => {
+      // Chercher une recommandation pour ce patient
+      return rec.patientId === patient.id;
+    });
+
+    if (existingRec) {
+      // Ouvrir la conversation pour la recommandation existante
+      this.loadAllRecMessages();
+      this.openDoctorConversation(existingRec);
+    } else {
+      // Créer une modale de conversation directe avec l'aidant
+      // Pour l'instant, afficher un message
+      this.notifService.showInfo(`Conversation avec ${aidant.prenom} ${aidant.nom} (aidant)`);
+      // Futur: Implémenter une messagerie directe patient <-> aidant
+    }
+    
+    this.closePatientDetail();
+  }
+
+  /** Ouvre l'appel vidéo avec l'aidant du patient sélectionné */
+  openVideoCallWithPatientAidant() {
+    const patient = this.selectedPatientDetail();
+    if (!patient || !patient.aidants || patient.aidants.length === 0) {
+      this.notifService.showError('Aucun aidant assigné à ce patient');
+      return;
+    }
+
+    const aidant = patient.aidants[0]; // Utiliser le premier aidant
+    
+    // Pré-sélectionner l'aidant pour l'appel vidéo
+    this.videoSelectedAidant.set(aidant);
+    this.videoConfigStep.set('configure');
+    this.videoCallMode.set(null);
+    this.scheduledCallDate.set('');
+    this.scheduledCallTime.set('');
+    this.showVideoConfigModal.set(true);
+    
+    this.closePatientDetail();
+  }
+
   openSelectionModal(type: 'PATIENT' | 'AIDANT') {
     console.log('[DEBUG] openSelectionModal called with type:', type);
     this.selectionType.set(type);
     this.showSelectionModal.set(true);
-    // Recharger la liste correspondante pour garantir qu’elle est à jour
+    // Recharger la liste correspondante pour garantir qu'elle est à jour
     if (type === 'AIDANT') {
       console.log('[DEBUG] Loading aidants...');
       this.loadAidants();
@@ -514,10 +773,10 @@ export class TestsCognitifsComponent implements OnInit {
       const aidant = this.aidantsList().find(a => a.id === id);
       if (aidant) {
         this.activeAidantId.set(id);
-        // Mettre à jour les données de l’aidant avec les vraies données
+        // Mettre à jour les données de l'aidant avec les vraies données
         this.aidantData.patientName = `${aidant.prenom} ${aidant.nom}`;
         this.aidantData.patientId = aidant.id;
-        // Utiliser une valeur par défaut pour l’âge car AccompagnantDTO n'a pas de dateNaissance
+        // Utiliser une valeur par défaut pour l'âge car AccompagnantDTO n'a pas de dateNaissance
         this.aidantData.patientAge = 75; // Valeur par défaut pour la démo
         this.selectedRole.set('aidant');
 
@@ -525,6 +784,18 @@ export class TestsCognitifsComponent implements OnInit {
         this.loadAidantPatientTests(id);
         // Charger le score MMSE du patient lié à cet aidant
         this.loadMmseScoreForAidant();
+        // Charger le score global composite
+        this.aidantGlobalScore.set(null);
+        this.metricsService.getScoreGlobalForAidant(id).subscribe({
+          next: (score) => this.aidantGlobalScore.set(score),
+          error: (err) => console.error('Erreur score global', err)
+        });
+
+        // Charger les recommandations si le patientId est déjà connu (AccompagnantDTO)
+        if ((aidant as any).patientId) {
+          this.loadAidantRecommendations((aidant as any).patientId);
+          this.aidantData.patientId = (aidant as any).patientId;
+        }
       }
     }
     this.handleCloseSelectionModal();
@@ -588,6 +859,9 @@ export class TestsCognitifsComponent implements OnInit {
   }
 
   loadPatientAssignments(patientId: number) {
+    // Charger aussi les recommandations du patient
+    this.loadPatientRecommendations(patientId);
+
     this.assignationService.getAssignationsByPatient(patientId).pipe(
       catchError(() => of([]))
     ).subscribe((realAssignments) => {
@@ -641,6 +915,12 @@ export class TestsCognitifsComponent implements OnInit {
       // Mettre à jour les données affichées si le premier élément contient un nom de patient
       if (mapped.length > 0 && mapped[0].patientName) {
         this.aidantData.patientName = mapped[0].patientName;
+      }
+
+      // Charger les recommandations pour le patient de l'aidant
+      if (mapped.length > 0 && mapped[0].patientId) {
+        this.loadAidantRecommendations(mapped[0].patientId);
+        this.aidantData.patientId = mapped[0].patientId;
       }
     });
   }
@@ -809,10 +1089,15 @@ export class TestsCognitifsComponent implements OnInit {
         console.log('[DEBUG] Using patient medecinId:', soignantId);
       }
 
+      // Trouver l'aidant associé au patient sélectionné
+      const patientIdNum = Number(this.selectedPatientId());
+      const aidant = this.aidantsList().find((a: any) => a.patientId === patientIdNum);
+
       const request: AssignationRequest = {
-        patientId: Number(this.selectedPatientId()),
+        patientId: patientIdNum,
         testId: selectedTest.id,
         soignantId: soignantId,
+        accompagnantId: aidant ? aidant.id : undefined,
         dateLimite: this.testDeadline(),
         instructions: this.testNotes()
       };
@@ -862,6 +1147,336 @@ export class TestsCognitifsComponent implements OnInit {
     }
   }
 
+  // ════════════════════════════════════════════════════════════
+  //  RECOMMANDATIONS — MÉDECIN
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * Ouvre la modale de création de recommandation (vue médecin).
+   * Le clinicianId est récupéré depuis le signal doctorId.
+   */
+  openNewRecommendationDialog(): void {
+    const clinicianId = this.doctorId();
+    if (!clinicianId) {
+      alert('Identifiant médecin non disponible. Veuillez actualiser la page.');
+      return;
+    }
+
+    const dialogRef = this.dialog.open(NewRecommendationModalComponent, {
+      width: '620px',
+      maxWidth: '95vw',
+      disableClose: false,
+      data: {
+        clinicianId,
+        clinicianName: 'Dr. Médecin'
+      },
+      panelClass: 'recommendation-dialog',
+      backdropClass: 'recommendation-dialog-backdrop'
+    });
+
+    dialogRef.afterClosed().subscribe((newRec: Recommendation | undefined) => {
+      if (newRec) {
+        // Ajouter la nouvelle recommandation en tête de liste avec badge "NOUVEAU"
+        const enriched = { ...newRec, isNew: true };
+        this.doctorRecommendations.update(recs => [enriched, ...recs]);
+      }
+    });
+  }
+
+  /**
+   * Charge les recommandations créées par le médecin.
+   */
+  loadDoctorRecommendations(clinicianId: number): void {
+    this.recommendationService.getByClinicianId(clinicianId).subscribe({
+      next: (recs) => {
+        const now = new Date();
+        const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const enriched = recs.map(r => ({
+          ...r,
+          isNew: r.createdAt ? new Date(r.createdAt) > oneDayAgo : false
+        }));
+        this.doctorRecommendations.set(enriched);
+      },
+      error: (err) => console.error('[Recommandations Médecin] Erreur de chargement:', err)
+    });
+    // Charger rendez-vous et démarrer rappels (médecin aussi)
+    this.loadAppointments();
+    this.startReminderPolling();
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  RECOMMANDATIONS — AIDANT
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * Charge les recommandations destinées à l'aidant pour un patient donné.
+   */
+  loadAidantRecommendations(patientId: number): void {
+    this.recommendationService.getByPatientId(patientId).subscribe({
+      next: (recs) => {
+        this.checkAndNotifyNewRecs(recs);
+        this.aidantRecommendations.set(recs);
+        this.startNotifPolling(patientId);
+      },
+      error: (err) => console.error('[Recommandations Aidant] Erreur de chargement:', err)
+    });
+    // Étape 19 — charger les décisions associées au patient
+    this.decisionService.getByPatient(patientId).subscribe({
+      next: (decisions) => this.patientDecisions.set(decisions),
+      error: () => this.patientDecisions.set([])
+    });
+    // Étape 20 — charger les messages localStorage
+    this.loadAllRecMessages();
+    // Médecin — charger les IDs lus et démarrer le polling messages
+    this.loadDoctorReadIds();
+    this.startDoctorMsgPolling();
+    // Étapes 21-23 — polling appel entrant + rappels
+    this.startAidantCallPolling();
+    this.loadAppointments();
+    this.startReminderPolling();
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  RECOMMANDATIONS — PATIENT
+  // ════════════════════════════════════════════════════════════
+
+  /**
+   * Charge les recommandations d'un patient (vue patient).
+   */
+  loadPatientRecommendations(patientId: number): void {
+    this.recommendationService.getByPatientId(patientId).subscribe({
+      next: (recs) => this.patientRecommendations.set(recs),
+      error: (err) => console.error('[Recommandations Patient] Erreur de chargement:', err)
+    });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  UTILITAIRES PRIORITÉ / STATUT
+  // ════════════════════════════════════════════════════════════
+
+  getPriorityLabel(priority: PriorityLevel): string {
+    switch (priority) {
+      case PriorityLevel.LOW:    return 'Basse';
+      case PriorityLevel.MEDIUM: return 'Moyenne';
+      case PriorityLevel.HIGH:   return 'Haute';
+      case PriorityLevel.URGENT: return 'Urgente';
+      default: return 'Inconnue';
+    }
+  }
+
+  getPriorityEmoji(priority: PriorityLevel): string {
+    switch (priority) {
+      case PriorityLevel.LOW:    return '🟢';
+      case PriorityLevel.MEDIUM: return '🟡';
+      case PriorityLevel.HIGH:   return '🟠';
+      case PriorityLevel.URGENT: return '🔴';
+      default: return '⚪';
+    }
+  }
+
+  getPriorityColor(priority: PriorityLevel): string {
+    switch (priority) {
+      case PriorityLevel.LOW:    return '#4caf50';
+      case PriorityLevel.MEDIUM: return '#ffc107';
+      case PriorityLevel.HIGH:   return '#ff9800';
+      case PriorityLevel.URGENT: return '#f44336';
+      default: return '#9e9e9e';
+    }
+  }
+
+  getStatusLabel(status: RecommendStatus): string {
+    switch (status) {
+      case RecommendStatus.PENDING:     return 'En attente';
+      case RecommendStatus.IN_PROGRESS: return 'En cours';
+      case RecommendStatus.COMPLETED:   return 'Terminée';
+      case RecommendStatus.DISMISSED:   return 'Ignorée';
+      default: return 'Inconnu';
+    }
+  }
+
+  getStatusColor(status: RecommendStatus): string {
+    switch (status) {
+      case RecommendStatus.PENDING:     return '#2196f3';
+      case RecommendStatus.IN_PROGRESS: return '#ff9800';
+      case RecommendStatus.COMPLETED:   return '#4caf50';
+      case RecommendStatus.DISMISSED:   return '#9e9e9e';
+      default: return '#666';
+    }
+  }
+
+  formatDeadlineText(deadline: string | undefined): string {
+    if (!deadline) return '';
+    const info = this.recommendationService.getTimeStrings(deadline);
+    const formatted = this.recommendationService.formatDeadline(deadline);
+    return `${formatted}  (${info.text})`;
+  }
+
+  getRecommendationUrgentCount(): number {
+    return this.doctorRecommendations().filter(r => r.priority === PriorityLevel.URGENT).length;
+  }
+
+  getRecommendationPendingCount(): number {
+    return this.doctorRecommendations().filter(r => r.status === RecommendStatus.PENDING).length;
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  INTERFACE AIDANT — RECOMMANDATIONS (Étapes 11-14)
+  // ════════════════════════════════════════════════════════════
+
+  /** Compteurs par statut */
+  pendingRecsCount():     number { return this.aidantRecommendations().filter(r => r.status === RecommendStatus.PENDING).length; }
+  inProgressRecsCount():  number { return this.aidantRecommendations().filter(r => r.status === RecommendStatus.IN_PROGRESS).length; }
+  completedRecsCount():   number { return this.aidantRecommendations().filter(r => r.status === RecommendStatus.COMPLETED).length; }
+  dismissedRecsCount():   number { return this.aidantRecommendations().filter(r => r.status === RecommendStatus.DISMISSED).length; }
+
+  /** Tri par priorité (URGENT→HIGH→MEDIUM→LOW) puis par deadline croissante */
+  private priorityOrder: Record<string, number> = { URGENT: 0, HIGH: 1, MEDIUM: 2, LOW: 3 };
+
+  getSortedAidantRecs(): Recommendation[] {
+    return [...this.aidantRecommendations()]
+      .filter(r => r.status !== RecommendStatus.COMPLETED && r.status !== RecommendStatus.DISMISSED)
+      .sort((a, b) => {
+        const pDiff = (this.priorityOrder[a.priority] ?? 9) - (this.priorityOrder[b.priority] ?? 9);
+        if (pDiff !== 0) return pDiff;
+        return new Date(a.deadline ?? 0).getTime() - new Date(b.deadline ?? 0).getTime();
+      });
+  }
+
+  getFilteredAidantRecs(): Recommendation[] {
+    const statusFilter = this.aidantStatusFilter();
+    const search = this.aidantSearchQuery().toLowerCase().trim();
+    const priority = this.aidantPriorityFilter();
+
+    let recs: Recommendation[];
+    if (statusFilter === RecommendStatus.COMPLETED || statusFilter === RecommendStatus.DISMISSED) {
+      recs = this.aidantRecommendations()
+        .filter(r => r.status === statusFilter)
+        .sort((a, b) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime());
+    } else {
+      recs = this.getSortedAidantRecs();
+      if (statusFilter) recs = recs.filter(r => r.status === statusFilter);
+    }
+    if (search) {
+      recs = recs.filter(r =>
+        r.action.toLowerCase().includes(search) ||
+        (r.notes || '').toLowerCase().includes(search)
+      );
+    }
+    if (priority) {
+      recs = recs.filter(r => r.priority === priority);
+    }
+    return recs;
+  }
+
+  getPaginatedAidantRecs(): Recommendation[] {
+    const page = this.aidantRecPage();
+    const all = this.getFilteredAidantRecs();
+    return all.slice(0, page * this.REC_PAGE_SIZE);
+  }
+
+  hasMoreRecs(): boolean {
+    return this.getFilteredAidantRecs().length > this.aidantRecPage() * this.REC_PAGE_SIZE;
+  }
+
+  loadMoreRecs(): void { this.aidantRecPage.update(p => p + 1); }
+
+  /** Liste historique (COMPLETED + DISMISSED) */
+  getHistoryRecs(): Recommendation[] {
+    return [...this.aidantRecommendations()]
+      .filter(r => r.status === RecommendStatus.COMPLETED || r.status === RecommendStatus.DISMISSED)
+      .sort((a, b) => new Date(b.updatedAt ?? b.createdAt ?? 0).getTime() - new Date(a.updatedAt ?? a.createdAt ?? 0).getTime());
+  }
+
+  /** Top 3 urgentes/haute priorité pour la vue Accueil */
+  getTopUrgentRecs(): Recommendation[] {
+    return this.getSortedAidantRecs().slice(0, 3);
+  }
+
+  /** Ouvrir le détail d'une recommandation */
+  openRecDetail(rec: Recommendation): void {
+    this.aidantSelectedRec.set(rec);
+    this.aidantRecNotesDraft.set(rec.notes ?? '');
+    this.aidantRecNotesEditing.set(false);
+  }
+
+  closeRecDetail(): void {
+    this.aidantSelectedRec.set(null);
+    this.aidantRecNotesEditing.set(false);
+  }
+
+  /** Mettre à jour le statut d'une recommandation */
+  updateAidantRecStatus(rec: Recommendation, newStatus: RecommendStatus): void {
+    this.recommendationService.updateStatus(rec.id!, newStatus).subscribe({
+      next: (updated) => {
+        const recs = this.aidantRecommendations().map(r => r.id === updated.id ? updated : r);
+        this.aidantRecommendations.set(recs);
+        if (this.aidantSelectedRec()?.id === updated.id) this.aidantSelectedRec.set(updated);
+      },
+      error: (err) => console.error('[RecStatus] Erreur:', err)
+    });
+  }
+
+  /** Sauvegarder les notes personnelles de l'aidant */
+  saveAidantRecNotes(rec: Recommendation): void {
+    const notes = this.aidantRecNotesDraft();
+    this.recommendationService.update(rec.id!, { notes }).subscribe({
+      next: (updated) => {
+        const recs = this.aidantRecommendations().map(r => r.id === updated.id ? updated : r);
+        this.aidantRecommendations.set(recs);
+        this.aidantSelectedRec.set(updated);
+        this.aidantRecNotesEditing.set(false);
+      },
+      error: (err) => console.error('[RecNotes] Erreur:', err)
+    });
+  }
+
+  /** Statut de la deadline : overdue / today / soon / normal */
+  getDeadlineStatus(deadline: string | undefined): 'overdue' | 'today' | 'soon' | 'normal' {
+    if (!deadline) return 'normal';
+    const dl = new Date(deadline);
+    const now = new Date();
+    if (dl < now) return 'overdue';
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dlDate = new Date(dl.getFullYear(), dl.getMonth(), dl.getDate());
+    if (dlDate.getTime() === today.getTime()) return 'today';
+    const diffDays = (dlDate.getTime() - today.getTime()) / 86400000;
+    return diffDays <= 2 ? 'soon' : 'normal';
+  }
+
+  /** Texte deadline formatté avec indicateur couleur */
+  getDeadlineDisplay(deadline: string | undefined): string {
+    if (!deadline) return 'Pas de date limite';
+    const dl = new Date(deadline);
+    const status = this.getDeadlineStatus(deadline);
+    const formatted = dl.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                    + ' ' + dl.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    const info = this.recommendationService.getTimeStrings(deadline);
+    if (status === 'overdue') return `⚠️ RETARD — ${formatted} (${info.text})`;
+    if (status === 'today')   return `⏰ Aujourd'hui — ${formatted}`;
+    return `Date limite : ${formatted} (${info.text})`;
+  }
+
+  /** Initiales du nom patient */
+  getPatientInitials(name: string): string {
+    return (name || '?').split(' ').map((n: string) => n[0] || '').join('').toUpperCase().slice(0, 2);
+  }
+
+  /** Sélectionner un filtre statut (toggle) */
+  toggleStatusFilter(status: RecommendStatus): void {
+    const current = this.aidantStatusFilter();
+    this.aidantStatusFilter.set(current === status ? null : status);
+    this.aidantRecPage.set(1);
+    this.aidantSelectedRec.set(null);
+  }
+
+  /** Naviguer vers un tab aidant */
+  goToAidantTab(tab: 'accueil' | 'recommandations' | 'historique' | 'profil'): void {
+    this.aidantActiveTab.set(tab);
+    this.aidantSelectedRec.set(null);
+    this.aidantStatusFilter.set(null);
+    this.aidantRecPage.set(1);
+  }
+
   openCalendar() {
     const role = this.selectedRole();
     if (role === 'medecin') {
@@ -879,6 +1494,1001 @@ export class TestsCognitifsComponent implements OnInit {
     } else {
       this.router.navigate(['/calendar']);
     }
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPE 15 — CONFIRMATION DE CHANGEMENT DE STATUT
+  // ════════════════════════════════════════════════════════════
+
+  /** Demande de changement de statut avec confirmation */
+  requestStatusChange(rec: Recommendation, newStatus: RecommendStatus): void {
+    if (newStatus === RecommendStatus.DISMISSED) {
+      this.requestDismiss(rec);
+      return;
+    }
+    const cfgs: Record<string, { title: string; message: string; confirmLabel: string; confirmClass: string }> = {
+      [RecommendStatus.IN_PROGRESS]: {
+        title: 'Commencer cette recommandation ?',
+        message: `Confirmez-vous avoir commencé à travailler sur :\n« ${rec.action} » ?`,
+        confirmLabel: '▶ Oui, commencer',
+        confirmClass: 'inprogress'
+      },
+      [RecommendStatus.COMPLETED]: {
+        title: 'Marquer comme terminée ?',
+        message: `Cette action marque la recommandation comme accomplie :\n« ${rec.action} »\nConfirmez-vous ?`,
+        confirmLabel: '✅ Oui, c\'est terminé',
+        confirmClass: 'completed'
+      },
+      [RecommendStatus.PENDING]: {
+        title: 'Réouvrir la recommandation ?',
+        message: `Voulez-vous réactiver :\n« ${rec.action} » ?`,
+        confirmLabel: '↺ Réouvrir',
+        confirmClass: 'reopen'
+      }
+    };
+    const cfg = cfgs[newStatus];
+    if (!cfg) return;
+    this.confirmConfig.set({ ...cfg, onConfirm: () => this.executeStatusChange(rec, newStatus) });
+    this.showConfirmModal.set(true);
+  }
+
+  /** Ouvrir le modal de motif pour DISMISSED */
+  requestDismiss(rec: Recommendation): void {
+    this.dismissTargetRec.set(rec);
+    this.dismissReason.set('');
+    this.dismissCustomNote.set('');
+    this.showDismissModal.set(true);
+  }
+
+  /** Confirmer l'ignorance avec motif */
+  confirmDismiss(): void {
+    const rec = this.dismissTargetRec();
+    const reason = this.dismissReason();
+    if (!rec || !reason) return;
+    const finalNote = reason === 'Autre (préciser)'
+      ? (this.dismissCustomNote().trim() || 'Autre')
+      : reason;
+    this.showDismissModal.set(false);
+    this.recommendationService.update(rec.id!, { notes: finalNote }).pipe(
+      switchMap(() => this.recommendationService.updateStatus(rec.id!, RecommendStatus.DISMISSED))
+    ).subscribe({
+      next: (updated) => {
+        const recs = this.aidantRecommendations().map(r =>
+          r.id === updated.id ? { ...updated, notes: finalNote } : r
+        );
+        this.aidantRecommendations.set(recs);
+        if (this.aidantSelectedRec()?.id === updated.id) {
+          this.aidantSelectedRec.set({ ...updated, notes: finalNote });
+        }
+        this.dismissTargetRec.set(null);
+      },
+      error: (err) => console.error('[Dismiss] Erreur:', err)
+    });
+  }
+
+  /** Exécuter le changement après confirmation */
+  executeStatusChange(rec: Recommendation, newStatus: RecommendStatus): void {
+    this.showConfirmModal.set(false);
+    this.updateAidantRecStatus(rec, newStatus);
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPE 16 — RÉINITIALISATION DES FILTRES
+  // ════════════════════════════════════════════════════════════
+
+  resetAllFilters(): void {
+    this.aidantSearchQuery.set('');
+    this.aidantStatusFilter.set(null);
+    this.aidantPriorityFilter.set(null);
+    this.aidantRecPage.set(1);
+    this.aidantSelectedRec.set(null);
+  }
+
+  hasActiveFilters(): boolean {
+    return !!(this.aidantSearchQuery() || this.aidantStatusFilter() || this.aidantPriorityFilter());
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPE 17 — NOTIFICATIONS EN TEMPS RÉEL
+  // ════════════════════════════════════════════════════════════
+
+  /** Vérifie les nouvelles recommandations et déclenche les notifications */
+  checkAndNotifyNewRecs(newRecs: Recommendation[]): void {
+    if (this.seenRecIds.size === 0) {
+      // Premier chargement : marquer tout comme vu, pas de notification
+      newRecs.forEach(r => { if (r.id) this.seenRecIds.add(r.id); });
+      return;
+    }
+    newRecs
+      .filter(r => r.id && !this.seenRecIds.has(r.id) && r.status === RecommendStatus.PENDING)
+      .forEach(r => {
+        if (r.id) this.seenRecIds.add(r.id);
+        this.triggerNotification(r);
+      });
+  }
+
+  /** Déclenche la notification selon la priorité */
+  triggerNotification(rec: Recommendation): void {
+    switch (rec.priority) {
+      case PriorityLevel.URGENT:
+        this.urgentPopupRec.set(rec);
+        this.playAlertSound();
+        break;
+      case PriorityLevel.HIGH:
+        this.addToast(rec, 10000);
+        break;
+      case PriorityLevel.MEDIUM:
+        this.addToast(rec, 5000);
+        break;
+      // LOW : le badge s'incrémente automatiquement via pendingRecsCount()
+    }
+  }
+
+  /** Ajoute un toast et le supprime après `duration` ms */
+  addToast(rec: Recommendation, duration: number): void {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    const timeout = setTimeout(() => this.removeToast(id), duration);
+    this.aidantToasts.update(list => [...list, { id, rec, timeout }]);
+  }
+
+  removeToast(id: string): void {
+    const toast = this.aidantToasts().find(t => t.id === id);
+    if (toast?.timeout) clearTimeout(toast.timeout);
+    this.aidantToasts.update(list => list.filter(t => t.id !== id));
+  }
+
+  /** Bip d'alerte via Web Audio API (2 bips courts) */
+  playAlertSound(): void {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      [0, 0.35].forEach(offset => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.28, ctx.currentTime + offset);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + offset + 0.28);
+        osc.start(ctx.currentTime + offset);
+        osc.stop(ctx.currentTime + offset + 0.28);
+      });
+    } catch (_) { /* AudioContext non disponible */ }
+  }
+
+  /** Démarre le polling toutes les 30 s pour détecter les nouvelles recommandations */
+  startNotifPolling(patientId: number): void {
+    if (this.notifPollingTimer) return;
+    this.notifPollingTimer = setInterval(() => {
+      this.recommendationService.getByPatientId(patientId).subscribe({
+        next: (recs) => {
+          this.checkAndNotifyNewRecs(recs);
+          this.aidantRecommendations.set(recs);
+        }
+      });
+    }, 30000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.notifPollingTimer) clearInterval(this.notifPollingTimer);
+    if (this.doctorMsgPollingTimer) clearInterval(this.doctorMsgPollingTimer);
+    if (this.callStatePollingTimer) clearInterval(this.callStatePollingTimer);
+    if (this.aidantCallPollingTimer) clearInterval(this.aidantCallPollingTimer);
+    if (this.reminderPollingTimer) clearInterval(this.reminderPollingTimer);
+    this.doctorCamStream()?.getTracks().forEach(t => t.stop());
+    this.aidantCamStream()?.getTracks().forEach(t => t.stop());
+    this.aidantToasts().forEach(t => { if (t.timeout) clearTimeout(t.timeout); });
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPE 18 — HISTORIQUE AVANCÉ
+  // ════════════════════════════════════════════════════════════
+
+  /** Historique filtré par période et statut */
+  getFilteredHistoryRecs(): Recommendation[] {
+    const period = this.histPeriodFilter();
+    const status = this.histStatusFilter();
+    const now = new Date();
+    let recs = this.aidantRecommendations().filter(r =>
+      r.status === RecommendStatus.COMPLETED || r.status === RecommendStatus.DISMISSED
+    );
+    // Filtre statut
+    if (status === 'completed') recs = recs.filter(r => r.status === RecommendStatus.COMPLETED);
+    if (status === 'dismissed') recs = recs.filter(r => r.status === RecommendStatus.DISMISSED);
+    // Filtre période
+    if (period !== 'all') {
+      const cutoff = new Date(now);
+      if (period === 'week')  cutoff.setDate(now.getDate() - 7);
+      if (period === 'month') cutoff.setMonth(now.getMonth() - 1);
+      if (period === 'year')  cutoff.setFullYear(now.getFullYear() - 1);
+      recs = recs.filter(r => {
+        const date = new Date(r.updatedAt || r.createdAt || 0);
+        return date >= cutoff;
+      });
+    }
+    return recs.sort((a, b) =>
+      new Date(b.updatedAt || b.createdAt || 0).getTime() -
+      new Date(a.updatedAt || a.createdAt || 0).getTime()
+    );
+  }
+
+  openArchiveDetail(rec: Recommendation): void {
+    this.archiveDetailRec.set(rec);
+    this.showArchiveDetailModal.set(true);
+  }
+
+  /** Export CSV de l'historique filtré */
+  exportHistoryCSV(): void {
+    const recs = this.getFilteredHistoryRecs();
+    const BOM = '\uFEFF';
+    const headers = ['Action', 'Priorité', 'Statut', 'Prescrit le', 'Réalisé le', 'Notes'];
+    const rows = recs.map(r => [
+      `"${(r.action || '').replace(/"/g, '""')}"`,
+      r.priority,
+      r.status === RecommendStatus.COMPLETED ? 'Terminée' : 'Ignorée',
+      r.createdAt ? new Date(r.createdAt).toLocaleDateString('fr-FR') : '',
+      (r.completedAt || r.updatedAt) ? new Date(r.completedAt || r.updatedAt!).toLocaleDateString('fr-FR') : '',
+      `"${(r.notes || '').replace(/"/g, '""')}"`
+    ]);
+    const csv = BOM + [headers.join(';'), ...rows.map(r => r.join(';'))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historique-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    this.notifService.showSuccess('Historique exporté en CSV');
+  }
+
+  /** Impression / PDF natif */
+  printHistory(): void {
+    window.print();
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPE 19 — DÉCISIONS MÉDICALES (vue simplifiée)
+  // ════════════════════════════════════════════════════════════
+
+  /** Trouve la décision liée à une recommandation */
+  getDecisionForRec(rec: Recommendation): Decision | null {
+    if (!rec.decisionId) return null;
+    return this.patientDecisions().find(d => d.id === rec.decisionId) ?? null;
+  }
+
+  /** Libellé lisible du niveau de risque */
+  getRiskLabel(level: string | undefined): string {
+    switch (level) {
+      case 'FAIBLE':   return 'Risque faible';
+      case 'MOYEN':    return 'Risque modéré';
+      case 'ELEVE':    return 'Risque élevé';
+      case 'CRITIQUE': return 'Risque critique';
+      default:         return 'Non évalué';
+    }
+  }
+
+  /** Couleur du niveau de risque */
+  getRiskColor(level: string | undefined): string {
+    switch (level) {
+      case 'FAIBLE':   return '#00635D';
+      case 'MOYEN':    return '#E6A800';
+      case 'ELEVE':    return '#e65100';
+      case 'CRITIQUE': return '#CB1527';
+      default:         return '#9CA3AF';
+    }
+  }
+
+  /** Libellé lisible du type de décision */
+  getDecisionTypeLabel(type: DecisionType | undefined): string {
+    switch (type) {
+      case DecisionType.SURVEILLANCE:  return 'Surveillance cognitive';
+      case DecisionType.ALERTE:        return 'Alerte — suivi renforcé';
+      case DecisionType.CONSULTATION:  return 'Consultation recommandée';
+      case DecisionType.URGENCE:       return 'Urgence médicale';
+      default:                         return 'Évaluation';
+    }
+  }
+
+  /** Libellé lisible du type de test */
+  getTestTypeLabel(type: TypeTestEnum | undefined): string {
+    switch (type) {
+      case TypeTestEnum.MEMORY:    return 'Mémoire';
+      case TypeTestEnum.LANGUAGE:  return 'Langage';
+      case TypeTestEnum.REFLECTION:return 'Réflexion cognitive';
+      case TypeTestEnum.CONFUSION: return 'Évaluation de confusion';
+      default:                     return 'Test cognitif';
+    }
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPE 20 — COMMUNICATION AIDANT ↔ MÉDECIN
+  // ════════════════════════════════════════════════════════════
+
+  private readonly MSG_STORE_KEY = 'memoria_rec_messages';
+
+  /** Charge tous les messages depuis localStorage */
+  loadAllRecMessages(): void {
+    try {
+      const raw = localStorage.getItem(this.MSG_STORE_KEY);
+      const all: RecMessage[] = raw ? JSON.parse(raw) : [];
+      this.contactMessages.set(all);
+    } catch { this.contactMessages.set([]); }
+  }
+
+  /** Messages pour une recommandation donnée */
+  getMessagesForRec(recId: number): RecMessage[] {
+    return this.contactMessages().filter(m => m.recId === recId);
+  }
+
+  /** Nombre de messages non lus du médecin */
+  unreadDoctorCount(recId: number): number {
+    return this.contactMessages().filter(
+      m => m.recId === recId && m.from === 'medecin' && !m.read
+    ).length;
+  }
+
+  /** Ouvre le modal de contact pré-rempli */
+  openContactModal(rec: Recommendation): void {
+    this.contactTargetRec.set(rec);
+    this.contactMessage.set(`À propos de la recommandation :\n« ${rec.action} »\n\n`);
+    this.contactPriority.set('NORMALE');
+    this.showContactModal.set(false); // reset first
+    setTimeout(() => this.showContactModal.set(true), 0);
+  }
+
+  /** Envoie le message et simule une réponse du médecin */
+  sendContactMessage(): void {
+    const rec = this.contactTargetRec();
+    const text = this.contactMessage().trim();
+    if (!rec?.id || !text) return;
+
+    const msg: RecMessage = {
+      id: `msg-${Date.now()}`,
+      recId: rec.id,
+      text,
+      from: 'aidant',
+      priority: this.contactPriority(),
+      sentAt: new Date().toISOString(),
+      read: true
+    };
+
+    const all = [...this.contactMessages(), msg];
+    this.contactMessages.set(all);
+    this._saveMessages(all);
+
+    this.showContactModal.set(false);
+    this.contactMessage.set('');
+    this.notifService.showSuccess('Message envoyé au médecin ✓');
+
+    // Simulation d'une réponse du médecin après 4 secondes (démo)
+    setTimeout(() => {
+      const reply: RecMessage = {
+        id: `msg-${Date.now()}-reply`,
+        recId: rec.id!,
+        text: `Bonjour, merci pour votre message concernant « ${rec.action} ». Je prends note et vous recontacterai si nécessaire. Continuez le suivi comme indiqué.`,
+        from: 'medecin',
+        priority: 'NORMALE',
+        sentAt: new Date().toISOString(),
+        read: false
+      };
+      const updated = [...this.contactMessages(), reply];
+      this.contactMessages.set(updated);
+      this._saveMessages(updated);
+      this.notifService.showInfo('💬 Le médecin a répondu à votre message');
+    }, 4000);
+  }
+
+  /** Ouvre la conversation d'une recommandation */
+  openConversation(rec: Recommendation): void {
+    // Marquer les messages du médecin comme lus
+    const all = this.contactMessages().map(m =>
+      m.recId === rec.id && m.from === 'medecin' ? { ...m, read: true } : m
+    );
+    this.contactMessages.set(all);
+    this._saveMessages(all);
+    this.conversationTargetRec.set(rec);
+    this.showConversationModal.set(true);
+  }
+
+  private _saveMessages(msgs: RecMessage[]): void {
+    try { localStorage.setItem(this.MSG_STORE_KEY, JSON.stringify(msgs)); } catch { /* silent */ }
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  INTERFACE MESSAGERIE MÉDECIN
+  // ════════════════════════════════════════════════════════════
+
+  private readonly DOC_READ_KEY = 'memoria_doc_reads';
+
+  /** Charge les IDs de messages lus par le médecin depuis localStorage */
+  loadDoctorReadIds(): void {
+    try {
+      const raw = localStorage.getItem(this.DOC_READ_KEY);
+      const ids: string[] = raw ? JSON.parse(raw) : [];
+      this.doctorReadIds.clear();
+      ids.forEach(id => this.doctorReadIds.add(id));
+    } catch { /* silent */ }
+  }
+
+  private _saveDoctorReadIds(): void {
+    try {
+      localStorage.setItem(this.DOC_READ_KEY, JSON.stringify([...this.doctorReadIds]));
+    } catch { /* silent */ }
+  }
+
+  /** Messages d'une recommandation (vue médecin) */
+  getDoctorMessages(recId: number): RecMessage[] {
+    return this.contactMessages().filter(m => m.recId === recId);
+  }
+
+  /** Nombre de messages de l'aidant non lus par le médecin */
+  getDoctorUnread(recId: number): number {
+    return this.contactMessages().filter(
+      m => m.recId === recId && m.from === 'aidant' && !this.doctorReadIds.has(m.id)
+    ).length;
+  }
+
+  /** Total non lus sur toutes les recommandations médecin */
+  getTotalDoctorUnread(): number {
+    return this.doctorRecommendations().reduce((sum, rec) => {
+      return rec.id ? sum + this.getDoctorUnread(rec.id) : sum;
+    }, 0);
+  }
+
+  /** Recommandations médecin ayant au moins un message */
+  getRecsWithMessages(): Recommendation[] {
+    return this.doctorRecommendations().filter(rec =>
+      rec.id ? this.getDoctorMessages(rec.id).length > 0 : false
+    );
+  }
+
+  /** Ouvre la conversation d'une recommandation (vue médecin) */
+  openDoctorConversation(rec: Recommendation): void {
+    // Marquer les messages de l'aidant comme lus par le médecin
+    const msgs = this.getDoctorMessages(rec.id!);
+    msgs.filter(m => m.from === 'aidant').forEach(m => this.doctorReadIds.add(m.id));
+    this._saveDoctorReadIds();
+
+    this.doctorConvRec.set(rec);
+    this.doctorReplyText.set('');
+    this.doctorReplyPriority.set('NORMALE');
+    this.showDoctorConvModal.set(true);
+  }
+
+  /** Envoie une réponse du médecin */
+  sendDoctorReply(): void {
+    const rec = this.doctorConvRec();
+    const text = this.doctorReplyText().trim();
+    if (!rec?.id || !text) return;
+
+    const msg: RecMessage = {
+      id: `msg-${Date.now()}-doc`,
+      recId: rec.id,
+      text,
+      from: 'medecin',
+      priority: this.doctorReplyPriority(),
+      sentAt: new Date().toISOString(),
+      read: false
+    };
+
+    // Marquer le propre message comme lu par le médecin
+    this.doctorReadIds.add(msg.id);
+    this._saveDoctorReadIds();
+
+    const all = [...this.contactMessages(), msg];
+    this.contactMessages.set(all);
+    this._saveMessages(all);
+
+    this.doctorReplyText.set('');
+    this.notifService.showSuccess('Réponse envoyée à l\'aidant ✓');
+
+    // Notification simulée pour l'aidant
+    setTimeout(() => {
+      this.notifService.showInfo('💬 L\'aidant a été notifié de votre réponse');
+    }, 800);
+  }
+
+  /** Démarre le polling médecin (30s) pour détecter les nouveaux messages de l'aidant */
+  startDoctorMsgPolling(): void {
+    if (this.doctorMsgPollingTimer) return;
+    this.doctorMsgPollingTimer = setInterval(() => {
+      const prev = this.getTotalDoctorUnread();
+      this.loadAllRecMessages();
+      const next = this.getTotalDoctorUnread();
+      if (next > prev) {
+        this.notifService.showInfo(`💬 ${next - prev} nouveau(x) message(s) de l'aidant`);
+      }
+    }, 30000);
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPES 21-22 — CONSULTATION VIDÉO
+  // ════════════════════════════════════════════════════════════
+
+  private readonly CALL_STATE_KEY  = 'memoria_video_call';
+  private readonly APPOINTMENTS_KEY = 'memoria_appointments';
+
+  // ── Médecin : initier l'appel ─────────────────────────────────────────
+
+  // ════════════════════════════════════════════════════════════
+  //  CARTES PATIENTS — SCROLL HORIZONTAL
+  // ════════════════════════════════════════════════════════════
+
+  /** Retourne la liste des patients avec leur aidant et stage calculé */
+  getPairedPatients(): Array<{ patient: PatientDTO; aidant: AccompagnantDTO | null; stage: string; stageLevel: 1|2|3; score: number; scoreLabel: string }> {
+    return this.patientsList().map(p => {
+      const aidant = this.aidantsList().find(a => (a as any).patientId === p.id) ?? null;
+      // Calcul mock du stage basé sur l'ID (remplacer par données réelles si dispo)
+      const stageLevel: 1|2|3 = (p.id % 3 === 0) ? 3 : (p.id % 2 === 0) ? 2 : 1;
+      const stage = stageLevel === 1 ? 'STABLE' : stageLevel === 2 ? 'SURVEILLANCE' : 'CRITIQUE';
+      const score = stageLevel === 1 ? 26 : stageLevel === 2 ? 20 : 14;
+      const scoreLabel = `${score}/30`;
+      return { patient: p, aidant, stage, stageLevel, score, scoreLabel };
+    });
+  }
+
+  /** Âge calculé depuis la date de naissance */
+  getPatientAge(dateNaissance: string | undefined): number {
+    if (!dateNaissance) return 0;
+    const diff = Date.now() - new Date(dateNaissance).getTime();
+    return Math.floor(diff / (365.25 * 24 * 60 * 60 * 1000));
+  }
+
+  /** Couleur selon le stage */
+  getStageColor(stageLevel: 1|2|3): string {
+    return stageLevel === 1 ? '#00635D' : stageLevel === 2 ? '#D97706' : '#CB1527';
+  }
+
+  /** Libellé complet du stage */
+  getStageLabelFull(stageLevel: 1|2|3): string {
+    return stageLevel === 1 ? 'Stage 1 — Stable' : stageLevel === 2 ? 'Stage 2 — Surveillance' : 'Stage 3 — Critique';
+  }
+
+  /** Ouvre la fiche d'un patient depuis le scroll */
+  openPatientCard(item: ReturnType<typeof this.getPairedPatients>[0]): void {
+    this.selectedPatientCard.set(item);
+    // Pre-sélectionner l'aidant pour la vidéo
+    if (item.aidant) this.videoSelectedAidant.set(item.aidant);
+    // Charger ses recommandations
+    if (item.patient?.id) {
+      this.loadDoctorRecommendations(this.doctorId() ?? 16);
+    }
+  }
+
+  closePatientCard(): void {
+    this.selectedPatientCard.set(null);
+    this.videoSelectedAidant.set(null);
+  }
+
+  /** Lance la vidéo avec l'aidant du patient sélectionné */
+  openVideoConfigForPatient(): void {
+    const card = this.selectedPatientCard();
+    if (card?.aidant) {
+      this.videoSelectedAidant.set(card.aidant);
+      this.videoConfigStep.set('configure');
+    } else {
+      this.videoConfigStep.set('select-aidant');
+    }
+    this.videoCallMode.set(null);
+    this.scheduledCallDate.set('');
+    this.scheduledCallTime.set('');
+    this.showVideoConfigModal.set(true);
+  }
+
+  /** Ouvre la messagerie pour les recommandations du patient sélectionné */
+  openPatientMessages(): void {
+    const msgs = this.contactMessages();
+    const rec = this.doctorRecommendations()[0] ?? null;
+    if (rec) {
+      this.loadAllRecMessages();
+      this.openDoctorConversation(rec);
+    } else {
+      this.notifService.showInfo('Aucune recommandation avec conversation pour ce patient.');
+    }
+  }
+
+  openVideoConfig(): void {
+    this.videoConfigStep.set('select-aidant');
+    this.videoSelectedAidant.set(null);
+    this.videoAidantSearch.set('');
+    this.videoCallMode.set(null);
+    this.scheduledCallDate.set('');
+    this.scheduledCallTime.set('');
+    this.showVideoConfigModal.set(true);
+  }
+
+  /** Aidants filtrés par la recherche */
+  getFilteredAidantsForVideo(): AccompagnantDTO[] {
+    const q = this.videoAidantSearch().toLowerCase().trim();
+    const all = this.aidantsList();
+    if (!q) return all;
+    return all.filter(a =>
+      `${a.nom} ${a.prenom}`.toLowerCase().includes(q) ||
+      a.email?.toLowerCase().includes(q) ||
+      (a as any).telephone?.toLowerCase().includes(q)
+    );
+  }
+
+  /** Sélectionne un aidant et passe à l'étape de configuration */
+  selectAidantForVideo(aidant: AccompagnantDTO): void {
+    this.videoSelectedAidant.set(aidant);
+    this.videoConfigStep.set('configure');
+  }
+
+  /** Retourne le nom complet du patient lié à l'aidant sélectionné */
+  getVideoPatientName(): string {
+    const aidant = this.videoSelectedAidant();
+    if (!aidant) return '';
+    // Cherche dans patientsList le patient lié
+    const patient = this.patientsList().find(p => p.id === (aidant as any).patientId);
+    if (patient) return `${patient.prenom} ${patient.nom}`;
+    return `Patient de ${aidant.prenom} ${aidant.nom}`;
+  }
+
+  /** Nombre de messages non lus venant d'un aidant donné */
+  getAidantMessageCount(_aidant: AccompagnantDTO): number {
+    return this.contactMessages().filter(m => m.from === 'aidant').length;
+  }
+
+  /** Dernier rendez-vous terminé (global) */
+  getLastCallDate(_aidant: AccompagnantDTO): string | null {
+    const apts = this.scheduledAppointments()
+      .filter(a => a.status === 'ended')
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    if (apts.length === 0) return null;
+    return new Date(apts[0].date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  }
+
+  /** Démarre une consultation immédiate */
+  async startImmediateCall(): Promise<void> {
+    const aidant = this.videoSelectedAidant();
+    const aidantName = aidant ? `${aidant.prenom} ${aidant.nom}` : this.aidantData.patientName;
+    const patientName = this.getVideoPatientName() || this.aidantData.patientName;
+
+    const roomId = `room-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    this.currentRoomId.set(roomId);
+
+    // Écrire l'état de l'appel dans localStorage (signalisation inter-onglets)
+    this._writeCallState({ roomId, status: 'calling', doctorName: 'Dr. Martin', patientName, aidantName });
+
+    this.showVideoConfigModal.set(false);
+    this.showDoctorVideoUI.set(true);
+    this.videoCallActive.set(true);
+    this.videoCallConnected.set(false);
+
+    // Activer la caméra du médecin
+    await this._startDoctorCamera();
+
+    // Notifier via toast
+    this.notifService.showInfo(`📹 Appel lancé — En attente de connexion de ${aidantName}…`);
+
+    // Polling : surveiller si l'aidant accepte
+    this._startCallStatePolling();
+  }
+
+  /** Planifie un rendez-vous futur */
+  scheduleVideoCall(): void {
+    const date = this.scheduledCallDate();
+    const time = this.scheduledCallTime();
+    if (!date || !time) { this.notifService.showError('Veuillez choisir une date et une heure.'); return; }
+
+    const aidant = this.videoSelectedAidant();
+    const patientName = this.getVideoPatientName() || this.aidantData.patientName;
+    const patientId   = (aidant as any)?.patientId ?? this.aidantData.patientId;
+
+    const apt: VideoAppointment = {
+      id: `apt-${Date.now()}`,
+      doctorName: 'Dr. Martin',
+      patientName,
+      patientId,
+      date: `${date}T${time}:00`,
+      status: 'scheduled',
+      roomId: `room-${Date.now()}`
+    };
+
+    const all = [...this.scheduledAppointments(), apt];
+    this.scheduledAppointments.set(all);
+    this._saveAppointments(all);
+    this.showVideoConfigModal.set(false);
+
+    // Notifier l'aidant (simulation via localStorage + toast)
+    this._writeCallState({ roomId: apt.roomId, status: 'scheduled', doctorName: apt.doctorName, patientName: apt.patientName, scheduledDate: apt.date });
+    this.notifService.showSuccess(`📅 Rendez-vous planifié le ${new Date(apt.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`);
+  }
+
+  private async _startDoctorCamera(): Promise<void> {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      this.doctorCamStream.set(stream);
+      setTimeout(() => {
+        const video = document.getElementById('doctor-local-video') as HTMLVideoElement;
+        if (video) { video.srcObject = stream; video.play().catch(() => {}); }
+      }, 200);
+    } catch {
+      this.notifService.showError('Impossible d\'accéder à la caméra. Vérifiez les autorisations.');
+    }
+  }
+
+  toggleDoctorMic(): void {
+    const stream = this.doctorCamStream();
+    if (!stream) return;
+    stream.getAudioTracks().forEach(t => { t.enabled = !t.enabled; });
+    this.doctorMicMuted.update(v => !v);
+  }
+
+  toggleDoctorCam(): void {
+    const stream = this.doctorCamStream();
+    if (!stream) return;
+    stream.getVideoTracks().forEach(t => { t.enabled = !t.enabled; });
+    this.doctorCamOff.update(v => !v);
+  }
+
+  /** Polling : médecin surveille l'acceptation de l'aidant */
+  private _startCallStatePolling(): void {
+    this.callStatePollingTimer = setInterval(() => {
+      const state = this._readCallState();
+      if (state?.status === 'accepted' && !this.videoCallConnected()) {
+        this.videoCallConnected.set(true);
+        this.notifService.showSuccess('✅ L\'aidant a rejoint la consultation !');
+        clearInterval(this.callStatePollingTimer);
+      }
+      if (state?.status === 'declined') {
+        this.notifService.showError('❌ L\'aidant a refusé la consultation.');
+        this.endVideoCall(false);
+      }
+    }, 2000);
+  }
+
+  endVideoCall(askReport = true): void {
+    // Arrêter tous les flux caméra
+    this.doctorCamStream()?.getTracks().forEach(t => t.stop());
+    this.aidantCamStream()?.getTracks().forEach(t => t.stop());
+    this.doctorCamStream.set(null);
+    this.aidantCamStream.set(null);
+
+    clearInterval(this.callStatePollingTimer);
+    clearInterval(this.aidantCallPollingTimer);
+
+    this._writeCallState({ roomId: this.currentRoomId() || '', status: 'ended', doctorName: 'Dr. Martin', patientName: this.aidantData.patientName });
+
+    this.videoCallActive.set(false);
+    this.videoCallConnected.set(false);
+    this.showDoctorVideoUI.set(false);
+    this.showAidantVideoUI.set(false);
+    this.incomingCall.set(null);
+
+    if (askReport && this.selectedRole() === 'medecin') {
+      this.videoReport.set('');
+      this.showVideoReportModal.set(true);
+    }
+  }
+
+  saveVideoReport(): void {
+    const report = this.videoReport().trim();
+    if (!report) { this.showVideoReportModal.set(false); return; }
+
+    // Associer le compte rendu au dernier rendez-vous
+    const apts = this.scheduledAppointments().map((a, i, arr) =>
+      i === arr.length - 1 ? { ...a, report, status: 'ended' as const } : a
+    );
+    this.scheduledAppointments.set(apts);
+    this._saveAppointments(apts);
+
+    this.showVideoReportModal.set(false);
+    this.notifService.showSuccess('Compte rendu sauvegardé dans le dossier patient ✓');
+  }
+
+  shareScreen(): void {
+    navigator.mediaDevices.getDisplayMedia({ video: true }).then(stream => {
+      const video = document.getElementById('doctor-local-video') as HTMLVideoElement;
+      if (video) { video.srcObject = stream; }
+      this.notifService.showInfo('🖥️ Partage d\'écran activé');
+    }).catch(() => this.notifService.showError('Partage d\'écran annulé.'));
+  }
+
+  // ── Aidant : recevoir l'appel ─────────────────────────────────────────
+
+  /** Polling aidant : cherche un appel entrant */
+  startAidantCallPolling(): void {
+    if (this.aidantCallPollingTimer) return;
+    this.aidantCallPollingTimer = setInterval(() => {
+      const state = this._readCallState();
+      if (state?.status === 'calling' && !this.incomingCall() && !this.showAidantVideoUI()) {
+        this.incomingCall.set({ roomId: state.roomId, doctorName: state.doctorName, patientName: state.patientName });
+        this.notifService.showInfo('📹 Demande de consultation à distance du médecin !');
+      }
+      if (state?.status === 'scheduled' && !this.incomingCall()) {
+        this.notifService.showInfo(`📅 Consultation planifiée le ${new Date(state.scheduledDate || '').toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`);
+        // Ne répéter qu'une fois
+        this._writeCallState({ ...state, status: 'scheduled_notified' });
+      }
+      if (state?.status === 'ended' && this.showAidantVideoUI()) {
+        this.endVideoCall(false);
+        this.notifService.showInfo('Le médecin a mis fin à la consultation.');
+      }
+    }, 2500);
+  }
+
+  async acceptCall(): Promise<void> {
+    const call = this.incomingCall();
+    if (!call) return;
+    this._writeCallState({ ...call, status: 'accepted' });
+    this.incomingCall.set(null);
+    this.showAidantVideoUI.set(true);
+    await this._startAidantCamera();
+  }
+
+  private async _startAidantCamera(): Promise<void> {
+    // Test mode : simuler avec un canvas animé
+    if (this.aidantTestMode()) {
+      this._startSimulatedCamera();
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      this.aidantCamStream.set(stream);
+      setTimeout(() => {
+        const video = document.getElementById('aidant-local-video') as HTMLVideoElement;
+        if (video) { video.srcObject = stream; video.play().catch(() => {}); }
+      }, 200);
+    } catch {
+      this.aidantTestMode.set(true);
+      this._startSimulatedCamera();
+    }
+  }
+
+  /** Caméra simulée par canvas animé (Mode Test PC unique) */
+  private _startSimulatedCamera(): void {
+    setTimeout(() => {
+      const canvas = document.getElementById('aidant-sim-canvas') as HTMLCanvasElement;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      let t = 0;
+      const draw = () => {
+        t += 0.02;
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, `hsl(${200 + Math.sin(t) * 30}, 60%, 25%)`);
+        grad.addColorStop(1, `hsl(${220 + Math.cos(t) * 30}, 50%, 15%)`);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('🔬 MODE TEST', canvas.width / 2, canvas.height / 2 - 14);
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = 'rgba(255,255,255,0.65)';
+        ctx.fillText('Caméra simulée', canvas.width / 2, canvas.height / 2 + 8);
+        requestAnimationFrame(draw);
+      };
+      draw();
+      const stream = (canvas as any).captureStream(15);
+      this.aidantCamStream.set(stream);
+    }, 300);
+  }
+
+  openDeclineCallModal(): void {
+    this.callDeclineReason.set('');
+    this.showDeclineCallModal.set(true);
+  }
+
+  declineCall(): void {
+    const call = this.incomingCall();
+    if (call) this._writeCallState({ ...call, status: 'declined', reason: this.callDeclineReason() });
+    this.incomingCall.set(null);
+    this.showDeclineCallModal.set(false);
+    this.notifService.showInfo('Consultation refusée. Le médecin a été notifié.');
+  }
+
+  openProposeTimeModal(): void {
+    this.proposeDate.set('');
+    this.proposeTime.set('');
+    this.showProposeTimeModal.set(true);
+  }
+
+  proposeOtherTime(): void {
+    const date = this.proposeDate();
+    const time = this.proposeTime();
+    if (!date || !time) { this.notifService.showError('Veuillez choisir une date et heure.'); return; }
+    const call = this.incomingCall();
+    if (call) {
+      this._writeCallState({ ...call, status: 'proposed', proposedDate: `${date}T${time}:00` });
+    }
+    this.incomingCall.set(null);
+    this.showProposeTimeModal.set(false);
+    this.notifService.showInfo(`Proposition envoyée : ${new Date(`${date}T${time}`).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}`);
+  }
+
+  // ── Helpers localStorage signalisation ───────────────────────────────
+
+  private _writeCallState(state: any): void {
+    try { localStorage.setItem(this.CALL_STATE_KEY, JSON.stringify(state)); } catch { /* silent */ }
+  }
+
+  private _readCallState(): any {
+    try { const raw = localStorage.getItem(this.CALL_STATE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  }
+
+  // ════════════════════════════════════════════════════════════
+  //  ÉTAPE 23 — RAPPELS RENDEZ-VOUS
+  // ════════════════════════════════════════════════════════════
+
+  loadAppointments(): void {
+    try {
+      const raw = localStorage.getItem(this.APPOINTMENTS_KEY);
+      this.scheduledAppointments.set(raw ? JSON.parse(raw) : []);
+    } catch { this.scheduledAppointments.set([]); }
+  }
+
+  private _saveAppointments(apts: VideoAppointment[]): void {
+    try { localStorage.setItem(this.APPOINTMENTS_KEY, JSON.stringify(apts)); } catch { /* silent */ }
+  }
+
+  /** Démarre le polling de rappels (toutes les 60s) */
+  startReminderPolling(): void {
+    if (this.reminderPollingTimer) return;
+    this.reminderPollingTimer = setInterval(() => this._checkReminders(), 60000);
+    this._checkReminders(); // vérification immédiate
+  }
+
+  private _checkReminders(): void {
+    const now = new Date().getTime();
+    const apts = this.scheduledAppointments();
+
+    apts.forEach(apt => {
+      if (apt.status !== 'scheduled') return;
+      const aptTime = new Date(apt.date).getTime();
+      const diffMin = (aptTime - now) / 60000;
+
+      // Rappel J-1 (entre 23h55 et 24h05 avant)
+      if (diffMin >= 1435 && diffMin <= 1445) {
+        this.notifService.showInfo(`📅 Rappel : Consultation demain à ${new Date(apt.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })} avec ${apt.doctorName}`);
+      }
+      // Rappel T-10 min
+      if (diffMin >= 9 && diffMin <= 11) {
+        this.notifService.showInfo(`⏰ Consultation dans 10 minutes ! Cliquez "Rejoindre" pour vous connecter.`);
+      }
+      // Absence après 5 min
+      if (diffMin <= -5 && diffMin >= -6) {
+        this.notifService.showError(`⚠️ L'aidant n'a pas rejoint la consultation planifiée.`);
+      }
+      // Annulation après 15 min
+      if (diffMin <= -15 && diffMin >= -16) {
+        const updated = apts.map(a => a.id === apt.id ? { ...a, status: 'missed' as const } : a);
+        this.scheduledAppointments.set(updated);
+        this._saveAppointments(updated);
+        this.notifService.showError(`❌ Rendez-vous manqué avec ${apt.patientName}. Séance annulée.`);
+      }
+    });
+  }
+
+  /** Rejoindre un rendez-vous planifié (aidant) */
+  joinScheduledCall(apt: VideoAppointment): void {
+    const state = this._readCallState();
+    if (state?.roomId === apt.roomId) {
+      this.incomingCall.set({ roomId: apt.roomId, doctorName: apt.doctorName, patientName: apt.patientName });
+    } else {
+      this.notifService.showError('Le médecin n\'a pas encore lancé la consultation.');
+    }
+  }
+
+  /** Ajouter au calendrier (format .ics) */
+  addToCalendar(apt: VideoAppointment): void {
+    const start = new Date(apt.date);
+    const end   = new Date(start.getTime() + 30 * 60000);
+    const fmt   = (d: Date) => d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
+    const ics = [
+      'BEGIN:VCALENDAR', 'VERSION:2.0',
+      'BEGIN:VEVENT',
+      `DTSTART:${fmt(start)}`,
+      `DTEND:${fmt(end)}`,
+      `SUMMARY:Consultation MemoriA avec ${apt.doctorName}`,
+      `DESCRIPTION:Consultation cognitive à distance`,
+      'END:VEVENT', 'END:VCALENDAR'
+    ].join('\r\n');
+    const blob = new Blob([ics], { type: 'text/calendar' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a'); a.href = url; a.download = 'consultation.ics'; a.click();
+    URL.revokeObjectURL(url);
   }
 
   startPatientTest(assignment: any): void {
