@@ -1,0 +1,26 @@
+<div class="login-page">
+  <div class="login-card">
+    <h1>Login</h1>
+    <p>Access your MemorIA account.</p>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <label>
+        Email
+        <input type="email" formControlName="email" />
+      </label>
+
+      <label>
+        Password
+        <input type="password" formControlName="password" />
+      </label>
+
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <button type="submit" [disabled]="isSubmitting">
+        {{ isSubmitting ? 'Signing in...' : 'Login' }}
+      </button>
+    </form>
+
+    <a routerLink="/signup">Create account</a>
+  </div>
+</div>
