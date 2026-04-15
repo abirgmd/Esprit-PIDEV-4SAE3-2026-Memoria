@@ -2,7 +2,6 @@ package com.med.cognitive.controller;
 
 import com.med.cognitive.dto.*;
 import com.med.cognitive.entity.Accompagnant;
-import com.med.cognitive.entity.AssignStatus;
 import com.med.cognitive.entity.Patient;
 import com.med.cognitive.entity.PatientTestAssign;
 import com.med.cognitive.entity.Soignant;
@@ -14,6 +13,7 @@ import com.med.cognitive.repository.SoignantRepository;
 import com.med.cognitive.service.AssignationService;
 import com.med.cognitive.service.CognitiveTestService;
 import com.med.cognitive.service.UserModuleService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,7 +46,7 @@ public class AssignationController {
     }
 
     @PostMapping("/personalized")
-    public ResponseEntity<PatientTestAssign> createPersonalized(@RequestBody PersonalizedTestRequest request) {
+    public ResponseEntity<PatientTestAssign> createPersonalized(@Valid @RequestBody PersonalizedTestRequest request) {
         return ResponseEntity.ok(assignationService.createPersonalizedAssignation(request));
     }
 
@@ -99,12 +99,15 @@ public class AssignationController {
     @GetMapping("/soignants/all")
     public ResponseEntity<List<Map<String, Object>>> getAllSoignantsList() {
         return ResponseEntity.ok(userService.getAllSoignants().stream()
-                .map(s -> Map.of(
-                    "id", (Object) s.getId(),
-                    "nom", (Object) s.getNom(),
-                    "prenom", (Object) s.getPrenom(),
-                    "email", (Object) (s.getEmail() != null ? s.getEmail() : "")
-                ))
+                .map(s -> {
+                    java.util.Map<String, Object> m = new java.util.HashMap<>();
+                    m.put("id", s.getId());
+                    m.put("nom", s.getNom());
+                    m.put("prenom", s.getPrenom());
+                    m.put("email", s.getEmail() != null ? s.getEmail() : "");
+                    m.put("specialite", s.getSpecialite() != null ? s.getSpecialite() : "Médecin");
+                    return m;
+                })
                 .collect(Collectors.toList()));
     }
 
@@ -194,104 +197,6 @@ public ResponseEntity<List<Map<String, Object>>> getAllPatientsWithMedecin() {
         return ResponseEntity.ok(patientsWithMedecin);
     } catch (Exception e) {
         return ResponseEntity.badRequest().body(List.of(Map.of("error", e.getMessage())));
-    }
-}
-
-@GetMapping("/dashboard/medecin/{soignantId}")
-public ResponseEntity<Map<String, Object>> getMedecinDashboard(@PathVariable Long soignantId) {
-    try {
-        Soignant medecin = userService.getSoignantById(soignantId);
-        if (medecin == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        List<Patient> patients = userService.getPatientsBySoignant(soignantId);
-        List<PatientTestAssign> assignations = assignationService.getAssignationsByMedecin(soignantId);
-        
-        long totalTests = assignations.size();
-        long completedTests = assignations.stream()
-                .filter(a -> a.getStatus() == AssignStatus.COMPLETED)
-                .count();
-        long inProgressTests = assignations.stream()
-                .filter(a -> a.getStatus() == AssignStatus.IN_PROGRESS)
-                .count();
-        
-        return ResponseEntity.ok(Map.of(
-            "medecin", Map.of(
-                "id", medecin.getId(),
-                "nom", medecin.getNom(),
-                "prenom", medecin.getPrenom(),
-                "email", medecin.getEmail(),
-                "specialite", medecin.getSpecialite()
-            ),
-            "statistics", Map.of(
-                "totalPatients", patients.size(),
-                "totalTests", totalTests,
-                "completedTests", completedTests,
-                "inProgressTests", inProgressTests
-            ),
-            "recentPatients", patients.stream()
-                    .limit(5)
-                    .map(p -> Map.of(
-                        "id", p.getId(),
-                        "nom", p.getNom(),
-                        "prenom", p.getPrenom(),
-                        "email", p.getEmail()
-                    ))
-                    .collect(Collectors.toList())
-        ));
-    } catch (Exception e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
-    }
-}
-
-@GetMapping("/dashboard/patient/{patientId}")
-public ResponseEntity<Map<String, Object>> getPatientDashboard(@PathVariable Long patientId) {
-    try {
-        Patient patient = userService.getPatientById(patientId);
-        if (patient == null) {
-            return ResponseEntity.notFound().build();
-        }
-        
-        List<PatientTestAssign> assignations = assignationService.getAssignationsByPatient(patientId);
-        Soignant soignant = patient.getSoignant();
-        
-        long totalTests = assignations.size();
-        long completedTests = assignations.stream()
-                .filter(a -> a.getStatus() == AssignStatus.COMPLETED)
-                .count();
-        
-        return ResponseEntity.ok(Map.of(
-            "patient", Map.of(
-                "id", patient.getId(),
-                "nom", patient.getNom(),
-                "prenom", patient.getPrenom(),
-                "email", patient.getEmail(),
-                "dateNaissance", patient.getDateNaissance(),
-                "sexe", patient.getSexe()
-            ),
-            "soignant", soignant != null ? Map.of(
-                "id", soignant.getId(),
-                "nom", soignant.getNom(),
-                "prenom", soignant.getPrenom(),
-                "specialite", soignant.getSpecialite()
-            ) : null,
-            "statistics", Map.of(
-                "totalTests", totalTests,
-                "completedTests", completedTests
-            ),
-            "recentTests", assignations.stream()
-                    .limit(5)
-                    .map(a -> Map.of(
-                        "id", a.getId(),
-                        "testName", a.getTest().getTitre(),
-                        "status", a.getStatus().toString(),
-                        "dateAssignation", a.getDateAssignation()
-                    ))
-                    .collect(Collectors.toList())
-        ));
-    } catch (Exception e) {
-        return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
     }
 }
 

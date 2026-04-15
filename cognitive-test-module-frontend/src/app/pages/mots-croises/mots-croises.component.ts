@@ -478,6 +478,6 @@ private readonly blockedSet = new Set<string>([
   }
 
   exit() {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/tests-cognitifs']);
   }
 }

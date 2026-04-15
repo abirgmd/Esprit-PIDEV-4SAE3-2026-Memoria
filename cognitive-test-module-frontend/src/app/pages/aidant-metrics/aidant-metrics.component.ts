@@ -1,38 +1,27 @@
 import { Component, OnInit, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { MetricsService, AidantMetrics } from '../../services/metrics.service';
-import { LucideAngularModule, TrendingUp, Users, CheckCircle, BarChart3, Calendar, Filter } from 'lucide-angular';
+import { MetricsService, AidantMetrics, ScoreGlobal } from '../../services/metrics.service';
+import { LucideAngularModule, TrendingUp, Users, CheckCircle, BarChart3, Calendar, Filter, Activity } from 'lucide-angular';
 
 @Component({
   selector: 'app-aidant-metrics',
   standalone: true,
-  imports: [
-    CommonModule,
-    LucideAngularModule
-  ],
+  imports: [CommonModule, LucideAngularModule],
   templateUrl: './aidant-metrics.component.html',
   styleUrls: ['./aidant-metrics.component.css']
 })
 export class AidantMetricsComponent implements OnInit {
-  readonly icons = {
-    TrendingUp,
-    Users,
-    CheckCircle,
-    BarChart3,
-    Calendar,
-    Filter
-  };
+  readonly icons = { TrendingUp, Users, CheckCircle, BarChart3, Calendar, Filter, Activity };
 
-  metrics = signal<AidantMetrics | null>(null);
-  aidantId = signal<number | null>(null);
-  selectedPeriod = signal<'current' | '6' | '12' | 'all'>('6'); // 6 derniers mois par défaut
+  metrics     = signal<AidantMetrics | null>(null);
+  scoreGlobal = signal<ScoreGlobal | null>(null);
+  aidantId    = signal<number | null>(null);
+  selectedPeriod = signal<'current' | '6' | '12' | 'all'>('6');
 
-  // Données simples pour affichage
   avgScoreByTypeEntries = computed(() => {
     const m = this.metrics();
-    if (!m) return [];
-    return Object.entries(m.avgScoreByType);
+    return m ? Object.entries(m.avgScoreByType) : [];
   });
 
   monthlyCountsEntries = computed(() => {
@@ -41,36 +30,39 @@ export class AidantMetricsComponent implements OnInit {
     const all = Object.entries(m.monthlyCounts);
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
     switch (this.selectedPeriod()) {
-      case 'current':
-        return all.filter(([k]) => k === currentMonth);
-      case '6':
-        return all.slice(-6);
-      case '12':
-        return all.slice(-12);
-      case 'all':
-      default:
-        return all;
+      case 'current': return all.filter(([k]) => k === currentMonth);
+      case '6':       return all.slice(-6);
+      case '12':      return all.slice(-12);
+      default:        return all;
     }
   });
 
-  // Score moyen calculé simplement : moyenne des scores des tests complétés
+  scoreGlobalEntries = computed(() => {
+    const sg = this.scoreGlobal();
+    return sg ? Object.entries(sg.scoreByType) : [];
+  });
+
+  /** Classes CSS Tailwind selon le code couleur du score global */
+  scoreGlobalClasses = computed(() => {
+    const sg = this.scoreGlobal();
+    if (!sg || sg.status === 'NON_EVALUABLE') return { badge: 'bg-gray-100 text-gray-500', bar: 'bg-gray-300' };
+    if (sg.colorCode === 'VERT')   return { badge: 'bg-green-100 text-green-700',  bar: 'bg-green-500'  };
+    if (sg.colorCode === 'JAUNE')  return { badge: 'bg-yellow-100 text-yellow-700', bar: 'bg-yellow-500' };
+    return                                { badge: 'bg-red-100 text-red-700',       bar: 'bg-red-500'    };
+  });
+
   avgScore = computed(() => {
     const m = this.metrics();
     if (!m || m.totalCompleted === 0) return 0;
-    // Récupérer tous les scores depuis avgScoreByType et faire la moyenne pondérée par nombre de tests
     const entries = Object.values(m.avgScoreByType);
-    if (entries.length === 0) return 0;
-    const sum = entries.reduce((s, v) => s + v, 0);
-    return sum / entries.length;
+    if (!entries.length) return 0;
+    return entries.reduce((s, v) => s + v, 0) / entries.length;
   });
 
-  // Taux de réussite : basé sur les scores > 0
   successRate = computed(() => {
     const m = this.metrics();
     if (!m || m.totalCompleted === 0) return 0;
-    // Si on a des scores positifs, on considère que c’est réussi
     const positiveScores = Object.values(m.avgScoreByType).filter(v => v > 0).length;
     return (positiveScores / m.totalCompleted) * 100;
   });
@@ -82,48 +74,57 @@ export class AidantMetricsComponent implements OnInit {
 
   ngOnInit() {
     this.route.queryParams.subscribe(params => {
-      const aidantId = params['aidantId'];
-      if (aidantId) {
-        this.aidantId.set(Number(aidantId));
-        this.metricsService.getMetricsForAidant(Number(aidantId)).subscribe({
+      const id = params['aidantId'];
+      if (id) {
+        const aidantId = Number(id);
+        this.aidantId.set(aidantId);
+
+        this.metricsService.getMetricsForAidant(aidantId).subscribe({
           next: data => this.metrics.set(data),
-          error: err => console.error('Erreur chargement métriques aidant', err)
+          error: err => console.error('Erreur métriques aidant', err)
+        });
+
+        this.metricsService.getScoreGlobalForAidant(aidantId).subscribe({
+          next: data => this.scoreGlobal.set(data),
+          error: err => console.error('Erreur score global', err)
         });
       }
     });
   }
 
   exportToCSV() {
-    const m = this.metrics();
+    const m  = this.metrics();
+    const sg = this.scoreGlobal();
     if (!m) return;
 
-    const csvRows = [
+    const rows: string[][] = [
       ['Métrique', 'Valeur'],
-      ['Total assigné', m.totalAssigned.toString()],
-      ['Total complété', m.totalCompleted.toString()],
+      ['Total assigné', String(m.totalAssigned)],
+      ['Total complété', String(m.totalCompleted)],
       ['Taux réussite (%)', m.successRate.toFixed(2)],
-      ['Score moyen (tests complétés)', this.avgScore().toFixed(2)]
     ];
 
-    // Ajouter les détails par type
-    csvRows.push(['']);
-    csvRows.push(['Score moyen par type de test']);
-    for (const [type, score] of this.avgScoreByTypeEntries()) {
-      csvRows.push([type, score.toFixed(2)]);
+    if (sg?.status === 'OK') {
+      rows.push(['Score global composite (z)', String(sg.globalScore)]);
+      rows.push(['Interprétation', sg.interpretation]);
+      rows.push(['Nombre de tests', String(sg.testCount)]);
+      rows.push(['']);
+      rows.push(['Score par type de test (z-score)']);
+      for (const [type, z] of Object.entries(sg.scoreByType)) {
+        rows.push([type, String(z)]);
+      }
     }
 
-    // Ajouter les comptes mensuels selon la période choisie
-    csvRows.push(['']);
-    csvRows.push(['Évolution mensuelle (période : ' + this.selectedPeriod() + ')']);
+    rows.push(['']);
+    rows.push(['Évolution mensuelle (période : ' + this.selectedPeriod() + ')']);
     for (const [month, count] of this.monthlyCountsEntries()) {
-      csvRows.push([month, count.toString()]);
+      rows.push([month, String(count)]);
     }
 
-    // Créer le contenu CSV
-    const csvContent = csvRows.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const csv  = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
     a.href = url;
     a.download = `aidant-metrics-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();

@@ -152,6 +152,71 @@ button:disabled {
   opacity: 0.5;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   CDK OVERLAY — centrage + z-index au-dessus de la sidebar
+   (la sidebar à z-index:1000 et transform: peuvent casser
+    position:fixed → on force le container en top-level fixed)
+═══════════════════════════════════════════════════════════════ */
+.cdk-overlay-container {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 1100 !important;
+  pointer-events: none;
+}
+
+.cdk-overlay-backdrop {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1 !important;
+  pointer-events: auto;
+}
+
+/* Wrapper qui centre la modale dans le viewport */
+.cdk-global-overlay-wrapper {
+  display: flex !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  align-items: center !important;
+  justify-content: center !important;
+  pointer-events: none;
+}
+
+.cdk-overlay-pane {
+  position: relative !important;
+  pointer-events: auto;
+  max-width: 95vw !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MODAL RECOMMANDATION — Override Angular Material dark theme
+═══════════════════════════════════════════════════════════════ */
+.recommendation-dialog .mat-mdc-dialog-container,
+.recommendation-dialog .mdc-dialog__surface {
+  background-color: #ffffff !important;
+  color: var(--text-dark) !important;
+  border-radius: 16px !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  box-shadow: 0 20px 60px rgba(84, 26, 117, 0.18) !important;
+  width: 620px !important;
+  max-width: 95vw !important;
+}
+
+/* Backdrop demi-transparent violet */
+.recommendation-dialog-backdrop {
+  background: rgba(44, 27, 71, 0.45) !important;
+  backdrop-filter: blur(3px);
+}
+
 /* FOCUS VISIBLE pour accessibilité */
 *:focus-visible {
   outline: 2px solid var(--primary);

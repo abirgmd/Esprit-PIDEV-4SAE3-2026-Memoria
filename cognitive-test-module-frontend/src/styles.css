@@ -1,3 +1,6 @@
+/* Angular Material prebuilt theme — requis pour éviter l'avertissement core theme */
+@import '@angular/material/prebuilt-themes/indigo-pink.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -47,6 +47,37 @@ export enum DifficultyLevel {
     AVANCE = 'AVANCE'
 }
 
+/**
+ * Énumérations pour les Recommandations et Décisions
+ */
+export enum PriorityLevel {
+    LOW = 'LOW',
+    MEDIUM = 'MEDIUM',
+    HIGH = 'HIGH',
+    URGENT = 'URGENT'
+}
+
+export enum RecommendStatus {
+    PENDING = 'PENDING',
+    IN_PROGRESS = 'IN_PROGRESS',
+    COMPLETED = 'COMPLETED',
+    DISMISSED = 'DISMISSED'
+}
+
+export enum DecisionSource {
+    AI_MODEL = 'AI_MODEL',
+    RULE_BASED = 'RULE_BASED',
+    MANUAL = 'MANUAL',
+    HYBRID = 'HYBRID'
+}
+
+export enum TypeTestEnum {
+    MEMORY = 'MEMORY',
+    LANGUAGE = 'LANGUAGE',
+    REFLECTION = 'REFLECTION',
+    CONFUSION = 'CONFUSION'
+}
+
 export interface CognitiveTest {
     id?: number;
     titre: string;
@@ -117,11 +148,12 @@ export interface Decision {
     id?: number;
     patientId: number;
     testResult?: TestResult;
+    testType?: TypeTestEnum;
     decisionType?: DecisionType;
     riskLevel?: 'FAIBLE' | 'MOYEN' | 'ELEVE' | 'CRITIQUE';
     confidence?: number;
     explanation?: string;
-    sourceType?: 'MANUAL' | 'AI_MODEL' | 'RULE_BASED' | 'HYBRID';
+    sourceType?: DecisionSource;
     createdAt?: string;
     createdBy?: string;
     approved?: boolean;
@@ -133,14 +165,21 @@ export interface Decision {
 export interface Recommendation {
     id?: number;
     decision?: Decision;
+    decisionId?: number;
     action: string;
-    priority?: 'FAIBLE' | 'MOYENNE' | 'ELEVEE' | 'URGENTE';
-    targetRole?: 'MEDECIN' | 'AIDANT' | 'PATIENT';
-    deadline?: string;
-    status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'DISMISSED';
+    priority: PriorityLevel;
+    targetRole: string; // 'CAREGIVER', 'MEDECIN', etc.
+    deadline: string;
+    status: RecommendStatus;
+    createdAt?: string;
+    clinicianId: number;
+    patientId: number;
     notes?: string;
     completedAt?: string;
     completedBy?: number;
+    updatedAt?: string;
+    testResultId?: number;
+    isNew?: boolean; // For UI purposes (highlight new items)
 }
 
 export interface UserDTO {
@@ -175,6 +214,7 @@ export interface AccompagnantDTO extends UserDTO {
     relation?: string;
     frequenceAccompagnement?: string;
     telephone?: string;
+    patientId?: number; // ID du patient lié à cet aidant
 }
 
 export interface AssignationRequest {

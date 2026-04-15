@@ -1,6 +1,7 @@
 package com.med.cognitive.validator;
 
 import com.med.cognitive.entity.Decision;
+import com.med.cognitive.entity.enums.DecisionSource;
 import com.med.cognitive.exception.BusinessLogicException;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +14,7 @@ public class DecisionValidator {
             }
         }
 
-        if (decision.getSourceType() == Decision.DecisionSource.AI_MODEL && decision.getConfidence() == null) {
+        if (decision.getSourceType() == DecisionSource.AI_MODEL && decision.getConfidence() == null) {
             throw new BusinessLogicException("AI decisions must have a confidence score");
         }
     }

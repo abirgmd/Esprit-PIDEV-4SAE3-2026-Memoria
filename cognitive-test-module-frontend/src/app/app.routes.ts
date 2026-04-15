@@ -1,15 +1,10 @@
 import { Routes } from '@angular/router';
 import { LayoutComponent } from './components/layout/layout.component';
-import { DashboardComponent } from './pages/dashboard/dashboard.component';
-import { PatientsComponent } from './pages/patients/patients.component';
-import { PatientDetailComponent } from './pages/patient-detail/patient-detail.component';
 import { TestsCognitifsComponent } from './pages/tests-cognitifs/tests-cognitifs.component';
 import { GestionTestsComponent } from './pages/gestion-tests/gestion-tests.component';
 import { PersonalizedTestFormComponent } from './pages/personalized-test-form/personalized-test-form.component';
 import { TestResultsComponent } from './pages/test-results/test-results.component';
-import { AnalysesComponent } from './pages/analyses/analyses.component';
 import { CalendarViewComponent } from './pages/calendar-view/calendar-view.component';
-import { ActivitiesComponent } from './pages/activities/activities.component';
 import { TestRunnerComponent } from './pages/test-runner/test-runner.component';
 import { Test5MotsComponent } from './pages/test-5mots/test-5mots.component';
 import { TestVisagesComponent } from './pages/test-visages/test-visages.component';
@@ -28,10 +23,7 @@ export const APP_ROUTES: Routes = [
     path: '',
     component: LayoutComponent,
     children: [
-      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { path: 'dashboard', component: DashboardComponent },
-      { path: 'patients', component: PatientsComponent },
-      { path: 'patients/:id', component: PatientDetailComponent },
+      { path: '', redirectTo: 'tests-cognitifs', pathMatch: 'full' },
       { path: 'tests-cognitifs', component: TestsCognitifsComponent },
       { path: 'personalized-test', component: PersonalizedTestFormComponent },
       { path: 'gestion-tests', component: GestionTestsComponent },
@@ -49,16 +41,14 @@ export const APP_ROUTES: Routes = [
       { path: 'test-mots-croises', component: MotsCroisesComponent },
       { path: 'test-tri-objets', component: TriObjetsComponent },
 
-      { path: 'analyses', component: AnalysesComponent },
       { path: 'calendar', component: CalendarViewComponent },
       { path: 'aidant-metrics', component: AidantMetricsComponent },
       { path: 'medecin-metrics', component: MedecinMetricsComponent },
-      { path: 'activites', component: ActivitiesComponent },
 
       // Test Results Route
       { path: 'test-results/:sessionId', component: TestResultsComponent },
 
-      { path: '**', redirectTo: 'dashboard' },
+      { path: '**', redirectTo: 'tests-cognitifs' },
     ]
   },
 ];

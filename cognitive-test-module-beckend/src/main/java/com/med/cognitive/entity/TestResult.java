@@ -37,6 +37,10 @@ public class TestResult {
     @Column(name = "score_percentage")
     private Double scorePercentage;
 
+    /** z-score individuel calculé au moment de la complétion du test */
+    @Column(name = "z_score")
+    private Double zScore;
+
     @Column(name = "completion_rate")
     private Double completionRate;
 

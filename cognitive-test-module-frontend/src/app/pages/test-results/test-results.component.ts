@@ -46,7 +46,7 @@ export class TestResultsComponent implements OnInit {
     const sessionId = this.route.snapshot.paramMap.get('sessionId');
     
     if (!sessionId) {
-      this.router.navigate(['/dashboard']);
+      this.router.navigate(['/tests-cognitifs']);
       return;
     }
 
@@ -92,7 +92,7 @@ export class TestResultsComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/tests-cognitifs']);
   }
 
   retakeTest(): void {

@@ -2,9 +2,16 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { LucideAngularModule, ChevronLeft, Plus, Trash2, Save, Image as ImageIcon, Music, Type, User } from 'lucide-angular';
+import { LucideAngularModule, ChevronLeft, Plus, Trash2, Save, Image as ImageIcon, Music, Type, User, Sparkles } from 'lucide-angular';
 import { AssignationService } from '../../services/assignation.service';
+import { GeminiService } from '../../services/gemini.service';
 import { PersonalizedTestRequest, PersonalizedTestItem, AccompagnantDTO } from '../../models/cognitive-models';
+
+export interface ValidationNotification {
+    type: 'error' | 'warning' | 'success';
+    title: string;
+    messages: string[];
+}
 
 @Component({
     selector: 'app-personalized-test-form',
@@ -17,6 +24,7 @@ export class PersonalizedTestFormComponent implements OnInit {
     private route = inject(ActivatedRoute);
     private router = inject(Router);
     private assignationService = inject(AssignationService);
+    private geminiService = inject(GeminiService);
 
     testType = signal<string>('');
     patientId = signal<number>(0);
@@ -32,14 +40,20 @@ export class PersonalizedTestFormComponent implements OnInit {
     // Items
     items = signal<PersonalizedTestItem[]>([]);
 
-    // Aidants List (Mocked or Fetched)
+    // Aidants List
     aidants = signal<AccompagnantDTO[]>([]);
-    
+
     // Patient and soignant data
     patientData = signal<any>(null);
     soignantData = signal<any>(null);
 
-    readonly icons = { ChevronLeft, Plus, Trash2, Save, ImageIcon, Music, Type, User };
+    // Validation state
+    notification = signal<ValidationNotification | null>(null);
+    submitting = signal<boolean>(false);
+    generatingAI = signal<boolean>(false);
+    invalidFields = signal<Set<string>>(new Set());
+
+    readonly icons = { ChevronLeft, Plus, Trash2, Save, ImageIcon, Music, Type, User, Sparkles };
 
     ngOnInit() {
         this.route.queryParams.subscribe(params => {
@@ -57,15 +71,12 @@ export class PersonalizedTestFormComponent implements OnInit {
     loadPatientData() {
         const patientId = this.patientId();
         if (patientId && patientId > 0) {
-            // Récupérer les données du patient avec son médecin
             this.assignationService.getAllPatientsWithMedecin().subscribe((patients: any[]) => {
                 const patient = patients.find(p => p.id === patientId);
                 if (patient) {
                     this.patientData.set(patient);
                     this.patientName.set(`${patient.prenom} ${patient.nom}`);
                     this.soignantData.set(patient.medecin);
-                    console.log('Patient trouvé:', patient);
-                    console.log('Médecin associé:', patient.medecin);
                 } else {
                     console.error('Patient non trouvé avec ID:', patientId);
                 }
@@ -87,20 +98,16 @@ export class PersonalizedTestFormComponent implements OnInit {
             default: title = 'Test Personnalisé';
         }
         this.testTitle.set(title);
-
-        // Add one empty item by default
         this.addItem();
     }
 
     loadAidants() {
-        // Fetch aidants for the patient or global
         this.assignationService.getAllAidants().subscribe((aidants: AccompagnantDTO[]) => {
             this.aidants.set(aidants);
         });
     }
 
     addItem() {
-        // Default structure based on type
         const newItem: PersonalizedTestItem = {
             question: '',
             reponse: '',
@@ -108,7 +115,6 @@ export class PersonalizedTestFormComponent implements OnInit {
             metadata: {}
         };
 
-        // Pre-fill question text based on type expectations to guide user?
         if (this.testType() === 'FACES') newItem.question = 'Qui est cette personne ?';
         if (this.testType() === 'RELATIVES') newItem.question = 'Qui est sur cette photo ?';
         if (this.testType() === 'SCENTS') newItem.question = 'Quelle odeur est-ce ?';
@@ -116,90 +122,114 @@ export class PersonalizedTestFormComponent implements OnInit {
         if (this.testType() === 'SONGS') newItem.question = 'Reconnaissez-vous cette chanson ?';
 
         this.items.update(items => [...items, newItem]);
+        this.clearNotification();
     }
 
     removeItem(index: number) {
         this.items.update(items => items.filter((_, i) => i !== index));
     }
 
-    // File Upload Helper (Simulated)
     onFileSelected(event: any, index: number) {
         const file = event.target.files[0];
         if (file) {
-            // In a real app, upload to server and get URL.
-            // Here we use a fake URL or base64 for demo if possible, or just a placeholder name
-            // "image_url = chemin de l'image uploadée"
             const fakeUrl = `assets/uploads/${file.name}`;
-
             this.items.update(items => {
                 const updated = [...items];
                 updated[index].imageUrl = fakeUrl;
-                // also store filename in metadata if needed
                 return updated;
             });
         }
     }
 
-    submitForm() {
-        // Validation
-        if (!this.dateLimite()) {
-            alert('⚠️ Veuillez définir une DATE LIMITE');
-            return;
+    clearNotification() {
+        this.notification.set(null);
+        this.invalidFields.set(new Set());
+    }
+
+    isFieldInvalid(field: string): boolean {
+        return this.invalidFields().has(field);
+    }
+
+    private validateLocally(): string[] {
+        const errors: string[] = [];
+        const invalid = new Set<string>();
+
+        if (!this.dateLimite() || this.dateLimite().trim() === '') {
+            errors.push('La date limite est obligatoire');
+            invalid.add('dateLimite');
         }
 
         if (this.items().length === 0) {
-            alert('⚠️ Veuillez ajouter au moins un élément au test');
-            return;
+            errors.push('Le test doit contenir au moins un élément');
         }
 
-        // Validate each item based on type
         for (let i = 0; i < this.items().length; i++) {
             const item = this.items()[i];
 
             if (!item.question || item.question.trim() === '') {
-                alert(`⚠️ Item ${i + 1}: La QUESTION est obligatoire`);
-                return;
+                errors.push(`Élément ${i + 1} : La question est obligatoire`);
+                invalid.add(`item_${i}_question`);
             }
 
             if (!item.reponse || item.reponse.trim() === '') {
-                alert(`⚠️ Item ${i + 1}: La RÉPONSE est obligatoire`);
-                return;
+                errors.push(`Élément ${i + 1} : La réponse est obligatoire`);
+                invalid.add(`item_${i}_reponse`);
             }
 
             if (this.testType() === 'FACES' || this.testType() === 'RELATIVES') {
                 if (!item.metadata['nom'] || item.metadata['nom'].trim() === '') {
-                    alert(`⚠️ Item ${i + 1}: Le NOM est obligatoire`);
-                    return;
+                    errors.push(`Élément ${i + 1} : Le nom de la personne est obligatoire`);
+                    invalid.add(`item_${i}_nom`);
                 }
                 if (!item.metadata['lien'] || item.metadata['lien'].trim() === '') {
-                    alert(`⚠️ Item ${i + 1}: Le LIEN avec le patient est obligatoire`);
-                    return;
+                    errors.push(`Élément ${i + 1} : Le lien avec le patient est obligatoire`);
+                    invalid.add(`item_${i}_lien`);
                 }
             }
 
             if (this.testType() === 'SCENTS') {
                 if (!item.metadata['description'] || item.metadata['description'].trim() === '') {
-                    alert(`⚠️ Item ${i + 1}: La DESCRIPTION de l'odeur est obligatoire`);
-                    return;
+                    errors.push(`Élément ${i + 1} : La description de l'odeur est obligatoire`);
+                    invalid.add(`item_${i}_description`);
                 }
             }
 
             if (this.testType() === 'SONGS') {
                 if (!item.metadata['titre'] || item.metadata['titre'].trim() === '') {
-                    alert(`⚠️ Item ${i + 1}: Le TITRE de la chanson est obligatoire`);
-                    return;
+                    errors.push(`Élément ${i + 1} : Le titre de la chanson est obligatoire`);
+                    invalid.add(`item_${i}_titre`);
                 }
                 if (!item.metadata['artiste'] || item.metadata['artiste'].trim() === '') {
-                    alert(`⚠️ Item ${i + 1}: L'ARTISTE est obligatoire`);
-                    return;
+                    errors.push(`Élément ${i + 1} : L'artiste est obligatoire`);
+                    invalid.add(`item_${i}_artiste`);
                 }
             }
         }
 
-        // Créer la requête SANS soignantId (il sera récupéré automatiquement)
+        this.invalidFields.set(invalid);
+        return errors;
+    }
+
+    submitForm() {
+        this.clearNotification();
+        const localErrors = this.validateLocally();
+
+        if (localErrors.length > 0) {
+            this.notification.set({
+                type: 'error',
+                title: 'Veuillez corriger les erreurs suivantes :',
+                messages: localErrors
+            });
+            // Scroll to top of form
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        this.submitting.set(true);
+
         const request: PersonalizedTestRequest = {
             patientId: this.patientId(),
-            soignantId: undefined, // Sera récupéré automatiquement depuis le patient
+            soignantId: undefined,
             accompagnantId: this.selectedAidantId() || undefined,
             titre: `${this.testTitle()} - ${this.patientName()}`,
             description: `Test personnalisé de type ${this.testType()}`,
@@ -209,20 +239,96 @@ export class PersonalizedTestFormComponent implements OnInit {
             items: this.items()
         };
 
-        console.log('Submitting Personalized Test:', request);
-        console.log('Médecin qui sera assigné automatiquement:', this.soignantData());
-
         this.assignationService.createPersonalizedAssignation(request).subscribe({
-            next: (res: any) => {
-                alert('✅ Test créé et assigné avec succès !\nMédecin assigné automatiquement: ' + 
-                      (this.soignantData()?.prenom + ' ' + this.soignantData()?.nom || 'Non spécifié'));
-                this.router.navigate(['/tests-cognitifs']); // Back to dashboard
+            next: () => {
+                this.submitting.set(false);
+                this.notification.set({
+                    type: 'success',
+                    title: 'Test créé avec succès',
+                    messages: [
+                        'Le test personnalisé a été créé et assigné.',
+                        'Médecin assigné automatiquement : ' +
+                        (this.soignantData()
+                            ? `${this.soignantData().prenom} ${this.soignantData().nom}`
+                            : 'Non spécifié')
+                    ]
+                });
+                setTimeout(() => this.router.navigate(['/tests-cognitifs']), 1800);
             },
             error: (err: any) => {
-                console.error('Error creating test:', err);
-                console.error('Error details:', err.error);
-                const errorMsg = err.error?.message || err.message || 'Erreur inconnue';
-                alert(`❌ Erreur: ${errorMsg}`);
+                this.submitting.set(false);
+                const body = err.error;
+
+                // Backend validation errors (HTTP 400 with validationErrors map)
+                if (body?.validationErrors && Object.keys(body.validationErrors).length > 0) {
+                    const messages = Object.entries(body.validationErrors)
+                        .map(([field, msg]) => `${this.formatFieldName(field)} : ${msg}`);
+                    this.notification.set({
+                        type: 'error',
+                        title: body.message || 'Erreur de validation',
+                        messages
+                    });
+                } else {
+                    const type = body?.severity === 'WARNING' ? 'warning' : 'error';
+                    this.notification.set({
+                        type,
+                        title: body?.error || 'Erreur',
+                        messages: [body?.message || err.message || 'Une erreur inattendue est survenue.']
+                    });
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        });
+    }
+
+    private formatFieldName(field: string): string {
+        const labels: Record<string, string> = {
+            patientId: 'Patient',
+            titre: 'Titre',
+            dateLimitString: 'Date limite',
+            items: 'Éléments',
+            'items[0].question': 'Élément 1 - Question',
+            'items[0].reponse': 'Élément 1 - Réponse',
+        };
+        return labels[field] ?? field;
+    }
+
+    generateWithAI() {
+        this.generatingAI.set(true);
+        this.clearNotification();
+        this.geminiService.generateTestItems(
+            this.testType(),
+            this.stage(),
+            this.patientName(),
+            3
+        ).subscribe({
+            next: (items) => {
+                this.generatingAI.set(false);
+                if (items.length === 0) {
+                    this.notification.set({
+                        type: 'warning',
+                        title: 'Génération IA',
+                        messages: ['Aucun élément généré. Vérifiez votre clé API Gemini dans environment.ts']
+                    });
+                    return;
+                }
+                this.items.set(items);
+                this.notification.set({
+                    type: 'success',
+                    title: 'Génération IA réussie',
+                    messages: [`${items.length} question(s) générée(s) par Gemini AI pour le stade ${this.stage()}.`]
+                });
+            },
+            error: (err: any) => {
+                this.generatingAI.set(false);
+                const is429 = err?.status === 429;
+                this.notification.set({
+                    type: is429 ? 'warning' : 'error',
+                    title: is429 ? 'Limite de requêtes atteinte' : 'Erreur Gemini AI',
+                    messages: [is429
+                        ? 'Trop de requêtes envoyées. Attendez ~1 minute et réessayez (limite gratuite : 15 req/min).'
+                        : 'Impossible de contacter l\'API Gemini. Vérifiez votre clé API dans environment.ts']
+                });
             }
         });
     }

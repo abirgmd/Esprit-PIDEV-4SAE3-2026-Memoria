@@ -453,6 +453,184 @@
     }
 }
 
+/* ====================================================
+   VALIDATION — Couleurs claires et professionnelles
+   ==================================================== */
+
+/* Notification banner */
+.validation-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: var(--radius-md);
+    border-left: 5px solid;
+    margin-bottom: var(--spacing-lg);
+    animation: bannerSlideIn 0.3s ease-out;
+}
+
+@keyframes bannerSlideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.validation-banner.error {
+    background: #FEF2F2;
+    border-color: #EF4444;
+    color: #7F1D1D;
+}
+
+.validation-banner.warning {
+    background: #FFFBEB;
+    border-color: #F59E0B;
+    color: #78350F;
+}
+
+.validation-banner.success {
+    background: #F0FDF4;
+    border-color: #10B981;
+    color: #064E3B;
+}
+
+.banner-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.validation-banner.error   .banner-icon { background: #FEE2E2; color: #DC2626; }
+.validation-banner.warning .banner-icon { background: #FEF3C7; color: #D97706; }
+.validation-banner.success .banner-icon { background: #D1FAE5; color: #059669; }
+
+.banner-content {
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.banner-content strong {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.banner-list {
+    margin: 0.4rem 0 0 0;
+    padding-left: 1.2rem;
+}
+
+.banner-list li {
+    margin: 0.2rem 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.banner-single {
+    margin: 0.25rem 0 0 0;
+    font-size: 0.875rem;
+}
+
+.banner-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.55;
+    font-size: 0.85rem;
+    padding: 0.2rem 0.4rem;
+    border-radius: 4px;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+    align-self: flex-start;
+}
+
+.banner-close:hover { opacity: 1; }
+
+/* Field-level errors */
+.form-group input.field-invalid,
+.form-group textarea.field-invalid,
+.form-group select.field-invalid {
+    border-color: #EF4444 !important;
+    background: #FFF5F5 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+.field-error-msg {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: #DC2626;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.3rem;
+    animation: bannerSlideIn 0.2s ease-out;
+}
+
+.field-error-msg::before {
+    content: '!';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    background: #EF4444;
+    color: white;
+    border-radius: 50%;
+    font-size: 0.65rem;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+/* Item card error state */
+.form-item-card.has-error {
+    border-color: #FECACA;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.02) 0%, rgba(220, 38, 38, 0.02) 100%);
+}
+
+.form-item-card.has-error .item-header {
+    border-bottom-color: #FECACA;
+}
+
+/* Radio group error state */
+.radio-group.radio-invalid {
+    padding: 0.5rem;
+    border: 1.5px solid #EF4444;
+    border-radius: var(--radius-sm);
+    background: #FFF5F5;
+}
+
+/* Required star */
+.required-star {
+    color: #EF4444;
+    font-size: 1rem;
+    margin-left: 2px;
+}
+
+/* Submit spinner */
+.spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ====================================================
+   END VALIDATION STYLES
+   ==================================================== */
+
 @media (max-width: 480px) {
     .test-form-container {
         border-radius: var(--radius-md);
@@ -473,4 +651,63 @@
     .file-upload {
         padding: var(--spacing-md);
     }
+}
+
+/* ── Gemini AI Button ───────────────────────────────────────────────────────── */
+
+.ai-generate-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.btn-ai-generate {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, #6366F1, #8B5CF6);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.btn-ai-generate:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+}
+
+.btn-ai-generate:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.ai-hint {
+    font-size: 0.8rem;
+    color: var(--text-muted, #6B7280);
+    font-style: italic;
+}
+
+.spinner-ai {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }

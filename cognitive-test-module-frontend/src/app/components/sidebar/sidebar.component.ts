@@ -5,7 +5,6 @@ import {
   LucideAngularModule,
   LayoutDashboard,
   Brain,
-  BarChart3,
   Bell,
   Users,
   MessageCircle,
@@ -49,83 +48,9 @@ export class SidebarComponent {
 
   menuItems: MenuItem[] = [
     {
-      path: '/',
-      label: 'Dashboard',
-      icon: LayoutDashboard
-    },
-    {
       path: '/tests-cognitifs',
       label: 'Tests cognitifs',
       icon: Brain      
-    },
-    {
-      path: '/diagnosis',
-      label: 'Diagnostic',
-      icon: Stethoscope,
-      children: [
-        { path: '/diagnosis', label: 'Dashboard' },
-        { path: '/diagnosis/create', label: 'Nouveau test' }
-      ]
-    },
-    {
-      path: '/treatment',
-      label: 'Traitement',
-      icon: Shield,
-      children: [
-        { path: '/treatment', label: 'Dashboard' },
-        { path: '/treatment/zones/create', label: 'Créer une zone' },
-        { path: '/treatment/tracking', label: 'Tracking GPS' }
-      ]
-    },
-    {
-      path: '/analyses',
-      label: 'Analyses',
-      icon: BarChart3
-    },
-    {
-      path: '/alertes',
-      label: 'Alertes',
-      icon: Bell,
-      children: [
-        { path: '/alertes', label: 'Dashboard' },
-        { path: '/alertes/create', label: 'Créer une alerte' },
-        { path: '/alertes/reports', label: 'Rapports' }
-      ]
-    },
-    {
-      path: '/planning',
-      label: 'Planning',
-      icon: Calendar,
-      children: [
-        { path: '/planning/calendar', label: 'Calendrier' },
-        { path: '/planning/scheduling', label: 'Planification' },
-        { path: '/planning/tasks', label: 'Tâches' },
-        { path: '/planning/availability', label: 'Disponibilités' }
-      ]
-    },
-    {
-      path: '/patients',
-      label: 'Dossiers patients',
-      icon: Users
-    },
-    {
-      path: '/communaute',
-      label: 'Communauté',
-      icon: MessageCircle,
-      children: [
-        { path: '/communaute', label: 'Communautés' },
-        { path: '/communaute/analytics', label: 'Analytics' }
-      ]
-    },
-    {
-      path: '/activites',
-      label: 'Activités',
-      icon: Activity
-    },
-    {
-      path: '/parametres',
-      label: 'Paramètres',
-      icon: Settings
     }
   ];
 

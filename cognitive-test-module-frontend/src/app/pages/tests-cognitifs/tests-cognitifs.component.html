@@ -583,6 +583,47 @@
                 </div>
             </div>
         </div>
+
+        <!-- Actions rapides (sous Mes recommandations) -->
+        <div class="quick-actions-section">
+            <div class="quick-actions-header">
+                <h2>Actions rapides</h2>
+                <span>Acces direct aux operations du medecin</span>
+            </div>
+            <div class="quick-actions-grid">
+                <button class="quick-action-card primary" (click)="showNewTestModal.set(true)">
+                    <lucide-icon [img]="icons.Plus" size="20"></lucide-icon>
+                    <div>
+                        <strong>Assigner test</strong>
+                        <p>Creer une nouvelle assignation</p>
+                    </div>
+                </button>
+
+                <button class="quick-action-card success" (click)="openNewRecommendationDialog()">
+                    <lucide-icon [img]="icons.ClipboardCheck" size="20"></lucide-icon>
+                    <div>
+                        <strong>Recommandation</strong>
+                        <p>Prescrire une action a l'aidant</p>
+                    </div>
+                </button>
+
+                <button class="quick-action-card light" (click)="openCalendar()">
+                    <lucide-icon [img]="icons.Calendar" size="20"></lucide-icon>
+                    <div>
+                        <strong>Calendrier</strong>
+                        <p>Voir les rendez-vous et rappels</p>
+                    </div>
+                </button>
+
+                <button class="quick-action-card danger" (click)="selectedRole.set(null)">
+                    <lucide-icon [img]="icons.ChevronRight" size="20" style="transform: rotate(180deg);"></lucide-icon>
+                    <div>
+                        <strong>Changer role</strong>
+                        <p>Retour a la selection des roles</p>
+                    </div>
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- ══════════════════════════════════════════════════════════
@@ -2157,108 +2198,6 @@
                     📹 Rejoindre
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- ══════════════════════════════════════════════════════════
-         ÉTAPE 25 — TABLEAU RÉCAPITULATIF (médecin)
-    ══════════════════════════════════════════════════════════ -->
-    <div *ngIf="selectedRole() === 'medecin'" class="features-summary-table-section">
-        <div class="features-table-header">
-            <h3>📊 Fonctionnalités avancées — Tableau récapitulatif</h3>
-        </div>
-        <div class="features-table-wrapper">
-            <table class="features-table">
-                <thead>
-                    <tr>
-                        <th>Fonctionnalité</th>
-                        <th>Déclencheur</th>
-                        <th>Acteur récepteur</th>
-                        <th>Difficulté</th>
-                        <th>Statut</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>📹 Visio immédiate</td>
-                        <td>Médecin</td>
-                        <td>Aidant</td>
-                        <td><span class="diff-badge diff-medium">Moyenne</span></td>
-                        <td><span class="status-badge status-active">✅ Actif</span></td>
-                    </tr>
-                    <tr>
-                        <td>📅 Visio planifiée</td>
-                        <td>Médecin</td>
-                        <td>Aidant</td>
-                        <td><span class="diff-badge diff-medium">Moyenne</span></td>
-                        <td><span class="status-badge status-active">✅ Actif</span></td>
-                    </tr>
-                    <tr>
-                        <td>🔄 Proposition autre horaire</td>
-                        <td>Aidant</td>
-                        <td>Médecin</td>
-                        <td><span class="diff-badge diff-easy">Faible</span></td>
-                        <td><span class="status-badge status-active">✅ Actif</span></td>
-                    </tr>
-                    <tr>
-                        <td>⏰ Rappel automatique</td>
-                        <td>Système (J-1, T-10min)</td>
-                        <td>Aidant</td>
-                        <td><span class="diff-badge diff-easy">Faible</span></td>
-                        <td><span class="status-badge status-active">✅ Actif</span></td>
-                    </tr>
-                    <tr>
-                        <td>🔬 Test mono-PC (caméra simulée)</td>
-                        <td>Développeur</td>
-                        <td>Médecin + Aidant</td>
-                        <td><span class="diff-badge diff-easy">Faible</span></td>
-                        <td><span class="status-badge status-active">✅ Actif</span></td>
-                    </tr>
-                    <tr>
-                        <td>💬 Messagerie aidant ↔ médecin</td>
-                        <td>Aidant / Médecin</td>
-                        <td>Médecin / Aidant</td>
-                        <td><span class="diff-badge diff-easy">Faible</span></td>
-                        <td><span class="status-badge status-active">✅ Actif</span></td>
-                    </tr>
-                    <tr>
-                        <td>🔔 Notifications temps réel</td>
-                        <td>Système</td>
-                        <td>Aidant / Médecin</td>
-                        <td><span class="diff-badge diff-easy">Faible</span></td>
-                        <td><span class="status-badge status-active">✅ Actif</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div class="features-test-guide">
-            <h4>🖥️ Guide test sur PC unique (Étape 24)</h4>
-            <div class="test-guide-grid">
-                <div class="test-guide-card">
-                    <div class="test-guide-browser chrome">Chrome</div>
-                    <strong>Rôle : Médecin</strong>
-                    <ul>
-                        <li>Liste des patients</li>
-                        <li>Créer recommandations</li>
-                        <li>Lancer consultation vidéo</li>
-                        <li>Caméra RÉELLE</li>
-                    </ul>
-                </div>
-                <div class="test-guide-divider">⟷</div>
-                <div class="test-guide-card">
-                    <div class="test-guide-browser firefox">Firefox</div>
-                    <strong>Rôle : Aidant</strong>
-                    <ul>
-                        <li>Recevoir notifications</li>
-                        <li>Accepter/refuser visio</li>
-                        <li>Changer statut recos</li>
-                        <li>Caméra SIMULÉE 🔬</li>
-                    </ul>
-                </div>
-            </div>
-            <p class="test-guide-note">
-                💡 Les deux onglets partagent le même <code>localStorage</code> — les notifications et l'état de l'appel se synchronisent automatiquement entre les navigateurs du même navigateur. Pour deux navigateurs différents, utilisez l'extension <em>localStorage Sync</em> ou relancez la consultation manuellement dans chaque onglet.
-            </p>
         </div>
     </div>
 

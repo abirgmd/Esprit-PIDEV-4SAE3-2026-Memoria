@@ -35,15 +35,6 @@ export class AssignationService {
         return this.http.get<any>(`${this.apiUrl}/patient/${patientId}/soignant`);
     }
 
-    // Dashboards dynamiques
-    getMedecinDashboard(soignantId: number): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/dashboard/medecin/${soignantId}`);
-    }
-
-    getPatientDashboard(patientId: number): Observable<any> {
-        return this.http.get<any>(`${this.apiUrl}/dashboard/patient/${patientId}`);
-    }
-
     // Anciens endpoints conservés pour compatibilité
     getPatientsByMedecin(soignantId: number): Observable<PatientDTO[]> {
         return this.http.get<PatientDTO[]>(`${this.apiUrl}/medecin/${soignantId}/patients`);
