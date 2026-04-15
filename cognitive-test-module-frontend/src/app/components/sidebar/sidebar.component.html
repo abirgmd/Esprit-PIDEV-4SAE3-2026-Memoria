@@ -1,0 +1,72 @@
+<ng-container>
+  <!-- Mobile overlay -->
+  <div *ngIf="mobileOpen()" class="sidebar-overlay" (click)="mobileOpen.set(false)" aria-hidden="true">
+  </div>
+
+  <!-- Sidebar -->
+  <aside [class.sidebar]="true" [class.sidebar-mobile-open]="mobileOpen()">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="logo-icon">
+        <lucide-icon [img]="icons.Brain" size="32" strokeWidth="2.5"></lucide-icon>
+      </div>
+      <h1 class="logo-text">Memoria</h1>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar-nav" aria-label="Navigation principale">
+      <p class="nav-section-title">Navigation</p>
+      <ul class="nav-list">
+        <li *ngFor="let item of menuItems" class="nav-item">
+          <!-- Items with children -->
+          <ng-container *ngIf="item.children">
+            <div class="nav-link-wrapper">
+              <a [routerLink]="item.path" class="nav-link" [routerLinkActiveOptions]="{ exact: false }"
+                routerLinkActive="nav-link-active" (click)="onNavClick()">
+                <span class="nav-link-content">
+                  <span class="nav-icon">
+                    <lucide-icon [img]="item.icon" size="20"></lucide-icon>
+                  </span>
+                  <span class="nav-label">{{ item.label }}</span>
+                </span>
+              </a>
+              <button class="nav-expand-btn" (click)="toggleMenu(item.path); $event.stopPropagation()"
+                [attr.aria-expanded]="isExpanded(item.path)"
+                [attr.aria-label]="(isExpanded(item.path) ? 'Fermer' : 'Ouvrir') + ' le sous-menu ' + item.label">
+                <lucide-icon *ngIf="isExpanded(item.path)" [img]="icons.ChevronDown" size="16"></lucide-icon>
+                <lucide-icon *ngIf="!isExpanded(item.path)" [img]="icons.ChevronRight" size="16"></lucide-icon>
+              </button>
+            </div>
+            <!-- Submenu -->
+            <ul class="nav-submenu" *ngIf="isExpanded(item.path)">
+              <li *ngFor="let child of item.children">
+                <a [routerLink]="child.path" class="nav-link nav-link-child" routerLinkActive="nav-link-active"
+                  (click)="onNavClick()">
+                  {{ child.label }}
+                </a>
+              </li>
+            </ul>
+          </ng-container>
+
+          <!-- Items without children -->
+          <ng-container *ngIf="!item.children">
+            <a [routerLink]="item.path" class="nav-link" [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+              routerLinkActive="nav-link-active" (click)="onNavClick()">
+              <span class="nav-link-content">
+                <span class="nav-icon">
+                  <lucide-icon [img]="item.icon" size="20"></lucide-icon>
+                </span>
+                <span class="nav-label">{{ item.label }}</span>
+              </span>
+            </a>
+          </ng-container>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Mobile toggle button -->
+  <button class="sidebar-mobile-toggle" (click)="mobileOpen.set(!mobileOpen())" aria-label="Toggle menu">
+    <lucide-icon [img]="icons.LayoutDashboard" size="24"></lucide-icon>
+  </button>
+</ng-container>

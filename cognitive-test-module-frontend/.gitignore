@@ -1,0 +1,19 @@
+node_modules
+
+.angular/
+dist/
+
+.idea/
+.vscode/
+*.iml
+
+.windsurf/
+
+# Backend build outputs
+**/target/
+
+# Local Maven distribution artifacts (should not be versioned)
+cognitive-test-module-beckend/apache-maven-3.9.6/
+cognitive-test-module-beckend/maven_portable/
+cognitive-test-module-beckend/maven.zip
+cognitive-test-module-beckend/package.log
