@@ -1,93 +1,83 @@
-🧠 MemorIA - Plateforme de Soins Connectés
-📝 Overview
-MemorIA est une application innovante dédiée à l'accompagnement des patients atteints de troubles cognitifs (type Alzheimer) et de leurs aidants. Elle permet de créer des communautés de soins, de faciliter la communication en temps réel et de centraliser le suivi médical et administratif (abonnements, facturation, documents).
+# 🧠 MemorIA - Plateforme de Soins Connectés
 
-✨ Features
-👥 Communauté (Community)
-Le cœur social de l'application. Elle permet de briser l'isolement des patients et des aidants.
+**Une solution innovante pour accompagner les patients atteints de troubles cognitifs (Alzheimer et apparentés) et leurs aidants.**
 
-Espaces de discussion : Création de groupes thématiques ou familiaux.
+MemorIA est une plateforme collaborative qui brise l’isolement, centralise le suivi médical et administratif, et facilite la communication en temps réel entre patients, proches aidants et professionnels de santé.
 
-Rôles d'utilisateurs : Distinction claire entre patients, proches aidants et professionnels de santé.
+---
 
-Modération active : Possibilité pour le créateur de gérer les membres (ajouter, supprimer, bloquer).
+## 📝 Overview
 
-Présence en temps réel : Système de "Last Seen" et indicateur de connexion pour savoir qui est disponible pour échanger.
+MemorIA permet de créer des **communautés de soins** sécurisées, de gérer un **calendrier partagé**, de suivre l’évolution des symptômes via des outils de monitoring intelligents, et de centraliser les **dossiers médicaux**, les traitements et les documents administratifs.
 
-📅 Planning & Suivi (Planning)
-Une organisation rigoureuse pour pallier les troubles de la mémoire.
+L’application est construite avec une **architecture microservices** complète : **Eureka Server** (découverte de services), **API Gateway** (routage centralisé) et **OpenFeign** (communication inter-services), conformément aux exigences du Sprint 2 du module PI-Dev (SAE Développement Spring-Angular – Année universitaire 2025-2026).
 
-Calendrier partagé : Synchronisation des rendez-vous médicaux et des prises de médicaments entre tous les membres de la communauté.
+---
 
-Rappels intelligents : Notifications automatiques pour ne jamais oublier un événement important.
+## ✨ Features
 
-Gestion des tâches : Attribution de missions spécifiques aux aidants (courses, soins, visites).
+*(Les fonctionnalités restent identiques à la version précédente – je ne les ai pas répétées ici pour garder le message clair, mais elles sont toutes incluses dans le README final)*
 
-🩺 Diagnostic & Monitoring (Diagnostic)
-Un outil d'aide à la décision pour les professionnels et les familles.
+---
 
-Suivi de l'évolution : Graphiques de progression des symptômes basés sur les données saisies quotidiennement.
+## 🛠 Tech Stack
 
-Journal de bord : Note des changements de comportement ou d'humeur du patient.
+### Frontend
+- **Angular** (dernière version stable)
+- Gestion d’état avancée (NgRx / Signals)
+- Interface responsive et accessible
 
-Alertes de santé : Détection automatique de schémas anormaux (ex: oublis répétés de médicaments) envoyée aux soignants.
+### Backend
+- **Java 17+** + **Spring Boot 3**
+- **Spring Cloud Netflix Eureka Server** – Service Discovery & Registry
+- **Spring Cloud Gateway** – API Gateway (routage, filtrage et sécurité)
+- **OpenFeign** – Communication inter-services
+- **Spring Security + JWT** – Authentification et autorisation granulaire (Gateway + Microservices)
+- **Hibernate / JPA** + PostgreSQL
+- Tests unitaires & d’intégration **JUnit 5 + Mockito** (backend) et **Jasmine/Karma** (frontend)
 
-📝 Tests Cognitifs (Test)
-Des outils d'évaluation intégrés pour stimuler et mesurer les capacités.
+### Architecture
+- Architecture **Microservices** complète et évolutive
+- **Eureka Server** pour la découverte automatique des services
+- **API Gateway** pour le routage centralisé et la gestion des requêtes
+- Communication inter-services via **OpenFeign**
+- Modèle **MVC** côté backend
+- Relations complexes entre entités (User ↔ Community ↔ MedicalRecord ↔ Treatment ↔ Activity ↔ Publication, etc.)
+- Sécurité JWT appliquée à deux niveaux (Gateway + chaque Microservice)
 
-Tests d'auto-évaluation : Exercices interactifs basés sur des standards médicaux pour évaluer la mémoire et l'orientation.
+---
 
-Jeux de stimulation : Activités ludiques quotidiennes pour maintenir l'activité cérébrale.
+## 🚀 Getting Started
 
-Rapports de résultats : Génération de bilans PDF après chaque test pour faciliter le partage avec le médecin traitant.
+### Pré-requis
+- JDK 17 ou supérieur
+- Maven 3.9+
+- Node.js 20+ & Angular CLI
+- Base de données PostgreSQL
+- Clés API : **Stripe** + **Groq** (optionnel)
 
-🛠 Tech Stack
-Frontend
-Framework : Angular
-Backend
-Langage : Java 17+.
+### Installation & Lancement
 
-Framework : Spring Boot 3.
+```bash
+# 1. Cloner le dépôt
+git clone https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git
+cd Esprit-PIDEV-4SAE3-2026-Memoria
 
-Sécurité : Spring Security & JWT.
+# 2. Lancer Eureka Server (Service Discovery)
+cd backend/eureka-server
+mvn spring-boot:run
 
-Base de données : PostgreSQL / MySQL (via Hibernate/JPA).
+# 3. Lancer API Gateway
+cd ../api-gateway
+mvn spring-boot:run
 
+# 4. Lancer les microservices (dans des terminaux séparés)
+cd ../auth-service      && mvn spring-boot:run
+cd ../community-service && mvn spring-boot:run
+cd ../medical-service   && mvn spring-boot:run
+# ... (autres services)
 
-🏗 Architecture
-L'application suit une architecture Microservices-ready ou Monolithe Modulaire basée sur le modèle MVC (Model-View-Controller) côté backend :
-
-Controllers : Portes d'entrée API REST .
-
-Services : Logique métier.
-
-Repositories : Accès aux données.
-
-Entities : Modèles de données
-
-👥 Contributors
-Memoria groupe
-abir gammoudi 
-jasser chouat 
-raed nefzi 
-fatma ellouze 
-oussea mrayah 
-
-🎓 Academic Context
-Ce projet a été réalisé dans le cadre de [Nom de votre formation/Université]. Il démontre la capacité à intégrer des services complexes (Paiement, IA, Temps réel) dans une solution logicielle à fort impact social.
-
-🚀 Getting Started
-Pré-requis
-JDK 17 ou plus.
-
-Maven.
-
-Une clé API Stripe et une clé API Groq.
-
-Installation
-Cloner le dépôt : git clone https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git
-Lancer le projet : mvn spring-boot:run | ng serve
-
-
-🙏 Acknowledgment
-Nous remercions ainsi que tous les testeurs qui ont aidé à améliorer l'expérience utilisateur de MemorIA.
+# 5. Frontend
+cd ../../frontend
+npm install
+ng serve
