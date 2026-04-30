@@ -1,0 +1,146 @@
+<p-toast position="top-right" />
+
+<div class="profile-page">
+
+  <!-- Hero Banner -->
+  <div class="profile-hero soignant-hero">
+    <div class="hero-content">
+      <div class="hero-avatar"><i class="pi pi-verified"></i></div>
+      <div class="hero-text">
+        <h1>Profil Soignant</h1>
+        <p>Bonjour <strong>{{ userName }}</strong> — Renseignez vos informations professionnelles pour accéder à votre tableau de bord.</p>
+      </div>
+    </div>
+    <div class="hero-badge"><i class="pi pi-shield"></i> Données sécurisées</div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="profile-form">
+
+    <!-- Section 1 : Identité professionnelle -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon s-green"><i class="pi pi-briefcase"></i></div>
+        <div>
+          <h2>Identité professionnelle</h2>
+          <p>Informations d'exercice requises</p>
+        </div>
+      </div>
+      <div class="field-grid">
+
+        <div class="field">
+          <label>Numéro d'ordre <span class="req">*</span></label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-hashtag" />
+            <input pInputText formControlName="numeroOrdre" placeholder="N° d'ordre médical" style="width:100%" />
+          </p-iconfield>
+          @if (form.get('numeroOrdre')?.invalid && form.get('numeroOrdre')?.touched) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Spécialité <span class="req">*</span></label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-star" />
+            <input pInputText formControlName="specialite" placeholder="Ex : Neurologie, Gériatrie…" style="width:100%" />
+          </p-iconfield>
+          @if (form.get('specialite')?.invalid && form.get('specialite')?.touched) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Hôpital / Établissement <span class="req">*</span></label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-building" />
+            <input pInputText formControlName="hopital" placeholder="Nom de l'établissement" style="width:100%" />
+          </p-iconfield>
+          @if (form.get('hopital')?.invalid && form.get('hopital')?.touched) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Date de début d'exercice</label>
+          <input pInputText type="date" formControlName="dateDebutExercice" style="width:100%" />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Section 2 : Contact & Expérience -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon s-teal"><i class="pi pi-phone"></i></div>
+        <div>
+          <h2>Contact & Expérience</h2>
+          <p>Coordonnées secondaires et années de pratique</p>
+        </div>
+      </div>
+      <div class="field-grid">
+
+        <div class="field">
+          <label>Téléphone secondaire</label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-phone" />
+            <input pInputText formControlName="numeroTelephone2" placeholder="+213 XX XX XX XX" style="width:100%" />
+          </p-iconfield>
+        </div>
+
+        <div class="field">
+          <label>Années d'expérience</label>
+          <p-inputnumber
+            formControlName="anneesExperience"
+            [min]="0"
+            [max]="60"
+            [showButtons]="true"
+            [style]="{ width: '100%' }"
+            inputStyleClass="w-full"
+          />
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Section 3 : Formation & Présentation -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon s-purple"><i class="pi pi-book"></i></div>
+        <div>
+          <h2>Formation & Présentation</h2>
+          <p>Diplômes obtenus et biographie professionnelle (optionnel)</p>
+        </div>
+      </div>
+      <div class="field-grid">
+
+        <div class="field full-width">
+          <label>Diplômes</label>
+          <textarea
+            pTextarea
+            formControlName="diplomes"
+            rows="3"
+            placeholder="Listez vos diplômes et certifications…"
+            style="width:100%; resize:vertical"
+          ></textarea>
+        </div>
+
+        <div class="field full-width">
+          <label>Biographie</label>
+          <textarea
+            pTextarea
+            formControlName="biographie"
+            rows="4"
+            placeholder="Décrivez votre parcours et votre approche thérapeutique…"
+            style="width:100%; resize:vertical"
+          ></textarea>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <p-button type="submit" label="Enregistrer mon profil" icon="pi pi-check" [loading]="isSubmitting" size="large" />
+    </div>
+
+  </form>
+</div>

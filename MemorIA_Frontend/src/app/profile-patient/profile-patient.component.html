@@ -1,0 +1,142 @@
+<p-toast position="top-right" />
+
+<div class="profile-page">
+
+  <!-- Hero Banner -->
+  <div class="profile-hero patient-hero">
+    <div class="hero-content">
+      <div class="hero-avatar"><i class="pi pi-heart-fill"></i></div>
+      <div class="hero-text">
+        <h1>Profil Patient</h1>
+        <p>Bonjour <strong>{{ userName }}</strong> — Complétez vos informations pour accéder à votre espace de suivi.</p>
+      </div>
+    </div>
+    <div class="hero-badge"><i class="pi pi-shield"></i> Données sécurisées</div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="profile-form">
+
+    <!-- Section 1 : Identité -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon s-purple"><i class="pi pi-user"></i></div>
+        <div>
+          <h2>Informations personnelles</h2>
+          <p>Données d'identité requises pour votre dossier</p>
+        </div>
+      </div>
+      <div class="field-grid">
+
+        <div class="field">
+          <label>Date de naissance <span class="req">*</span></label>
+          <input pInputText type="date" formControlName="dateNaissance" style="width:100%" />
+          @if (form.get('dateNaissance')?.invalid && form.get('dateNaissance')?.touched) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
+          }
+        </div>
+
+        <div class="field">
+          <label>Sexe <span class="req">*</span></label>
+          <p-select
+            formControlName="sexe"
+            [options]="sexeOptions"
+            optionLabel="label"
+            optionValue="value"
+            [style]="{ width: '100%' }"
+          />
+          @if (form.get('sexe')?.invalid && form.get('sexe')?.touched) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
+          }
+        </div>
+
+        <div class="field full-width">
+          <label>Numéro de sécurité sociale <span class="req">*</span></label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-id-card" />
+            <input pInputText formControlName="numeroSecuriteSociale" placeholder="1 84 12 75 108 042 18" style="width:100%" />
+          </p-iconfield>
+          @if (form.get('numeroSecuriteSociale')?.invalid && form.get('numeroSecuriteSociale')?.touched) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Champ requis.</small>
+          }
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Section 2 : Adresse -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon s-blue"><i class="pi pi-map-marker"></i></div>
+        <div>
+          <h2>Adresse</h2>
+          <p>Informations de localisation (optionnel)</p>
+        </div>
+      </div>
+      <div class="field-grid">
+
+        <div class="field full-width">
+          <label>Adresse</label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-home" />
+            <input pInputText formControlName="adresse" placeholder="Numéro et nom de rue" style="width:100%" />
+          </p-iconfield>
+        </div>
+
+        <div class="field">
+          <label>Ville</label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-building" />
+            <input pInputText formControlName="ville" placeholder="Votre ville" style="width:100%" />
+          </p-iconfield>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Section 3 : Médical -->
+    <div class="form-section">
+      <div class="section-header">
+        <div class="section-icon s-red"><i class="pi pi-heart"></i></div>
+        <div>
+          <h2>Informations médicales</h2>
+          <p>Couverture santé et données médicales (optionnel)</p>
+        </div>
+      </div>
+      <div class="field-grid">
+
+        <div class="field">
+          <label>Groupe sanguin</label>
+          <p-select
+            formControlName="groupeSanguin"
+            [options]="groupeSanguinOptions"
+            optionLabel="label"
+            optionValue="value"
+            [style]="{ width: '100%' }"
+          />
+        </div>
+
+        <div class="field">
+          <label>Mutuelle</label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-file-check" />
+            <input pInputText formControlName="mutuelle" placeholder="Nom de votre mutuelle" style="width:100%" />
+          </p-iconfield>
+        </div>
+
+        <div class="field full-width">
+          <label>Numéro de police mutuelle</label>
+          <p-iconfield>
+            <p-inputicon styleClass="pi pi-hashtag" />
+            <input pInputText formControlName="numeroPoliceMutuelle" placeholder="Numéro de contrat" style="width:100%" />
+          </p-iconfield>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="form-footer">
+      <p-button type="submit" label="Enregistrer mon profil" icon="pi pi-check" [loading]="isSubmitting" size="large" />
+    </div>
+
+  </form>
+</div>

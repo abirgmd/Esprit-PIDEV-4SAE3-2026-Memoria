@@ -1,0 +1,228 @@
+
+> memor-ia-frontend@0.0.0 start
+> ng serve --port 4200 --host 127.0.0.1 --no-open
+
+[33m>[39m Building...
+[32m√[39m Building...
+Application bundle generation failed. [7.254 seconds]
+
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2729: Property 'fb' is used before its initialization.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/signup/signup.component.ts:20:20:
+[37m      20 │   signupForm = this.[32mfb[37m.nonNullable.group({
+         ╵                     [32m~~[0m
+
+  'fb' is declared here.
+
+    src/app/signup/signup.component.ts:30:4:
+[37m      30 │     [32mprivate readonly fb: FormBuilder[37m,
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2729: Property 'fb' is used before its initialization.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/users/users.component.ts:23:18:
+[37m      23 │   editForm = this.[32mfb[37m.nonNullable.group({
+         ╵                   [32m~~[0m
+
+  'fb' is declared here.
+
+    src/app/users/users.component.ts:35:4:
+[37m      35 │     [32mprivate readonly fb: FormBuilder[37m,
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+Watch mode enabled. Watching for file changes...
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [30.073 seconds]
+
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2729: Property 'fb' is used before its initialization.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/users/users.component.ts:23:18:
+[37m      23 │   editForm = this.[32mfb[37m.nonNullable.group({
+         ╵                   [32m~~[0m
+
+  'fb' is declared here.
+
+    src/app/users/users.component.ts:35:4:
+[37m      35 │     [32mprivate readonly fb: FormBuilder[37m,
+         ╵     [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m         [2m | [22m [36m92.96 kB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m    [2m | [22m [36m90.20 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m       [2m | [22m[36m304 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m[1m183.46 kB[22m
+
+Application bundle generation complete. [1.843 seconds]
+
+NOTE: Raw file sizes do not reflect development server per-request transformations.
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m4200[22m/[39m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+
+No output file changes.
+
+Application bundle generation complete. [2.922 seconds]
+
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m101.17 kB[39m[2m | [22m
+
+Application bundle generation complete. [9.314 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m101.19 kB[39m[2m | [22m
+
+Application bundle generation complete. [10.203 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m101.69 kB[39m[2m | [22m
+
+Application bundle generation complete. [1.871 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m101.69 kB[39m[2m | [22m
+
+Application bundle generation complete. [3.669 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m101.77 kB[39m[2m | [22m
+
+Application bundle generation complete. [40.329 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m101.85 kB[39m[2m | [22m
+
+Application bundle generation complete. [4.585 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m101.95 kB[39m[2m | [22m
+
+Application bundle generation complete. [6.245 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m102.73 kB[39m[2m | [22m
+
+Application bundle generation complete. [12.376 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m104.03 kB[39m[2m | [22m
+
+Application bundle generation complete. [1.302 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m104.27 kB[39m[2m | [22m
+
+Application bundle generation complete. [8.636 seconds]
+
+Page reload sent to client(s).
+[2m17:23:26[22m [36m[1m[vite][22m[39m [32m✨ new dependencies optimized: [33mrxjs[32m[39m
+[2m17:23:26[22m [36m[1m[vite][22m[39m [32m✨ optimized dependencies changed. reloading[39m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m[2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m [2m | [22m[36m104.36 kB[39m[2m | [22m
+
+Application bundle generation complete. [12.793 seconds]
+
+Page reload sent to client(s).
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [1.774 seconds]
+
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2367: This comparison appears to be unintentional because the types '"PATIENT"' and '"ACCOMPAGNANT"' have no overlap.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/signup/signup.component.ts:120:34:
+[37m      120 │ ...ccompagnant = computed(() => [32mthis.role.value === 'ACCOMPAGNANT'[37m);
+          ╵                                 [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2367: This comparison appears to be unintentional because the types '"PATIENT"' and '"SOIGNANT"' have no overlap.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/signup/signup.component.ts:121:30:
+[37m      121 │   isSoignant = computed(() => [32mthis.role.value === 'SOIGNANT'[37m);
+          ╵                               [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [18.916 seconds]
+
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2367: This comparison appears to be unintentional because the types '"PATIENT"' and '"ACCOMPAGNANT"' have no overlap.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/signup/signup.component.ts:120:34:
+[37m      120 │ ...ccompagnant = computed(() => [32mthis.role.value === 'ACCOMPAGNANT'[37m);
+          ╵                                 [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2367: This comparison appears to be unintentional because the types '"PATIENT"' and '"SOIGNANT"' have no overlap.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/signup/signup.component.ts:121:30:
+[37m      121 │   isSoignant = computed(() => [32mthis.role.value === 'SOIGNANT'[37m);
+          ╵                               [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+Application bundle generation failed. [3.748 seconds]
+
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2367: This comparison appears to be unintentional because the types '"PATIENT"' and '"ACCOMPAGNANT"' have no overlap.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/signup/signup.component.ts:120:34:
+[37m      120 │ ...ccompagnant = computed(() => [32mthis.role.value === 'ACCOMPAGNANT'[37m);
+          ╵                                 [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2367: This comparison appears to be unintentional because the types '"PATIENT"' and '"SOIGNANT"' have no overlap.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/signup/signup.component.ts:121:30:
+[37m      121 │   isSoignant = computed(() => [32mthis.role.value === 'SOIGNANT'[37m);
+          ╵                               [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[33m>[39m Changes detected. Rebuilding...
+[32m√[39m Changes detected. Rebuilding...
+[1mInitial chunk files[22m[2m | [22m[1mNames[22m        [2m | [22m [1mRaw size[22m
+[32mmain.js[39m            [2m | [22m[2mmain[22m         [2m | [22m[36m126.29 kB[39m[2m | [22m
+[32mpolyfills.js[39m       [2m | [22m[2mpolyfills[22m    [2m | [22m [36m90.20 kB[39m[2m | [22m
+[32mstyles.css[39m         [2m | [22m[2mstyles[22m       [2m | [22m[36m304 bytes[39m[2m | [22m
+
+[1m [22m                  [2m | [22m[1mInitial total[22m[2m | [22m[1m216.80 kB[22m
+
+Application bundle generation complete. [18.170 seconds]
+
+Page reload sent to client(s).

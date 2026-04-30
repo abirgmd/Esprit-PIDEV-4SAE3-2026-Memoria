@@ -1,0 +1,310 @@
+<p-toast position="top-right" />
+<p-confirmDialog />
+
+<div class="users-page">
+
+  <!-- ── Header ── -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">
+        <i class="pi pi-users header-icon"></i>
+        User Management
+      </h1>
+      <p class="page-subtitle">Manage all MemoriA system users</p>
+    </div>
+    <div class="header-right">
+      <p-button label="Add User" icon="pi pi-plus" (onClick)="goToSignup()" />
+      <p-button label="Logout" icon="pi pi-sign-out" severity="secondary" [outlined]="true" (onClick)="logout()" />
+    </div>
+  </div>
+
+  <!-- ── KPI Cards ── -->
+  @if (!isLoading) {
+    <div class="stats-grid">
+      <div class="stat-card stat-total">
+        <div class="stat-icon-wrapper"><i class="pi pi-users"></i></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.total }}</span>
+          <span class="stat-label">Total Users</span>
+        </div>
+      </div>
+      <div class="stat-card stat-active">
+        <div class="stat-icon-wrapper"><i class="pi pi-check-circle"></i></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.active }}</span>
+          <span class="stat-label">Active Users</span>
+        </div>
+      </div>
+      <div class="stat-card stat-inactive">
+        <div class="stat-icon-wrapper"><i class="pi pi-times-circle"></i></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats.inactive }}</span>
+          <span class="stat-label">Inactive Users</span>
+        </div>
+      </div>
+      <div class="stat-card stat-profile">
+        <div class="stat-icon-wrapper"><i class="pi pi-id-card"></i></div>
+        <div class="stat-info">
+          <span class="stat-value">{{ profileCompletionRate }}%</span>
+          <span class="stat-label">Profile Completion</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Charts ── -->
+    @if (stats.total > 0) {
+      <div class="charts-row">
+        <p-card header="Users by Role" styleClass="chart-card">
+          <div class="chart-container">
+            <p-chart type="doughnut" [data]="roleChartData" [options]="chartOptions" />
+          </div>
+        </p-card>
+        <p-card header="Active vs Inactive by Role" styleClass="chart-card">
+          <div class="chart-container">
+            <p-chart type="bar" [data]="statusChartData" [options]="barChartOptions" />
+          </div>
+        </p-card>
+      </div>
+    }
+  }
+
+  <!-- ── Users Table ── -->
+  <p-card styleClass="table-card">
+    <p-table
+      #dt
+      [value]="users"
+      [loading]="isLoading"
+      [paginator]="true"
+      [rows]="10"
+      [rowsPerPageOptions]="[5, 10, 25, 50]"
+      [showCurrentPageReport]="true"
+      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} users"
+      [globalFilterFields]="['nom', 'prenom', 'email', 'telephone', 'role']"
+      sortMode="single"
+      [tableStyle]="{ 'min-width': '60rem' }"
+      styleClass="p-datatable-striped p-datatable-gridlines"
+    >
+      <ng-template #caption>
+        <div class="table-caption">
+          <span class="table-title">All Users</span>
+          <div class="caption-actions">
+            <p-iconfield>
+              <p-inputicon styleClass="pi pi-search" />
+              <input
+                pInputText
+                type="text"
+                (input)="dt.filterGlobal($any($event.target).value, 'contains')"
+                placeholder="Search by name, email, role…"
+                class="search-input"
+              />
+            </p-iconfield>
+            <p-button
+              icon="pi pi-file-excel"
+              label="Excel"
+              severity="success"
+              [outlined]="true"
+              size="small"
+              pTooltip="Export visible rows to Excel"
+              tooltipPosition="top"
+              (onClick)="exportExcel()"
+            />
+            <p-button
+              icon="pi pi-file-pdf"
+              label="PDF"
+              severity="danger"
+              [outlined]="true"
+              size="small"
+              pTooltip="Export visible rows to PDF"
+              tooltipPosition="top"
+              (onClick)="exportPdf()"
+            />
+          </div>
+        </div>
+      </ng-template>
+
+      <ng-template #header>
+        <tr>
+          <th pSortableColumn="id" style="width:5rem">
+            ID <p-sortIcon field="id" />
+          </th>
+          <th pSortableColumn="nom">
+            Name <p-sortIcon field="nom" />
+          </th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th pSortableColumn="role">
+            Role <p-sortIcon field="role" />
+          </th>
+          <th pSortableColumn="actif">
+            Status <p-sortIcon field="actif" />
+          </th>
+          <th>Profile</th>
+          <th style="width:11rem; text-align:center">Actions</th>
+        </tr>
+      </ng-template>
+
+      <ng-template #body let-user>
+        <tr>
+          <td>{{ user.id }}</td>
+          <td>
+            <span class="user-name">{{ user.prenom }} {{ user.nom }}</span>
+          </td>
+          <td>{{ user.email }}</td>
+          <td>{{ user.telephone }}</td>
+          <td>
+            <p-tag [value]="user.role" [severity]="getRoleSeverity(user.role)" />
+          </td>
+          <td>
+            <p-tag
+              [value]="user.actif ? 'Active' : 'Inactive'"
+              [severity]="user.actif ? 'success' : 'danger'"
+            />
+          </td>
+          <td>
+            <p-tag
+              [value]="user.profileCompleted ? 'Complete' : 'Incomplete'"
+              [severity]="user.profileCompleted ? 'success' : 'warn'"
+            />
+          </td>
+          <td>
+            <div class="action-buttons">
+              @if (!user.actif) {
+                <p-button
+                  icon="pi pi-envelope"
+                  severity="success"
+                  size="small"
+                  [rounded]="true"
+                  [text]="true"
+                  pTooltip="Send confirmation email"
+                  tooltipPosition="top"
+                  (onClick)="confirmUser(user)"
+                />
+              }
+              <p-button
+                icon="pi pi-pencil"
+                size="small"
+                [rounded]="true"
+                [text]="true"
+                pTooltip="Edit user"
+                tooltipPosition="top"
+                (onClick)="startEdit(user)"
+              />
+              <p-button
+                icon="pi pi-trash"
+                severity="danger"
+                size="small"
+                [rounded]="true"
+                [text]="true"
+                pTooltip="Delete user"
+                tooltipPosition="top"
+                (onClick)="deleteUser(user)"
+              />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="8" class="empty-table">
+            <i class="pi pi-inbox" style="font-size:2rem;color:#94a3b8"></i>
+            <p>No users found.</p>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+</div>
+
+<!-- ── Edit Dialog ── -->
+<p-dialog
+  [header]="'Edit User #' + editingUserId"
+  [(visible)]="editDialogVisible"
+  [modal]="true"
+  [style]="{ width: '620px' }"
+  [closable]="true"
+  (onHide)="cancelEdit()"
+>
+  <form [formGroup]="editForm" class="edit-form">
+    <div class="form-grid">
+
+      <div class="field">
+        <label for="nom">Last Name</label>
+        <input id="nom" pInputText formControlName="nom" style="width:100%" />
+        @if (editForm.get('nom')?.invalid && editForm.get('nom')?.touched) {
+          <small class="field-error">Minimum 2 characters required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="prenom">First Name</label>
+        <input id="prenom" pInputText formControlName="prenom" style="width:100%" />
+        @if (editForm.get('prenom')?.invalid && editForm.get('prenom')?.touched) {
+          <small class="field-error">Minimum 2 characters required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" pInputText formControlName="email" style="width:100%" />
+        @if (editForm.get('email')?.invalid && editForm.get('email')?.touched) {
+          <small class="field-error">A valid email is required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label for="telephone">Phone</label>
+        <input id="telephone" pInputText formControlName="telephone" style="width:100%" />
+        @if (editForm.get('telephone')?.invalid && editForm.get('telephone')?.touched) {
+          <small class="field-error">Minimum 8 characters required.</small>
+        }
+      </div>
+
+      <div class="field">
+        <label>Role</label>
+        <p-select
+          formControlName="role"
+          [options]="roleOptions"
+          optionLabel="label"
+          optionValue="value"
+          [style]="{ width: '100%' }"
+        />
+      </div>
+
+      <div class="field">
+        <label>Status</label>
+        <div class="toggle-row">
+          <p-toggleswitch formControlName="actif" />
+          <span class="toggle-label">
+            {{ editForm.get('actif')?.value ? 'Active' : 'Inactive' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Profile Completed</label>
+        <div class="toggle-row">
+          <p-toggleswitch formControlName="profileCompleted" />
+          <span class="toggle-label">
+            {{ editForm.get('profileCompleted')?.value ? 'Yes' : 'No' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="field full-width">
+        <label for="password">
+          New Password
+          <small class="hint"> — leave blank to keep current</small>
+        </label>
+        <input id="password" pInputText type="password" formControlName="password" style="width:100%" />
+      </div>
+
+    </div>
+  </form>
+
+  <ng-template #footer>
+    <p-button label="Cancel" icon="pi pi-times" severity="secondary" [outlined]="true" (onClick)="cancelEdit()" />
+    <p-button label="Save Changes" icon="pi pi-check" [loading]="isSaving" (onClick)="saveEdit()" />
+  </ng-template>
+</p-dialog>

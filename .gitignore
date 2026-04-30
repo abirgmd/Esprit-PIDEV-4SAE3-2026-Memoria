@@ -1,0 +1,25 @@
+# Node / Angular
+node_modules/
+.angular/cache/
+dist/
+
+# Maven build output
+target/
+*.class
+
+# Logs
+*.log
+backend-dev.log
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment / secrets
+.env
+*.env.local
