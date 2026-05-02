@@ -12,19 +12,17 @@ pipeline {
                 git branch: 'fatma-dev',
                     url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git',
                     credentialsId: 'github-credentials'
-                    echo "Code récupéré depuis GitHub — branche fatma-dev"
+                echo "Code récupéré depuis GitHub — branche fatma-dev"
             }
         }
         stage('2 - Build Maven') {
             steps {
                 dir("MemoriA-dev/MemoriA-Planning-Service") {
                     sh 'mvn clean package -DskipTests'
-                    echo "Build Maven terminé : ${MS_NAME}"
-
                 }
             }
         }
-        stage('3 — Tests') {
+        stage('3 - Tests') {
             steps {
                 dir("MemoriA-dev/MemoriA-Planning-Service") {
                     sh 'mvn test'
@@ -32,9 +30,8 @@ pipeline {
             }
             post {
                 always {
-                 // Publier les résultats de tests dans Jenkins
-                junit "${MS_NAME}/target/surefire-reports/*.xml"
-                 }
+                    junit "MemoriA-dev/MemoriA-Planning-Service/target/surefire-reports/*.xml"
+                }
                 failure {
                     error 'Tests échoués — arrêt du pipeline'
                 }
@@ -44,8 +41,6 @@ pipeline {
             steps {
                 dir("MemoriA-dev/MemoriA-Planning-Service") {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                     echo "Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}"
-
                 }
             }
         }
@@ -53,7 +48,6 @@ pipeline {
             steps {
                 sh "echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin"
                 sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
-                echo "Image Docker poussée : ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
     }
