@@ -17,7 +17,7 @@ pipeline {
         }
         stage('2 - Build Maven') {
             steps {
-                dir("${MS_NAME}") {
+                dir("MemoriA-dev/MemoriA-Planning-Service") {
                     sh 'mvn clean package -DskipTests'
                     echo "Build Maven terminé : ${MS_NAME}"
 
@@ -26,7 +26,7 @@ pipeline {
         }
         stage('3 — Tests') {
             steps {
-                dir("${MS_NAME}") {
+                dir("MemoriA-dev/MemoriA-Planning-Service") {
                     sh 'mvn test'
                 }
             }
@@ -42,7 +42,7 @@ pipeline {
         }
         stage('4 - Docker Build') {
             steps {
-                dir("${MS_NAME}") {
+                dir("MemoriA-dev/MemoriA-Planning-Service") {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                      echo "Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}"
 
