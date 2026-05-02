@@ -50,7 +50,7 @@ pipeline {
             post {
                 always {
                  // Publier les résultats de tests dans Jenkins
-                junit "**/target/surefire-reports/*.xml"
+                junit testResults: "${env.SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyResults: true
                  }
                 failure {
                     error 'Tests échoués — arrêt du pipeline'

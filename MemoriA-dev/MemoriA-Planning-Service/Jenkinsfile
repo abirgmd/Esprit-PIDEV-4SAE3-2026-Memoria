@@ -48,7 +48,7 @@ pipeline {
             }
             post {
                 always {
-                    junit "**/target/surefire-reports/*.xml"
+                    junit testResults: "${env.SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyResults: true
                 }
                 failure {
                     error 'Tests échoués — arrêt du pipeline'
