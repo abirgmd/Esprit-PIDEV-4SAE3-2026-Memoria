@@ -18,10 +18,21 @@ pipeline {
         stage('0 - Locate POM') {
             steps {
                 script {
-                    env.POM_PATH = sh(script: "find . -name pom.xml | head -n 1", returnStdout: true).trim()
-                    if (!env.POM_PATH) {
+                    env.SERVICE_DIR = sh(script: '''
+                        if [ -f pom.xml ]; then
+                          pwd
+                        elif [ -f ../pom.xml ]; then
+                                                    cd .. && pwd
+                        elif [ -f MemoriA-dev/MemoriA-Planning-Service/pom.xml ]; then
+                          echo "MemoriA-dev/MemoriA-Planning-Service"
+                        else
+                          find .. -path '*/MemoriA-Planning-Service/pom.xml' -print -quit | sed 's#/pom.xml##'
+                        fi
+                    ''', returnStdout: true).trim()
+                    if (!env.SERVICE_DIR) {
                         error 'Impossible de trouver un pom.xml dans le workspace'
                     }
+                    env.POM_PATH = "${env.SERVICE_DIR}/pom.xml"
                     echo "pom.xml trouvé : ${env.POM_PATH}"
                 }
             }
@@ -46,7 +57,9 @@ pipeline {
         }
         stage('4 - Docker Build') {
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                dir("${env.SERVICE_DIR}") {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                }
             }
         }
         stage('5 - Docker Push') {
