@@ -12,28 +12,34 @@ pipeline {
                 git branch: 'fatma-dev',
                     url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git',
                     credentialsId: 'github-credentials'
-                    echo "Code récupéré depuis GitHub — branche fatma-dev"
+                echo "Code récupéré depuis GitHub — branche fatma-dev"
+            }
+        }
+        stage('0 - Locate POM') {
+            steps {
+                script {
+                    env.POM_PATH = sh(script: "find . -name pom.xml | head -n 1", returnStdout: true).trim()
+                    if (!env.POM_PATH) {
+                        error 'Impossible de trouver un pom.xml dans le workspace'
+                    }
+                    echo "pom.xml trouvé : ${env.POM_PATH}"
+                }
             }
         }
         stage('2 - Build Maven') {
             steps {
-                dir("${MS_NAME}") {
-                    sh 'mvn clean package -DskipTests'
-                    echo "Build Maven terminé : ${MS_NAME}"
-
-                }
+                sh "mvn -f ${env.POM_PATH} clean package -DskipTests"
+                echo "Build Maven terminé : ${MS_NAME}"
             }
         }
         stage('3 — Tests') {
             steps {
-                dir("${MS_NAME}") {
-                    sh 'mvn test'
-                }
+                sh "mvn -f ${env.POM_PATH} test"
             }
             post {
                 always {
                  // Publier les résultats de tests dans Jenkins
-                junit "${MS_NAME}/target/surefire-reports/*.xml"
+                junit "**/target/surefire-reports/*.xml"
                  }
                 failure {
                     error 'Tests échoués — arrêt du pipeline'
@@ -42,11 +48,8 @@ pipeline {
         }
         stage('4 - Docker Build') {
             steps {
-                dir("${MS_NAME}") {
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                     echo "Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}"
-
-                }
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                echo "Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}"
             }
         }
         stage('5 - Docker Push') {
