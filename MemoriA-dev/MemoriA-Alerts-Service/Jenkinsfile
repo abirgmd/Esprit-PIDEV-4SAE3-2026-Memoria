@@ -37,6 +37,14 @@ pipeline {
                 }
             }
         }
+        stage('1 - Check Docker') {
+            steps {
+                script {
+                    env.DOCKER_AVAILABLE = sh(script: 'command -v docker >/dev/null 2>&1 && echo true || echo false', returnStdout: true).trim()
+                    echo "Docker disponible sur l'agent : ${env.DOCKER_AVAILABLE}"
+                }
+            }
+        }
         stage('2 - Build Maven') {
             steps {
                 sh "mvn -f ${env.POM_PATH} clean package -DskipTests"
@@ -58,6 +66,9 @@ pipeline {
             }
         }
         stage('4 - Docker Build') {
+            when {
+                expression { env.DOCKER_AVAILABLE == 'true' }
+            }
             steps {
                 dir("${env.SERVICE_DIR}") {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
@@ -66,6 +77,9 @@ pipeline {
             }
         }
         stage('5 - Docker Push') {
+            when {
+                expression { env.DOCKER_AVAILABLE == 'true' }
+            }
             steps {
                 sh "echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin"
                 sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
@@ -75,7 +89,11 @@ pipeline {
     }
     post {
         always {
-            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+            script {
+                if (env.DOCKER_AVAILABLE == 'true') {
+                    sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+                }
+            }
         }
     }
 }

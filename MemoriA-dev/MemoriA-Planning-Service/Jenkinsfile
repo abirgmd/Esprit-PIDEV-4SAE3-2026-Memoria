@@ -14,28 +14,60 @@ pipeline {
                 echo "Code récupéré depuis GitHub"
             }
         }
+        stage('0 - Locate POM') {
+            steps {
+                script {
+                    env.SERVICE_DIR = sh(script: '''
+                        if [ -f MemoriA-dev/MemoriA-Planning-Service/pom.xml ]; then
+                          echo "MemoriA-dev/MemoriA-Planning-Service"
+                        elif [ -f pom.xml ]; then
+                          pwd
+                        elif [ -f ../pom.xml ]; then
+                          cd .. && pwd
+                        else
+                          find .. -path '*/MemoriA-Planning-Service/pom.xml' -print -quit | sed 's#/pom.xml##'
+                        fi
+                    ''', returnStdout: true).trim()
+                    if (!env.SERVICE_DIR) {
+                        error 'Impossible de trouver un pom.xml pour le service Planning'
+                    }
+                    env.POM_PATH = "${env.SERVICE_DIR}/pom.xml"
+                    env.DOCKER_AVAILABLE = sh(script: 'command -v docker >/dev/null 2>&1 && echo true || echo false', returnStdout: true).trim()
+                    echo "pom.xml trouvé : ${env.POM_PATH}"
+                    echo "Docker disponible sur l'agent : ${env.DOCKER_AVAILABLE}"
+                }
+            }
+        }
         stage('2 - Build Maven') {
             steps {
-                sh 'mvn -f MemoriA-dev/MemoriA-Planning-Service/pom.xml clean package -DskipTests'
+                sh "mvn -f ${env.POM_PATH} clean package -DskipTests"
             }
         }
         stage('3 - Tests') {
             steps {
-                sh 'mvn -f MemoriA-dev/MemoriA-Planning-Service/pom.xml test'
+                sh "mvn -f ${env.POM_PATH} test"
             }
             post {
                 always {
                     junit allowEmptyResults: true,
-                          testResults: 'MemoriA-dev/MemoriA-Planning-Service/target/surefire-reports/*.xml'
+                          testResults: "${env.SERVICE_DIR}/target/surefire-reports/*.xml"
                 }
             }
         }
         stage('4 - Docker Build') {
+            when {
+                expression { env.DOCKER_AVAILABLE == 'true' }
+            }
             steps {
-                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} MemoriA-dev/MemoriA-Planning-Service/"
+                dir("${env.SERVICE_DIR}") {
+                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                }
             }
         }
         stage('5 - Docker Push') {
+            when {
+                expression { env.DOCKER_AVAILABLE == 'true' }
+            }
             steps {
                 sh "echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin"
                 sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
@@ -44,7 +76,11 @@ pipeline {
     }
     post {
         always {
-            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+            script {
+                if (env.DOCKER_AVAILABLE == 'true') {
+                    sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+                }
+            }
         }
     }
 }
