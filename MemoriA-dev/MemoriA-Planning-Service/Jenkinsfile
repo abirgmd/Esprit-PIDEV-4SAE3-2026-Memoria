@@ -1,7 +1,6 @@
 pipeline {
     agent any
     environment {
-        MS_NAME = 'MemoriA-Planning-Service'
         IMAGE_NAME = 'fatmaellouze03/memoria-planning'
         IMAGE_TAG = 'latest'
         DOCKER_CREDS = credentials('docker-hub-credentials')
@@ -12,54 +11,28 @@ pipeline {
                 git branch: 'fatma-dev',
                     url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git',
                     credentialsId: 'github-credentials'
-                echo "Code récupéré depuis GitHub — branche fatma-dev"
-            }
-        }
-        stage('0 - Locate POM') {
-            steps {
-                script {
-                    env.SERVICE_DIR = sh(script: '''
-                        if [ -f pom.xml ]; then
-                          pwd
-                        elif [ -f ../pom.xml ]; then
-                                                    cd .. && pwd
-                        elif [ -f MemoriA-dev/MemoriA-Planning-Service/pom.xml ]; then
-                          echo "MemoriA-dev/MemoriA-Planning-Service"
-                        else
-                          find .. -path '*/MemoriA-Planning-Service/pom.xml' -print -quit | sed 's#/pom.xml##'
-                        fi
-                    ''', returnStdout: true).trim()
-                    if (!env.SERVICE_DIR) {
-                        error 'Impossible de trouver un pom.xml dans le workspace'
-                    }
-                    env.POM_PATH = "${env.SERVICE_DIR}/pom.xml"
-                    echo "pom.xml trouvé : ${env.POM_PATH}"
-                }
+                echo "Code récupéré depuis GitHub"
             }
         }
         stage('2 - Build Maven') {
             steps {
-                sh "mvn -f ${env.POM_PATH} clean package -DskipTests"
+                sh 'mvn -f MemoriA-dev/MemoriA-Planning-Service/pom.xml clean package -DskipTests'
             }
         }
         stage('3 - Tests') {
             steps {
-                sh "mvn -f ${env.POM_PATH} test"
+                sh 'mvn -f MemoriA-dev/MemoriA-Planning-Service/pom.xml test'
             }
             post {
                 always {
-                    junit testResults: "${env.SERVICE_DIR}/target/surefire-reports/*.xml", allowEmptyResults: true
-                }
-                failure {
-                    error 'Tests échoués — arrêt du pipeline'
+                    junit allowEmptyResults: true,
+                          testResults: 'MemoriA-dev/MemoriA-Planning-Service/target/surefire-reports/*.xml'
                 }
             }
         }
         stage('4 - Docker Build') {
             steps {
-                dir("${env.SERVICE_DIR}") {
-                    sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                }
+                sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} MemoriA-dev/MemoriA-Planning-Service/"
             }
         }
         stage('5 - Docker Push') {
