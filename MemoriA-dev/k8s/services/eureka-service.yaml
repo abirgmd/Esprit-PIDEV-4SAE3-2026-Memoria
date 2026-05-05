@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: eureka-server
+  namespace: memoria
+  labels:
+    app: eureka-server
+spec:
+  selector:
+    app: eureka-server
+  ports:
+  - port: 8761
+    targetPort: 8761
+    nodePort: 30761 # accessible depuis l'extérieur sur ce port
+    protocol: TCP
+    name: http
+  type: NodePort

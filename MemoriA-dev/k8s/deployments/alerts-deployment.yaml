@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memoria-alerts
+  namespace: memoria
+  labels:
+    app: memoria-alerts
+spec:
+  replicas: 2 # 2 pods pour la haute disponibilité
+  selector:
+    matchLabels:
+      app: memoria-alerts
+  template:
+    metadata:
+      labels:
+        app: memoria-alerts
+    spec:
+      containers:
+      - name: memoria-alerts
+        image: fatmaellouze03/memoria-alerts:latest
+        ports:
+        - containerPort: 8092
+          name: http
+        env:
+        # K8s DNS interne : les services se trouvent par leur nom
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: 'http://eureka-server:8761/eureka/'
+        - name: SPRING_DATASOURCE_URL
+          value: 'jdbc:mysql://mysql:3306/alerts_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC'
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef: # récupérer depuis un Secret K8s
+              name: mysql-secret
+              key: username
+              optional: true
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+              optional: true
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8092
+          initialDelaySeconds: 30 # attendre Eureka et MySQL
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8092
+          initialDelaySeconds: 60
+          periodSeconds: 15
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

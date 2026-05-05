@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: memoria-gateway
+  namespace: memoria
+  labels:
+    app: memoria-gateway
+spec:
+  selector:
+    app: memoria-gateway
+  ports:
+  - port: 8888
+    targetPort: 8888
+    nodePort: 30888
+    protocol: TCP
+    name: http
+  type: NodePort # accessible depuis l'extérieur sur le port du cluster

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: memoria-user-service
+  namespace: memoria
+  labels:
+    app: memoria-user-service
+spec:
+  selector:
+    app: memoria-user-service
+  ports:
+  - port: 8094
+    targetPort: 8094
+    protocol: TCP
+    name: http
+  type: ClusterIP # interne uniquement, l'API Gateway route vers lui

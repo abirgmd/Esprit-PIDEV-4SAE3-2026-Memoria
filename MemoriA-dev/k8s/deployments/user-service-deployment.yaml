@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memoria-user-service
+  namespace: memoria
+  labels:
+    app: memoria-user-service
+spec:
+  replicas: 2 # 2 pods pour la haute disponibilité
+  selector:
+    matchLabels:
+      app: memoria-user-service
+  template:
+    metadata:
+      labels:
+        app: memoria-user-service
+    spec:
+      containers:
+      - name: memoria-user-service
+        image: fatmaellouze03/memoria-user-service:latest
+        ports:
+        - containerPort: 8094
+          name: http
+        env:
+        # K8s DNS interne : les services se trouvent par leur nom
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: 'http://eureka-server:8761/eureka/'
+        - name: SPRING_DATASOURCE_URL
+          value: 'jdbc:mysql://mysql:3306/users_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC'
+        - name: SPRING_DATASOURCE_USERNAME
+          valueFrom:
+            secretKeyRef: # récupérer depuis un Secret K8s
+              name: mysql-secret
+              key: username
+              optional: true
+        - name: SPRING_DATASOURCE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: password
+              optional: true
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: jwt-secret
+              key: secret
+              optional: true
+        readinessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8094
+          initialDelaySeconds: 30 # attendre Eureka et MySQL
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8094
+          initialDelaySeconds: 60
+          periodSeconds: 15
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
