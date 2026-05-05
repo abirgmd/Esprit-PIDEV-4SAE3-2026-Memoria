@@ -1,0 +1,40 @@
+pipeline {
+    agent any
+    stages {
+        stage('1 - Checkout') {
+            steps {
+                git branch: 'fatma-dev',
+                    url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git',
+                    credentialsId: 'github-credentials'
+            }
+        }
+        stage('2 - Pull Image') {
+            steps {
+                sh 'docker pull fatmaellouze03/memoria-alerts:latest'
+            }
+        }
+        stage('3 - Deploy Alerts') {
+            steps {
+                sh 'kubectl apply -f MemoriA-dev/k8s/namespace.yaml'
+                sh 'kubectl apply -f MemoriA-dev/k8s/alerts-deployment.yaml'
+            }
+        }
+        stage('4 - Vérifier Pod') {
+            steps {
+                sh 'kubectl rollout status deployment/memoria-alerts -n memoria --timeout=120s'
+            }
+        }
+        stage('5 - Smoke Test') {
+            steps {
+                sh 'kubectl get pods -n memoria'
+                sh 'kubectl get services -n memoria'
+            }
+        }
+    }
+    post {
+        success { echo 'Alerts déployé sur Kubernetes ✅' }
+        failure {
+            sh 'kubectl get events -n memoria --sort-by=.metadata.creationTimestamp | tail -10'
+        }
+    }
+}
