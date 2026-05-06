@@ -1,0 +1,62 @@
+﻿pipeline {
+    agent any
+    
+    environment {
+        NAMESPACE = 'memoria-prod'
+    }
+    
+    stages {
+        stage('1 - Checkout Manifests K8s') {
+            steps {
+                git branch: 'devops-oussama',
+                    url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
+                echo "✅ Manifests Kubernetes récupérés"
+            }
+        }
+        
+        stage('2 - Vérifier disponibilité images Docker Hub') {
+            steps {
+                sh 'docker pull oussama433/memoria-frontend:latest'
+                sh 'docker pull oussama433/memoria-backend:latest'
+                echo "✅ Toutes les images sont disponibles sur Docker Hub"
+            }
+        }
+        
+        stage('3 - Déploiement sur Kubernetes') {
+            steps {
+                sh """
+                    kubectl create namespace ${NAMESPACE} --dry-run=client -o yaml | kubectl apply -f -
+                    kubectl apply -f k8s/deployment.yaml
+                    kubectl apply -f k8s/service.yaml
+                """
+                echo "✅ Manifests appliqués sur le cluster K8s"
+            }
+        }
+        
+        stage('4 - Attendre que les Pods soient prêts') {
+            steps {
+                sh 'kubectl rollout status deployment/memoria-frontend -n memoria-prod --timeout=120s'
+                sh 'kubectl rollout status deployment/memoria-backend -n memoria-prod --timeout=120s'
+                echo "✅ Tous les déploiements sont opérationnels"
+            }
+        }
+        
+        stage('5 - Test de santé') {
+            steps {
+                sh 'kubectl get pods -n memoria-prod -o wide'
+                sh 'kubectl get services -n memoria-prod'
+                echo "✅ Frontend accessible sur http://192.168.56.10:30080"
+            }
+        }
+    }
+    
+    post {
+        success {
+            echo "🎉 Déploiement Kubernetes réussi !"
+        }
+        failure {
+            sh 'kubectl get events -n memoria-prod --sort-by=.metadata.creationTimestamp | tail -20'
+            echo "❌ Consulter les events K8s ci-dessus pour diagnostiquer"
+        }
+    }
+}
