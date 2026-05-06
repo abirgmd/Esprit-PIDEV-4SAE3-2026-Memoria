@@ -1,20 +1,76 @@
 ﻿apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: memoria-app
+  name: memoria-frontend
   namespace: memoria-prod
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: memoria
+      app: memoria-frontend
   template:
     metadata:
       labels:
-        app: memoria
+        app: memoria-frontend
     spec:
       containers:
-      - name: memoria-container
-        image: oussama433/memoria-service-a:latest
+      - name: frontend
+        image: oussama433/memoria-frontend:latest
         ports:
         - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memoria-backend
+  namespace: memoria-prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: memoria-backend
+  template:
+    metadata:
+      labels:
+        app: memoria-backend
+    spec:
+      containers:
+      - name: backend
+        image: oussama433/memoria-backend:latest
+        ports:
+        - containerPort: 8082
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://postgres:5432/memoria"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: "memoria"
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "123"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: memoria-prod
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "memoria"
+        - name: POSTGRES_USER
+          value: "memoria"
+        - name: POSTGRES_PASSWORD
+          value: "123"
