@@ -27,16 +27,22 @@ pipeline {
         }
         stage('3 - Tests') {
             steps {
-                dir("${MS_NAME}") {
-                    sh 'mvn test -DskipTests'
+                script {
+                    sh "docker run -d --name mysql-test-${IMAGE_NAME} -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=memoria_db -p 3306:3306 mysql:5.7 || true"
+                    sh "sleep 15"
+                    
+                    dir("${MS_NAME}") {
+                        sh 'mvn test'
+                    }
                 }
             }
             post {
                 always {
                     junit allowEmptyResults: true, testResults: "${MS_NAME}/target/surefire-reports/*.xml"
+                    sh "docker rm -f mysql-test-${IMAGE_NAME} || true"
                 }
                 failure {
-                    error 'Tests échoués - arrêt du pipeline'
+                    echo 'Tests échoués - vérifiez les rapports'
                 }
             }
         }
@@ -61,9 +67,9 @@ pipeline {
         }
         stage('6 - Kubernetes') {
             steps {
-                sh "sudo kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl rollout status deployment/backend-communaute -n pidev --kubeconfig=/home/vagrant/.kube/config"
+                sh "kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
+                sh "kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
+                sh "kubectl rollout status deployment/backend-communaute -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
             }
         }
     }
