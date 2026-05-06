@@ -13,24 +13,22 @@ else
 fi
 
 echo "--- Configuration du remote ---"
-# Supprime le remote origin s'il existe déjà pour éviter les erreurs
 git remote remove origin 2>/dev/null
 git remote add origin $REPO_URL
 echo "Remote 'origin' configuré sur $REPO_URL"
 
-echo "--- Préparation des fichiers ---"
-git add .
-git rm --cached guide-frontend.sh --ignore-unmatch # Retire le fichier de l'index Git s'il y était
-echo "Fichier guide-frontend.sh supprimé du suivi Git pour cette branche."
+echo "--- Préparation des fichiers (Nettoyage inclus) ---"
+git add -A # Prend en compte les ajouts, modifications ET suppressions
+git rm --cached guide-frontend.sh cleanup_k8s.ps1 --ignore-unmatch 2>/dev/null
+echo "Fichiers temporaires exclus du suivi."
 
 echo "--- Création du commit ---"
-git commit -m "Push automatique (excluant guide-frontend.sh)"
+git commit -m "Nettoyage et organisation de la structure Kubernetes"
 
-echo "--- Création de la branche $BRANCH_NAME ---"
-git checkout -b $BRANCH_NAME 2>/dev/null || git checkout $BRANCH_NAME
+echo "--- Préparation de la branche $BRANCH_NAME ---"
+git checkout -B $BRANCH_NAME
 
-echo "--- Envoi vers GitHub ---"
-echo "Note: Si demandé, entrez votre nom d'utilisateur et votre Personal Access Token (PAT)."
-git push -u origin $BRANCH_NAME
+echo "--- Envoi FORCÉ vers GitHub (Remplace le contenu distant) ---"
+git push -u origin $BRANCH_NAME --force
 
-echo "--- Terminé ! ---"
+echo "--- Terminé ! La branche $BRANCH_NAME est à jour. ---"

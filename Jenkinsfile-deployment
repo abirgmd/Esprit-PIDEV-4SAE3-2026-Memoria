@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_REGISTRY = 'abirgamoudi123'
+        GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
+        KUBECONFIG      = credentials('kubeconfig-credentials')
+    }
+    stages {
+        stage('1 - Checkout Manifests K8s') {
+            steps {
+                // Récupérer les fichiers YAML de configuration Kubernetes
+                git branch: 'main', url: "${GIT_REPO_URL}"
+                echo 'Manifests Kubernetes récupérés'
+            }
+        }
+        stage('2 - Verifier disponibilite images Docker Hub') {
+            steps {
+                sh "docker pull ${DOCKER_REGISTRY}/memoria-backend-activite:latest"
+                sh "docker pull ${DOCKER_REGISTRY}/memoria-backend-communaute:latest"
+                sh "docker pull ${DOCKER_REGISTRY}/memoria-gateway:latest"
+                sh "docker pull ${DOCKER_REGISTRY}/memoria-registry:latest"
+                sh "docker pull ${DOCKER_REGISTRY}/memoria-frontend:latest"
+            }
+        }
+        stage('3 - Déploiement sur Kubernetes') {
+            steps {
+                // Appliquer TOUS les manifests du dossier k8s/ récursivement
+                sh 'sudo kubectl apply -f k8s/ --recursive --kubeconfig=${KUBECONFIG}'
+                echo 'Manifests appliqués sur le cluster K8s'
+            }
+        }
+        stage('4 - Attendre que les Pods soient prets') {
+            steps {
+                sh 'sudo kubectl rollout status deployment/backend-activite --timeout=120s --kubeconfig=${KUBECONFIG}'
+                sh 'sudo kubectl rollout status deployment/backend-communaute --timeout=120s --kubeconfig=${KUBECONFIG}'
+                sh 'sudo kubectl rollout status deployment/memoria-gateway --timeout=120s --kubeconfig=${KUBECONFIG}'
+                sh 'sudo kubectl rollout status deployment/memoria-registry --timeout=120s --kubeconfig=${KUBECONFIG}'
+                sh 'sudo kubectl rollout status deployment/frontend --timeout=120s --kubeconfig=${KUBECONFIG}'
+                echo 'Tous les déploiements sont opérationnels'
+            }
+        }
+        stage('5 - Test de sante') {
+            steps {
+                sh 'sudo kubectl get pods -o wide --kubeconfig=${KUBECONFIG}'
+                sh 'sudo kubectl get services --kubeconfig=${KUBECONFIG}'
+                echo 'Vérifier manuellement : http://[IP NODE]:30000 (Frontend)'
+                echo 'Vérifier manuellement : http://[IP NODE]:30080 (Activité)'
+            }
+        }
+    }
+    post {
+        success {
+            echo 'Déploiement Kubernetes réussi !'
+        }
+        failure {
+            sh 'sudo kubectl get events --sort-by=.metadata.creationTimestamp --kubeconfig=${KUBECONFIG} | tail -20'
+            echo 'Consulter les events K8s ci-dessus pour diagnostiquer'
+        }
+    }
+}

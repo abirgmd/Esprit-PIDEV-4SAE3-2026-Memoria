@@ -4,31 +4,49 @@ pipeline {
         DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
         DOCKER_HUB_USER    = 'abirgamoudi123'
         IMAGE_NAME         = 'memoria-backend-activite'
-        // Remplacer par l'URL de votre dépôt GitHub
-        GIT_REPO_URL       = 'https://github.com/votre-compte/votre-repo.git'
+        MS_NAME            = 'MemorIA_Backendgestionactivitepublication'
+        GIT_REPO_URL       = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
     stages {
-        stage('Checkout') {
+        stage('1 - Checkout') {
             steps {
                 git branch: 'main', url: "${GIT_REPO_URL}"
+                echo "Code récupéré depuis GitHub - branche main"
             }
         }
-        stage('build maven') {
+        stage('2 - Build Maven') {
             steps {
-                sh "cd MemorIA_Backendgestionactivitepublication && mvn clean package -DskipTests"
+                dir("${MS_NAME}") {
+                    sh 'mvn clean package -DskipTests'
+                }
+                echo "Build Maven terminé : ${MS_NAME}"
             }
         }
-        stage('tests') {
+        stage('3 - Tests') {
             steps {
-                sh "cd MemorIA_Backendgestionactivitepublication && mvn test"
+                dir("${MS_NAME}") {
+                    sh 'mvn test'
+                }
+            }
+            post {
+                always {
+                    // Publier les résultats de tests dans Jenkins
+                    junit "${MS_NAME}/target/surefire-reports/*.xml"
+                }
+                failure {
+                    error 'Tests échoués - arrêt du pipeline'
+                }
             }
         }
-        stage('build img docker') {
+        stage('4 - Build Image Docker') {
             steps {
-                sh "cd MemorIA_Backendgestionactivitepublication && docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
+                dir("${MS_NAME}") {
+                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
+                }
+                echo "Image Docker construite : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
             }
         }
-        stage('push docker') {
+        stage('5 - Push Docker Hub') {
             steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CRED_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
@@ -36,13 +54,25 @@ pipeline {
                         sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                     }
                 }
+                echo "Image publiée sur Docker Hub : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
             }
         }
-        stage('keverntes') {
+        stage('6 - Keverntes') {
             steps {
                 sh "sudo kubectl apply -f k8s/backend-activite.yaml --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl rollout status deployment/${IMAGE_NAME} --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl rollout status deployment/memoria-backend-activite --kubeconfig=/home/vagrant/.kube/config"
             }
+        }
+    }
+    post {
+        success {
+            echo "Pipeline CI réussi - image ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest disponible sur Docker Hub"
+        }
+        failure {
+            echo "Pipeline CI échoué - vérifier les logs ci-dessus"
+        }
+        always {
+            sh "docker rmi ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest || true"
         }
     }
 }

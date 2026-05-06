@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: memoria-gateway
+  namespace: pidev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: memoria-gateway
+  template:
+    metadata:
+      labels:
+        app: memoria-gateway
+    spec:
+      containers:
+        - name: memoria-gateway
+          image: abirgamoudi123/memoria-gateway:latest
+          ports:
+            - containerPort: 8888
