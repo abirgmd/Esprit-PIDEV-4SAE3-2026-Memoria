@@ -2,7 +2,7 @@
     agent any
     
     environment {
-        IMAGE_NAME = 'oussama433/memoria-frontend'
+        IMAGE_NAME = 'oussama433/memoria-backend'
         IMAGE_TAG = 'latest'
         DOCKER_CREDS = credentials('docker-hub-credentials')
     }
@@ -12,32 +12,45 @@
             steps {
                 git branch: 'devops-oussama',
                     url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
-                echo "Code récupéré depuis GitHub - branche devops-oussama"
+                echo "Code récupéré depuis GitHub"
             }
         }
         
-        stage('2 - Build Angular') {
+        stage('2 - Build Maven') {
             steps {
-                dir('memoria-frontend') {
-                    sh '''
-                        npm install
-                        npm run build --prod
-                    '''
-                    echo "Build Angular terminé"
+                dir('memoria-backend') {
+                    sh 'mvn clean package -DskipTests'
+                    echo "Build Maven terminé"
                 }
             }
         }
         
-        stage('3 - Build Docker Image') {
+        stage('3 - Tests') {
             steps {
-                dir('memoria-frontend') {
+                dir('memoria-backend') {
+                    sh 'mvn test'
+                }
+            }
+            post {
+                always {
+                    junit 'memoria-backend/target/surefire-reports/*.xml'
+                }
+                failure {
+                    error 'Tests échoués - arrêt du pipeline'
+                }
+            }
+        }
+        
+        stage('4 - Build Docker Image') {
+            steps {
+                dir('memoria-backend') {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
                     echo "Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}"
                 }
             }
         }
         
-        stage('4 - Push Docker Hub') {
+        stage('5 - Push Docker Hub') {
             steps {
                 sh """
                     echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin
@@ -53,7 +66,7 @@
             echo "Pipeline CI réussi - image ${IMAGE_NAME}:${IMAGE_TAG} disponible"
         }
         failure {
-            echo "Pipeline CI échoué - vérifier les logs ci-dessus"
+            echo "Pipeline CI échoué - vérifier les logs"
         }
         always {
             sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
