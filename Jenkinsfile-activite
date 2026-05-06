@@ -10,6 +10,9 @@ pipeline {
         MS_NAME            = 'MemorIA_Backendgestionactivitepublication'
         GIT_REPO_URL       = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
+    triggers {
+        githubPush() // Déclenche le build à chaque push GitHub
+    }
     stages {
         stage('1 - Checkout') {
             steps {

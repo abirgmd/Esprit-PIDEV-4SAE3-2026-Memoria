@@ -11,6 +11,9 @@ pipeline {
         MS_NAME            = 'MemoriA-Gateway'
         GIT_REPO_URL       = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
+    triggers {
+        githubPush()
+    }
     stages {
         stage('1 - Checkout') {
             steps {

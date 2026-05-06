@@ -4,11 +4,11 @@ WORKDIR /app
 
 # Optimisation du cache npm
 COPY package*.json ./
-RUN npm install
+RUN npm install --legacy-peer-deps
 
 # Build de l'application
 COPY . .
-RUN npm run build -- --configuration production
+RUN export NODE_OPTIONS="--max-old-space-size=4096" && npm run build -- --configuration production
 
 # Stage 2: Production
 FROM nginx:alpine

@@ -10,6 +10,9 @@ pipeline {
         MS_NAME            = 'MemorIA_Frontend'
         GIT_REPO_URL       = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
+    triggers {
+        githubPush()
+    }
     stages {
         stage('1 - Checkout') {
             steps {
@@ -20,7 +23,10 @@ pipeline {
         stage('2 - Build Node') {
             steps {
                 dir("${MS_NAME}") {
-                    sh 'npm install && npm run build -- --configuration production'
+                    // Utilisation de --legacy-peer-deps pour éviter les conflits de versions Angular 18
+                    // Et augmentation de la mémoire vive pour le build Angular (souvent nécessaire en CI)
+                    sh 'npm install --legacy-peer-deps'
+                    sh 'export NODE_OPTIONS="--max-old-space-size=4096" && npm run build -- --configuration production'
                 }
                 echo "Build Frontend terminé : ${MS_NAME}"
             }
