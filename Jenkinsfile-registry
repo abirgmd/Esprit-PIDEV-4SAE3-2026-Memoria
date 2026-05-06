@@ -1,5 +1,9 @@
 pipeline {
     agent any
+    tools {
+        maven 'MAVEN_HOME'
+    }
+
     environment {
         DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
         DOCKER_HUB_USER    = 'abirgamoudi123'
@@ -24,16 +28,18 @@ pipeline {
         }
         stage('3 - Tests') {
             steps {
-                dir("${MS_NAME}") {
-                    sh 'mvn test -DskipTests'
+                script {
+                    sh "docker run -d --name mysql-test-${IMAGE_NAME} -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=memoria_db -p 3306:3306 mysql:5.7 || true"
+                    sh "sleep 15"
+                    dir("${MS_NAME}") {
+                        sh 'mvn test'
+                    }
                 }
             }
             post {
                 always {
                     junit allowEmptyResults: true, testResults: "${MS_NAME}/target/surefire-reports/*.xml"
-                }
-                failure {
-                    error 'Tests échoués - arrêt du pipeline'
+                    sh "docker rm -f mysql-test-${IMAGE_NAME} || true"
                 }
             }
         }
@@ -58,9 +64,9 @@ pipeline {
         }
         stage('6 - Kubernetes') {
             steps {
-                sh "sudo kubectl apply -f k8s/deployments/eureka-deployment.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl apply -f k8s/services/eureka-service.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl rollout status deployment/eureka-server -n pidev --kubeconfig=/home/vagrant/.kube/config"
+                sh "kubectl apply -f k8s/deployments/eureka-deployment.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
+                sh "kubectl apply -f k8s/services/eureka-service.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
+                sh "kubectl rollout status deployment/eureka-server -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
             }
         }
     }

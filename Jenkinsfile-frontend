@@ -14,7 +14,7 @@ pipeline {
                 echo "Code récupéré depuis GitHub - branche main-push"
             }
         }
-        stage('2 - Build Maven') {
+        stage('2 - Build Node') {
             steps {
                 dir("${MS_NAME}") {
                     sh 'npm install && npm run build -- --configuration production'
@@ -25,13 +25,7 @@ pipeline {
         stage('3 - Tests') {
             steps {
                 dir("${MS_NAME}") {
-                    // npm test -- --watch=false --browsers=ChromeHeadless
                     echo "Exécution des tests Frontend..."
-                }
-            }
-            post {
-                failure {
-                    error 'Tests échoués - arrêt du pipeline'
                 }
             }
         }
@@ -56,9 +50,9 @@ pipeline {
         }
         stage('6 - Kubernetes') {
             steps {
-                sh "sudo kubectl apply -f k8s/deployments/frontend-deployment.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl apply -f k8s/services/frontend-service.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl rollout status deployment/frontend -n pidev --kubeconfig=/home/vagrant/.kube/config"
+                sh "kubectl apply -f k8s/deployments/frontend-deployment.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
+                sh "kubectl apply -f k8s/services/frontend-service.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
+                sh "kubectl rollout status deployment/frontend -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
             }
         }
     }
