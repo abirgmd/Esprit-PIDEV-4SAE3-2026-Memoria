@@ -1,4 +1,4 @@
-﻿pipeline {
+pipeline {
     agent any
     
     environment {
@@ -12,7 +12,7 @@
             steps {
                 git branch: 'devops-oussama',
                     url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
-                echo "Code récupéré depuis GitHub"
+                echo "Code recupere depuis GitHub"
             }
         }
         
@@ -20,7 +20,7 @@
             steps {
                 dir('memoria-backend') {
                     sh 'mvn clean package -DskipTests'
-                    echo "Build Maven terminé"
+                    echo "Build Maven termine"
                 }
             }
         }
@@ -31,45 +31,31 @@
                     sh 'mvn test'
                 }
             }
-            post {
-                always {
-                    junit 'memoria-backend/target/surefire-reports/*.xml'
-                }
-                failure {
-                    error 'Tests échoués - arrêt du pipeline'
-                }
-            }
         }
         
         stage('4 - Build Docker Image') {
             steps {
                 dir('memoria-backend') {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                    echo "Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}"
+                    echo "Image Docker construite"
                 }
             }
         }
         
         stage('5 - Push Docker Hub') {
             steps {
-                sh """
-                    echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin
-                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                """
-                echo "Image publiée sur Docker Hub : ${IMAGE_NAME}:${IMAGE_TAG}"
+                sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                echo "Image publiee sur Docker Hub"
             }
         }
     }
     
     post {
         success {
-            echo "Pipeline CI réussi - image ${IMAGE_NAME}:${IMAGE_TAG} disponible"
+            echo "Pipeline CI reussi"
         }
         failure {
-            echo "Pipeline CI échoué - vérifier les logs"
-        }
-        always {
-            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+            echo "Pipeline CI echoue"
         }
     }
 }
