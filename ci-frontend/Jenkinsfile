@@ -1,4 +1,4 @@
-﻿pipeline {
+pipeline {
     agent any
     
     environment {
@@ -12,18 +12,16 @@
             steps {
                 git branch: 'devops-oussama',
                     url: 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
-                echo "Code récupéré depuis GitHub - branche devops-oussama"
+                echo "Code recupere depuis GitHub"
             }
         }
         
         stage('2 - Build Angular') {
             steps {
                 dir('memoria-frontend') {
-                    sh '''
-                        npm install
-                        npm run build --prod
-                    '''
-                    echo "Build Angular terminé"
+                    sh 'npm install'
+                    sh 'npm run build --prod'
+                    echo "Build Angular termine"
                 }
             }
         }
@@ -32,31 +30,25 @@
             steps {
                 dir('memoria-frontend') {
                     sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
-                    echo "Image Docker construite : ${IMAGE_NAME}:${IMAGE_TAG}"
+                    echo "Image Docker construite"
                 }
             }
         }
         
         stage('4 - Push Docker Hub') {
             steps {
-                sh """
-                    echo ${DOCKER_CREDS_PSW} | docker login -u ${DOCKER_CREDS_USR} --password-stdin
-                    docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                """
-                echo "Image publiée sur Docker Hub : ${IMAGE_NAME}:${IMAGE_TAG}"
+                sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+                echo "Image publiee sur Docker Hub"
             }
         }
     }
     
     post {
         success {
-            echo "Pipeline CI réussi - image ${IMAGE_NAME}:${IMAGE_TAG} disponible"
+            echo "Pipeline CI reussi"
         }
         failure {
-            echo "Pipeline CI échoué - vérifier les logs ci-dessus"
-        }
-        always {
-            sh "docker rmi ${IMAGE_NAME}:${IMAGE_TAG} || true"
+            echo "Pipeline CI echoue"
         }
     }
 }
