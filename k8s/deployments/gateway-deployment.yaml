@@ -18,3 +18,13 @@ spec:
           image: abirgamoudi123/memoria-gateway:latest
           ports:
             - containerPort: 8888
+          env:
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: 'http://eureka-server:8761/eureka/'
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8888
+            initialDelaySeconds: 45
+            periodSeconds: 15
+
