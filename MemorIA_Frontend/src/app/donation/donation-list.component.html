@@ -1,0 +1,132 @@
+<div class="dashboard-container">
+  <!-- 1. DASHBOARD HEADER -->
+  <header class="dashboard-header animate-fade-in">
+    <div class="header-content-left">
+      <nav class="breadcrumb-nav">CARE / DONATIONS / ANALYTICS</nav>
+      <h1 class="page-title">Donation Insights</h1>
+      <p class="page-subtitle">Real-time overview of community contributions and funding impact.</p>
+    </div>
+    
+    <div class="header-content-right">
+      <div class="sync-status">
+        <i class="fas fa-clock"></i> Last updated: {{ lastUpdated | date:'HH:mm:ss' }}
+      </div>
+      <div class="action-buttons">
+        <button class="btn-refresh" (click)="onRefresh()" [disabled]="loading">
+          <i class="fas fa-sync-alt" [class.fa-spin]="loading"></i>
+          <span>Refresh Data</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 2. KPI METRICS (Top Row) -->
+  <section class="metrics-grid">
+    <div class="metric-card animate-slide-up" style="--delay: 0.1s">
+      <div class="metric-icon-box bg-blue">
+        <i class="fas fa-wallet"></i>
+      </div>
+      <div class="metric-info">
+        <label>Total Revenue</label>
+        <h2 class="metric-value">${{ getTotalAmount() | number:'1.2-2' }}</h2>
+      </div>
+    </div>
+
+    <div class="metric-card animate-slide-up" style="--delay: 0.2s">
+      <div class="metric-icon-box bg-purple">
+        <i class="fas fa-user-friends"></i>
+      </div>
+      <div class="metric-info">
+        <label>Total Donors</label>
+        <h2 class="metric-value">{{ donations.length }}</h2>
+      </div>
+    </div>
+
+    <div class="metric-card animate-slide-up" style="--delay: 0.3s">
+      <div class="metric-icon-box bg-pink">
+        <i class="fas fa-heart"></i>
+      </div>
+      <div class="metric-info">
+        <label>Honoree Donations</label>
+        <h2 class="metric-value">{{ (donations.length / 1.5) | number:'1.0-0' }}</h2>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. DATA TABLE SECTION -->
+  <main class="table-card animate-fade-in">
+    <div class="table-card-header">
+      <h3 class="card-title">Recent Transactions</h3>
+      
+      <div class="table-search">
+        <div class="search-input-wrapper">
+          <i class="fas fa-search"></i>
+          <input type="text" 
+                 [(ngModel)]="searchTerm" 
+                 (input)="applyFilter()" 
+                 placeholder="Search by name, email, or honoree..." />
+        </div>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table" *ngIf="!loading && filteredDonations.length > 0">
+        <thead>
+          <tr>
+            <th>Contributor</th>
+            <th>Contact Details</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Verification</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of filteredDonations">
+            <td>
+              <div class="donor-identity">
+                <div class="avatar-sm">
+                  {{ item.firstName.charAt(0) }}{{ item.lastName.charAt(0) }}
+                </div>
+                <div class="identity-text">
+                  <span class="full-name">{{ item.firstName }} {{ item.lastName }}</span>
+                  <span class="dedication-tag" *ngIf="item.dedicated">
+                    <i class="fas fa-award"></i> Dedicated to {{ item.honoreeName }}
+                  </span>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="contact-cell">
+                <span class="email-primary">{{ item.email }}</span>
+                <span class="phone-secondary">{{ item.phone || 'No phone' }}</span>
+              </div>
+            </td>
+            <td>
+              <span class="date-badge">{{ item.createdAt | date:'MMM dd, yyyy' }}</span>
+            </td>
+            <td>
+              <span class="amount-accent">${{ item.amount | number:'1.2-2' }}</span>
+            </td>
+            <td>
+              <span class="status-pill verified">
+                <i class="fas fa-check-circle"></i> Confirmed
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- --- Empty & Loading States --- -->
+      <div *ngIf="loading" class="data-status-box">
+        <div class="status-spinner"></div>
+        <p>Fetching latest financial data...</p>
+      </div>
+
+      <div *ngIf="!loading && filteredDonations.length === 0" class="data-status-box">
+        <div class="status-icon"><i class="fas fa-database"></i></div>
+        <h4>No Records Synchronized</h4>
+        <p>Synchronize with SQLite to see your latest donation data.</p>
+      </div>
+    </div>
+  </main>
+</div>

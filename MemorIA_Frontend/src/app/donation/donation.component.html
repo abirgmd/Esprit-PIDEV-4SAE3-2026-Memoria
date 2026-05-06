@@ -1,0 +1,117 @@
+<div class="donation-page">
+  <div class="donation-modal">
+    <!-- Left: Mission Details (Alzheimer's Style) -->
+    <aside class="mission-side">
+      <div class="hero-img-container">
+        <img src="C:\Users\ABIR\.gemini\antigravity\brain\3805f720-ede4-499a-8790-6915faea19fc\memoria_donation_hero_1776286530867.png" alt="Support" />
+      </div>
+      <div class="brand-section">
+        <div class="brand-logo">
+           <img src="C:\Users\ABIR\.gemini\antigravity\brain\3805f720-ede4-499a-8790-6915faea19fc\memoria_logo_pro_1776286543825.png" alt="MemorIA Logo" />
+        </div>
+        <h2>Be a part of the fight to end Alzheimer's.</h2>
+        <p>
+          The millions of people impacted by Alzheimer's disease need your help. 
+          Your generosity can help us provide care and support to those facing the challenges 
+          and advance global research. Thank you.
+        </p>
+        
+        <div class="mission-footer">
+           <a href="#">Give via a Donor-Advised Fund (DAF)</a> • <a href="#">Security and Privacy Policy</a>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: Form Cards -->
+    <main class="form-side">
+      <!-- Dedication Bar (Shows on Step 2 or if dedicated is active) -->
+      <div class="dedication-bar" *ngIf="donation.dedicated && donation.honoreeName">
+        <span>❤️ Dedicated to <span style="text-decoration: underline;">{{donation.honoreeName}}</span></span>
+      </div>
+
+      <div class="form-body">
+        
+        <!-- Step 1: Amount Selection -->
+        <div *ngIf="step === 1" class="step-container">
+           <h3>Choose your gift amount</h3>
+           
+           <div class="amount-grid">
+              <button *ngFor="let amt of amounts" 
+                      [class.selected]="donation.amount === amt" 
+                      (click)="setAmount(amt)" 
+                      class="btn-amt-box">
+                ${{amt}}
+              </button>
+           </div>
+
+           <div class="custom-input-box">
+              <span>$</span>
+              <input type="number" [(ngModel)]="customAmount" placeholder="Other amount" (focus)="donation.amount = 0" />
+           </div>
+
+           <div style="margin-top: 30px;">
+              <label class="opt-in-label">
+                <input type="checkbox" [(ngModel)]="donation.dedicated" />
+                <span>Dedicate this donation in honor of someone</span>
+              </label>
+              
+              <div *ngIf="donation.dedicated" style="margin-top: 15px;">
+                  <input type="text" [(ngModel)]="donation.honoreeName" 
+                         placeholder="Honoree full name" 
+                         style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none;" />
+              </div>
+           </div>
+
+           <button class="btn-continue-pro" (click)="nextStep()" [disabled]="!donation.amount && !customAmount" style="margin-top: 50px;">
+             Continue
+           </button>
+        </div>
+
+        <!-- Step 2: Personal Details (The Screenshot Style) -->
+        <div *ngIf="step === 2" class="step-container">
+           <h3>
+             <button (click)="prevStep()" class="btn-icon-back">
+               <i class="fas fa-chevron-left"></i>
+             </button>
+             Enter your details
+           </h3>
+
+           <div class="input-group-block">
+              <div class="grouped-field">
+                 <input type="text" [(ngModel)]="donation.firstName" placeholder="First name" />
+              </div>
+              <div class="grouped-field">
+                 <input type="text" [(ngModel)]="donation.lastName" placeholder="Last name" />
+              </div>
+              <div class="grouped-field">
+                 <input type="email" [(ngModel)]="donation.email" placeholder="Email address" />
+              </div>
+           </div>
+
+           <div class="phone-field-pro">
+              <div class="flag-selector">
+                 <span>🇹🇳</span>
+                 <i class="fas fa-chevron-down" style="font-size: 10px;"></i>
+              </div>
+              <input type="text" [(ngModel)]="donation.phone" placeholder="Phone (optional)" />
+              <i class="far fa-question-circle" style="color: #94a3b8;"></i>
+           </div>
+
+           <label class="opt-in-label" style="margin-bottom: 30px;">
+              <input type="checkbox" [(ngModel)]="donation.receiveEmail" />
+              <span>I'd like to receive email.</span>
+           </label>
+
+           <button class="btn-continue-pro" (click)="submitDonation()">
+             Complete Donation
+           </button>
+
+           <div style="text-align: center; margin-top: 25px; color: #64748b; font-size: 13px; font-weight: 600;">
+              Is my donation secure? • Is this donation tax-deductible?
+           </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>

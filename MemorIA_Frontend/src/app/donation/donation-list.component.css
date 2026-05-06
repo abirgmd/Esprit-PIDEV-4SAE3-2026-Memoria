@@ -1,0 +1,411 @@
+/* 
+ * MEMORIA - PROFESSIONAL CAREGIVER DASHBOARD (DONATIONS)
+ * Theme: Corporate SaaS / Medical Professional
+ * Organization: Variables -> Global -> Header -> Metrics -> Data Table -> Animations -> Responsive
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+:host {
+  /* --- 1. DESIGN SYSTEM VARIABLES --- */
+  --primary: #3b82f6;          /* Azure Blue */
+  --primary-bg: #eff6ff;
+  --bg-app: #f8fafc;           /* Slate 50 */
+  --bg-card: #ffffff;
+  
+  --text-main: #0f172a;        /* Slate 900 */
+  --text-body: #334155;        /* Slate 700 */
+  --text-muted: #64748b;       /* Slate 500 */
+  --text-light: #94a3b8;       /* Slate 400 */
+  
+  --border-color: #e2e8f0;     /* Slate 200 */
+  --border-light: #f1f5f9;     /* Slate 100 */
+
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.05);
+  
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+
+  --ease: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   2. GLOBAL LAYOUT & WRAPPER
+   ========================================================================== */
+
+.dashboard-container {
+  padding: 40px;
+  background: var(--bg-app);
+  min-height: 100vh;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-body);
+}
+
+/* ==========================================================================
+   3. DASHBOARD HEADER (Top Nav & Actions)
+   ========================================================================== */
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  gap: 20px;
+}
+
+.breadcrumb-nav {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--primary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.page-title {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  color: var(--text-muted);
+  font-size: 17px;
+  margin-top: 4px;
+}
+
+/* Header Actions */
+.sync-status {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 15px;
+  justify-content: flex-end;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-refresh, .btn-export {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--ease);
+  border: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+.btn-refresh {
+  background: white;
+  color: var(--text-main);
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: var(--border-light);
+  transform: translateY(-2px);
+}
+
+.btn-export {
+  background: var(--text-main);
+  color: white;
+  border: none;
+}
+
+.btn-export:hover {
+  background: #1e293b;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   4. METRICS GRID (KPI Cards)
+   ========================================================================== */
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  padding: 30px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  border: 1px solid var(--border-light);
+  transition: var(--ease);
+}
+
+.metric-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+.metric-icon-box {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.bg-blue { background: #eff6ff; color: #3b82f6; }
+.bg-purple { background: #f5f3ff; color: #8b5cf6; }
+.bg-pink { background: #fff1f2; color: #f43f5e; }
+
+.metric-info label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 4px 0 0 0;
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   5. TRANSACTIONS TABLE CARD
+   ========================================================================== */
+
+.table-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.table-card-header {
+  padding: 25px 40px;
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0;
+}
+
+/* Table Search Input */
+.search-input-wrapper {
+  position: relative;
+  width: 320px;
+}
+
+.search-input-wrapper i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light);
+}
+
+.search-input-wrapper input {
+  width: 100%;
+  padding: 12px 16px 12px 48px;
+  background: var(--bg-app);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-weight: 600;
+  outline: none;
+  transition: var(--ease);
+}
+
+.search-input-wrapper input:focus {
+  background: white;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+/* Pure Data Table Styles */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  padding: 16px 40px;
+  background: #fafbfc;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.data-table td {
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--border-light);
+  vertical-align: middle;
+}
+
+.data-table tr:hover {
+  background: #fcfdfe;
+}
+
+/* Custom Table Components */
+.donor-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.avatar-sm {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--border-light);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  border: 1px solid var(--border-color);
+}
+
+.identity-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.full-name {
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.dedication-tag {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.contact-cell {
+  display: flex;
+  flex-direction: column;
+}
+
+.email-primary {
+  color: var(--text-body);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.phone-secondary {
+  color: var(--text-light);
+  font-size: 12px;
+}
+
+.date-badge {
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.amount-accent {
+  font-weight: 800;
+  color: var(--text-main);
+  font-size: 16px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.status-pill.verified {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* ==========================================================================
+   6. STATES (LOADING & EMPTY)
+   ========================================================================== */
+
+.data-status-box {
+  padding: 100px;
+  text-align: center;
+}
+
+.status-icon {
+  font-size: 60px;
+  color: var(--border-light);
+  margin-bottom: 20px;
+}
+
+.status-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-light);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  margin: 0 auto 15px;
+  animation: spin 1s linear infinite;
+}
+
+/* ==========================================================================
+   7. ANIMATIONS
+   ========================================================================== */
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes slideUp { 
+  from { opacity: 0; transform: translateY(20px); } 
+  to { opacity: 1; transform: translateY(0); } 
+}
+
+.animate-fade-in { animation: fadeIn 0.8s ease-out; }
+.animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; animation-delay: var(--delay, 0s); }
+
+/* ==========================================================================
+   8. RESPONSIVE QUERIES
+   ========================================================================== */
+
+@media (max-width: 1200px) {
+  .metrics-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header { flex-direction: column; align-items: flex-start; }
+  .metrics-grid { grid-template-columns: 1fr; }
+  .table-card-header { flex-direction: column; gap: 20px; align-items: flex-start; }
+  .search-input-wrapper { width: 100%; }
+}
