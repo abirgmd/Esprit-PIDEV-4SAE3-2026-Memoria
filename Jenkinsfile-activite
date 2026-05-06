@@ -59,9 +59,9 @@ pipeline {
         }
         stage('6 - Kubernetes') {
             steps {
-                sh "sudo kubectl apply -f k8s/deployments/backend-activite-deployment.yaml --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl apply -f k8s/services/backend-activite-service.yaml --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl rollout status deployment/memoria-backend-activite --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl apply -f k8s/deployments/backend-activite-deployment.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl apply -f k8s/services/backend-activite-service.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl rollout status deployment/backend-activite -n pidev --kubeconfig=/home/vagrant/.kube/config"
             }
         }
     }
