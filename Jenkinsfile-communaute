@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        maven 'MAVEN_HOME' // Assurez-vous que ce nom correspond à celui dans Jenkins Tools
+    }
     environment {
         DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
         DOCKER_HUB_USER    = 'abirgamoudi123'
