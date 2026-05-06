@@ -10,8 +10,8 @@ pipeline {
     stages {
         stage('1 - Checkout') {
             steps {
-                git branch: 'main', url: "${GIT_REPO_URL}"
-                echo "Code récupéré depuis GitHub - branche main"
+                git branch: 'main-push', url: "${GIT_REPO_URL}"
+                echo "Code récupéré depuis GitHub - branche main-push"
             }
         }
         stage('2 - Build Maven') {
@@ -54,10 +54,11 @@ pipeline {
                 echo "Image publiée sur Docker Hub : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
             }
         }
-        stage('6 - Keverntes') {
+        stage('6 - Kubernetes') {
             steps {
-                sh "sudo kubectl apply -f k8s/frontend.yaml --kubeconfig=/home/vagrant/.kube/config"
-                sh "sudo kubectl rollout status deployment/frontend --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl apply -f k8s/deployments/frontend-deployment.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl apply -f k8s/services/frontend-service.yaml -n pidev --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl rollout status deployment/frontend -n pidev --kubeconfig=/home/vagrant/.kube/config"
             }
         }
     }
