@@ -3,58 +3,49 @@ pipeline {
     environment {
         DOCKER_REGISTRY = 'abirgamoudi123'
         GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
-        KUBECONFIG      = credentials('kubeconfig-credentials')
+        KUBECONFIG_PATH = '/home/vagrant/.kube/config'
     }
     stages {
         stage('1 - Checkout Manifests K8s') {
             steps {
-                // Récupérer les fichiers YAML de configuration Kubernetes
-                git branch: 'main', url: "${GIT_REPO_URL}"
+                git branch: 'main-push', url: "${GIT_REPO_URL}"
                 echo 'Manifests Kubernetes récupérés'
             }
         }
-        stage('2 - Verifier disponibilite images Docker Hub') {
+        stage('2 - Déploiement Infrastructure (MySQL & Secrets)') {
             steps {
-                sh "docker pull ${DOCKER_REGISTRY}/memoria-backend-activite:latest"
-                sh "docker pull ${DOCKER_REGISTRY}/memoria-backend-communaute:latest"
-                sh "docker pull ${DOCKER_REGISTRY}/memoria-gateway:latest"
-                sh "docker pull ${DOCKER_REGISTRY}/memoria-registry:latest"
-                sh "docker pull ${DOCKER_REGISTRY}/memoria-frontend:latest"
+                sh "sudo kubectl apply -f k8s/namespaces.yaml --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "sudo kubectl apply -f k8s/secrets/ -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl apply -f k8s/deployments/mysql-pvc.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl apply -f k8s/deployments/mysql-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl apply -f k8s/services/mysql-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                echo 'Infrastructure MySQL déployée'
             }
         }
-        stage('3 - Déploiement sur Kubernetes') {
+        stage('3 - Déploiement des Services') {
             steps {
-                // Appliquer TOUS les manifests du dossier k8s/ récursivement
-                sh 'sudo kubectl apply -f k8s/ --recursive --kubeconfig=${KUBECONFIG}'
-                echo 'Manifests appliqués sur le cluster K8s'
+                sh "sudo kubectl apply -f k8s/deployments/ -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl apply -f k8s/services/ -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                echo 'Tous les services appliqués sur le cluster K8s'
             }
         }
         stage('4 - Attendre que les Pods soient prets') {
             steps {
-                sh 'sudo kubectl rollout status deployment/backend-activite --timeout=120s --kubeconfig=${KUBECONFIG}'
-                sh 'sudo kubectl rollout status deployment/backend-communaute --timeout=120s --kubeconfig=${KUBECONFIG}'
-                sh 'sudo kubectl rollout status deployment/memoria-gateway --timeout=120s --kubeconfig=${KUBECONFIG}'
-                sh 'sudo kubectl rollout status deployment/memoria-registry --timeout=120s --kubeconfig=${KUBECONFIG}'
-                sh 'sudo kubectl rollout status deployment/frontend --timeout=120s --kubeconfig=${KUBECONFIG}'
+                sh "sudo kubectl rollout status deployment/eureka-server -n pidev --timeout=120s --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl rollout status deployment/backend-activite -n pidev --timeout=120s --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl rollout status deployment/backend-communaute -n pidev --timeout=120s --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl rollout status deployment/memoria-gateway -n pidev --timeout=120s --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl rollout status deployment/frontend -n pidev --timeout=120s --kubeconfig=${KUBECONFIG_PATH}"
                 echo 'Tous les déploiements sont opérationnels'
-            }
-        }
-        stage('5 - Test de sante') {
-            steps {
-                sh 'sudo kubectl get pods -o wide --kubeconfig=${KUBECONFIG}'
-                sh 'sudo kubectl get services --kubeconfig=${KUBECONFIG}'
-                echo 'Vérifier manuellement : http://[IP NODE]:30000 (Frontend)'
-                echo 'Vérifier manuellement : http://[IP NODE]:30080 (Activité)'
             }
         }
     }
     post {
         success {
-            echo 'Déploiement Kubernetes réussi !'
+            echo 'Déploiement complet réussi !'
         }
-        failure {
-            sh 'sudo kubectl get events --sort-by=.metadata.creationTimestamp --kubeconfig=${KUBECONFIG} | tail -20'
-            echo 'Consulter les events K8s ci-dessus pour diagnostiquer'
+        always {
+            sh "sudo kubectl get pods -n pidev --kubeconfig=${KUBECONFIG_PATH}"
         }
     }
 }
