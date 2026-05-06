@@ -1,0 +1,48 @@
+pipeline {
+    agent any
+    environment {
+        DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
+        DOCKER_HUB_USER    = 'abirgamoudi123'
+        IMAGE_NAME         = 'memoria-backend-communaute'
+        // Remplacer par l'URL de votre dépôt GitHub
+        GIT_REPO_URL       = 'https://github.com/votre-compte/votre-repo.git'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: "${GIT_REPO_URL}"
+            }
+        }
+        stage('build maven') {
+            steps {
+                sh "cd MemorIA_Backendgestioncommunaute && mvn clean package -DskipTests"
+            }
+        }
+        stage('tests') {
+            steps {
+                sh "cd MemorIA_Backendgestioncommunaute && mvn test"
+            }
+        }
+        stage('build img docker') {
+            steps {
+                sh "cd MemorIA_Backendgestioncommunaute && docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
+            }
+        }
+        stage('push docker') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CRED_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
+                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                    }
+                }
+            }
+        }
+        stage('keverntes') {
+            steps {
+                sh "sudo kubectl apply -f k8s/backend-communaute.yaml --kubeconfig=/home/vagrant/.kube/config"
+                sh "sudo kubectl rollout status deployment/${IMAGE_NAME} --kubeconfig=/home/vagrant/.kube/config"
+            }
+        }
+    }
+}
