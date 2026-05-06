@@ -20,9 +20,11 @@ echo "Remote 'origin' configuré sur $REPO_URL"
 
 echo "--- Préparation des fichiers ---"
 git add .
+git reset guide-frontend.sh # Exclure le fichier guide-frontend.sh du commit
+echo "Fichier guide-frontend.sh exclu du commit."
 
 echo "--- Création du commit ---"
-git commit -m "Push automatique de tous les fichiers du projet"
+git commit -m "Push automatique (excluant guide-frontend.sh)"
 
 echo "--- Création de la branche $BRANCH_NAME ---"
 git checkout -b $BRANCH_NAME 2>/dev/null || git checkout $BRANCH_NAME
