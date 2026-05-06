@@ -1,62 +1,72 @@
 Vagrant.configure("2") do |config|
+  # Box Selection
   config.vm.box = "ubuntu/jammy64"
+  
+  # Timeout and Network
   config.vm.boot_timeout = 600
-
   config.vm.network "private_network", ip: "192.168.56.10"
+  config.vm.network "forwarded_port", guest: 8080, host: 8080, auto_correct: true # Jenkins
+  config.vm.network "forwarded_port", guest: 9000, host: 9000, auto_correct: true # SonarQube
+  config.vm.network "forwarded_port", guest: 3000, host: 3000, auto_correct: true # Grafana
 
+  # VirtualBox Provider Settings
   config.vm.provider "virtualbox" do |vb|
+    vb.name = "MemorIA-DevOps-Server"
+    vb.memory = "4096" # Balanced for stability
+    vb.cpus = 2
     vb.gui = true
-    vb.memory = "8192"
-    vb.cpus = 4
+    
+    # Windows-specific network fixes
+    vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    vb.customize ["modifyvm", :id, "--ioapic", "on"]
   end
 
+  # Automated Provisioning
   config.vm.provision "shell", inline: <<-SHELL
+    export DEBIAN_FRONTEND=noninteractive
     echo "🚀 Starting DevOps Environment Setup..."
 
-    # Update system
-    sudo apt update -y && sudo apt upgrade -y
-
-    # Install basic tools
-    sudo apt install -y git curl wget unzip
+    # Update System
+    sudo apt-get update -y
+    
+    # Install Essential Tools
+    sudo apt-get install -y git curl wget unzip apt-transport-https ca-certificates
 
     # Install Docker
-    sudo apt install -y docker.io
+    echo "--- Installing Docker ---"
+    sudo apt-get install -y docker.io
     sudo systemctl enable docker
     sudo systemctl start docker
     sudo usermod -aG docker vagrant
-
-    # Install Java + Maven
-    sudo apt install -y openjdk-17-jdk maven
+    
+    # Install Java 17 (Required for Jenkins)
+    echo "--- Installing Java 17 ---"
+    sudo apt-get install -y openjdk-17-jdk
 
     # Install Jenkins
-    curl -fsSL https://pkg.jenkins.io/debian/jenkins.io.key | sudo tee \
+    echo "--- Installing Jenkins ---"
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
       /usr/share/keyrings/jenkins-keyring.asc > /dev/null
-
     echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
-      https://pkg.jenkins.io/debian binary/ | sudo tee \
+      https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
       /etc/apt/sources.list.d/jenkins.list > /dev/null
-
-    sudo apt update
-    sudo apt install -y jenkins
-
+    sudo apt-get update -y
+    sudo apt-get install -y jenkins
     sudo systemctl enable jenkins
     sudo systemctl start jenkins
-
-    # Allow Jenkins to use Docker
     sudo usermod -aG docker jenkins
 
-    # Install kubectl
-    sudo apt install -y kubectl
-
     # Install Minikube
+    echo "--- Installing Minikube ---"
     curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
     sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
-    # Start Minikube (Docker driver)
-    minikube start --driver=docker
+    # Install Kubectl
+    echo "--- Installing Kubectl ---"
+    sudo apt-get install -y kubectl
 
-    echo "✅ Installation Complete!"
-    echo "👉 Jenkins: http://192.168.56.10:8080"
-    echo "👉 Get password: sudo cat /var/lib/jenkins/secrets/initialAdminPassword"
+    echo "✅ Setup Complete!"
+    echo "👉 Jenkins available at: http://192.168.56.10:8080"
+    echo "👉 To start Minikube, run: minikube start --driver=docker"
   SHELL
 end
