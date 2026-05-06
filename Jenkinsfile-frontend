@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    tools {
+        nodejs 'NODE_HOME' // Assurez-vous d'avoir installé le plugin NodeJS et créé cet outil
+    }
     environment {
         DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
         DOCKER_HUB_USER    = 'abirgamoudi123'
