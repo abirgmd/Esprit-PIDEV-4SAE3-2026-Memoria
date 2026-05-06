@@ -4,7 +4,7 @@ metadata:
   name: backend-communaute
   namespace: pidev
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: backend-communaute
@@ -22,17 +22,11 @@ spec:
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: 'http://eureka-server:8761/eureka/'
             - name: SPRING_DATASOURCE_URL
-              value: 'jdbc:mysql://mysql:3306/memoria_db?createDatabaseIfNotExist=true'
+              value: 'jdbc:mysql://mysql:3306/memoria_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false'
             - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: username
+              value: 'root'
             - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: mysql-secret
-                  key: password
+              value: ''
           readinessProbe:
             httpGet:
               path: /actuator/health

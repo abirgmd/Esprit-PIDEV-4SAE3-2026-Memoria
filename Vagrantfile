@@ -4,8 +4,8 @@ Vagrant.configure("2") do |config|
   config.vm.network "private_network", ip: "192.168.56.10"
 
   config.vm.provider "virtualbox" do |vb|
-    vb.memory = "6144"
-    vb.cpus = 3
+    vb.memory = "8192"
+    vb.cpus = 4
   end
 
   config.vm.provision "shell", inline: <<-SHELL
