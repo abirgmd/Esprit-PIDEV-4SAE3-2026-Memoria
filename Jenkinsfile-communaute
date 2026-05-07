@@ -1,11 +1,15 @@
 pipeline {
     agent any
+    tools {
+        maven 'MAVEN_HOME'
+    }
     environment {
-        DOCKER_HUB_USER = 'abirgamoudi123'
-        IMAGE_NAME      = 'memoria-backend-communaute'
-        MS_NAME         = 'MemorIA_Backendgestioncommunaute'
-        KUBECONFIG_PATH = '/var/lib/jenkins/.kube/config'
-        GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
+        DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
+        DOCKER_HUB_USER    = 'abirgamoudi123'
+        IMAGE_NAME         = 'memoria-backend-communaute'
+        MS_NAME            = 'MemorIA_Backendgestioncommunaute'
+        KUBECONFIG_PATH    = '/var/lib/jenkins/.kube/config'
+        GIT_REPO_URL       = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
     stages {
         stage('1 - Checkout') {
@@ -13,19 +17,38 @@ pipeline {
                 git branch: 'main-push', url: "${GIT_REPO_URL}"
             }
         }
-        stage('2 - Build & Push Docker') {
+        stage('2 - Build Maven') {
             steps {
-                script {
-                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
-                    sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                dir("${MS_NAME}") {
+                    sh 'mvn clean package -DskipTests'
                 }
             }
         }
-        stage('3 - Update Kubernetes') {
+        stage('3 - SonarQube Analysis') {
             steps {
-                sh "kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                sh "kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                sh "kubectl rollout status deployment/backend-communaute -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
+                dir("${MS_NAME}") {
+                    withSonarQubeEnv('SonarQube') {
+                        sh "mvn sonar:sonar -Dsonar.projectKey=${IMAGE_NAME}"
+                    }
+                }
+            }
+        }
+        stage('4 - Build & Push Docker') {
+            steps {
+                script {
+                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CRED_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
+                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                    }
+                }
+            }
+        }
+        stage('5 - Kubernetes') {
+            steps {
+                sh "kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                sh "kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                echo '🚀 Déploiement Communauté envoyé au cluster.'
             }
         }
     }
