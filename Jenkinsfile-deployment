@@ -1,9 +1,8 @@
 pipeline {
     agent any
     environment {
-        DOCKER_REGISTRY = 'abirgamoudi123'
-        GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
         KUBECONFIG_PATH = '/var/lib/jenkins/.kube/config'
+        GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
     stages {
         stage('1 - Checkout Manifests K8s') {
@@ -20,7 +19,7 @@ pipeline {
                 sh "kubectl apply -f k8s/deployments/mysql-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/mysql-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 echo 'Attente de MySQL (le build continuera même en cas de timeout)...'
-                sh "kubectl rollout status deployment/mysql -n pidev --timeout=180s --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "kubectl rollout status deployment/mysql -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
             }
         }
         stage('3 - Déploiement Eureka (Service Registry)') {
@@ -28,26 +27,28 @@ pipeline {
                 sh "kubectl apply -f k8s/deployments/eureka-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/eureka-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 echo 'Attente de Eureka Server (le build continuera même en cas de timeout)...'
-                sh "kubectl rollout status deployment/eureka-server -n pidev --timeout=180s --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "kubectl rollout status deployment/eureka-server -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
             }
         }
         stage('4 - Déploiement des Microservices') {
             steps {
                 sh "kubectl apply -f k8s/deployments/ -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/ -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
+                echo 'Attente des backends (le build continuera même en cas de timeout)...'
+                sh "kubectl rollout status deployment/backend-activite -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "kubectl rollout status deployment/backend-communaute -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
                 echo 'Tous les services appliqués sur le cluster K8s'
             }
         }
-        stage('5 - Vérification finale') {
+        stage('5 - État final') {
             steps {
-                echo 'État actuel des Pods :'
                 sh "kubectl get pods -n pidev --kubeconfig=${KUBECONFIG_PATH}"
             }
         }
     }
     post {
         success {
-            echo 'Déploiement complet réussi !'
+            echo 'Déploiement complet envoyé au cluster !'
         }
         always {
             sh "kubectl get pods -n pidev --kubeconfig=${KUBECONFIG_PATH}"
