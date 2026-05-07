@@ -12,7 +12,7 @@ Vagrant.configure("2") do |config|
   # VirtualBox Provider Settings
   config.vm.provider "virtualbox" do |vb|
     vb.name = "MemorIA-DevOps-Server"
-    vb.memory = "4096" # Balanced for stability
+    vb.memory = "6144" # Increased to support SonarQube and Grafana
     vb.cpus = 2
     vb.gui = true
     
@@ -65,8 +65,14 @@ Vagrant.configure("2") do |config|
     echo "--- Installing Kubectl ---"
     sudo apt-get install -y kubectl
 
+    # Install SonarQube & Grafana
+    echo "--- Installing SonarQube & Grafana ---"
+    sudo docker run -d --name sonarqube -p 9000:9000 sonarqube:lts-community || true
+    sudo docker run -d --name grafana -p 3000:3000 grafana/grafana || true
+
     echo "✅ Setup Complete!"
-    echo "👉 Jenkins available at: http://192.168.56.10:8080"
-    echo "👉 To start Minikube, run: minikube start --driver=docker"
-  SHELL
+    echo "👉 Jenkins: http://192.168.56.10:8080"
+    echo "👉 SonarQube: http://192.168.56.10:9000"
+    echo "👉 Grafana: http://192.168.56.10:3000"
+SHELL
 end
