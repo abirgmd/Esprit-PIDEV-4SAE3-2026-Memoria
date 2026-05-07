@@ -11,6 +11,6 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: 
-          - '192.168.56.10:8081' # Communauté
-          - '192.168.56.10:8082' # Activité
-          - '192.168.56.10:8888' # Gateway
+          - '192.168.56.10:30081' # Communauté (NodePort)
+          - '192.168.56.10:30082' # Activité (NodePort)
+          - '192.168.56.10:30088' # Gateway (NodePort)
