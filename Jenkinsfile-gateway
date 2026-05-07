@@ -3,6 +3,7 @@ pipeline {
     environment {
         DOCKER_HUB_USER = 'abirgamoudi123'
         IMAGE_NAME      = 'memoria-gateway'
+        MS_NAME         = 'MemoriA-Gateway'
         KUBECONFIG_PATH = '/var/lib/jenkins/.kube/config'
         GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
@@ -15,7 +16,7 @@ pipeline {
         stage('2 - Build & Push Docker') {
             steps {
                 script {
-                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./MemoriA-Gateway"
+                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
                     sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                 }
             }
