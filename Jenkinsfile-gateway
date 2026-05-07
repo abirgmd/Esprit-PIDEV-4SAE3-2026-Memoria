@@ -40,36 +40,19 @@ pipeline {
                 }
             }
             post {
-                always {
-                    junit allowEmptyResults: true, testResults: "${MS_NAME}/target/surefire-reports/*.xml"
-                    sh "docker rm -f mysql-test-${IMAGE_NAME} || true"
-                }
-            }
-        }
-        stage('4 - Build Image Docker') {
-            steps {
-                dir("${MS_NAME}") {
-                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
-                }
-                echo "Image Docker construite : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
-            }
-        }
-        stage('5 - Push Docker Hub') {
+        stage('1 - Build & Push Docker') {
             steps {
                 script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CRED_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
-                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
-                    }
+                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./MemoriA-Gateway"
+                    sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                 }
-                echo "Image publiée sur Docker Hub : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
             }
         }
-        stage('6 - Kubernetes') {
+        stage('2 - Update Kubernetes') {
             steps {
-                sh "kubectl apply -f k8s/deployments/gateway-deployment.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
-                sh "kubectl apply -f k8s/services/gateway-service.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
-                sh "kubectl rollout status deployment/memoria-gateway -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
+                sh "kubectl apply -f k8s/deployments/gateway-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
+                sh "kubectl apply -f k8s/services/gateway-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
+                sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=180s --kubeconfig=${KUBECONFIG_PATH} || true"
             }
         }
     }
