@@ -2,9 +2,11 @@
 FROM node:18 AS build
 WORKDIR /app
 
-# Optimisation du cache npm
+# Optimisation du cache et de la fiabilité réseau
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-retries 5 && \
+    npm install --legacy-peer-deps
 
 # Build de l'application
 COPY . .
