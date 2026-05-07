@@ -34,11 +34,11 @@ pipeline {
             steps {
                 sh "kubectl apply -f k8s/deployments/ -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/ -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                echo 'Attente des services (le build continuera même en cas de timeout)...'
-                sh "kubectl rollout status deployment/backend-activite -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
-                sh "kubectl rollout status deployment/backend-communaute -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
-                sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
-                sh "kubectl rollout status deployment/frontend -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
+                echo 'Attente réelle des services (jusqu\'à 10 minutes par service)...'
+                sh "kubectl rollout status deployment/backend-activite -n pidev --timeout=600s --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "kubectl rollout status deployment/backend-communaute -n pidev --timeout=600s --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=600s --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "kubectl rollout status deployment/frontend -n pidev --timeout=600s --kubeconfig=${KUBECONFIG_PATH} || true"
                 echo 'Tous les services appliqués sur le cluster K8s'
             }
         }
