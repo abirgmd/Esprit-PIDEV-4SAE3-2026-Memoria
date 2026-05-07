@@ -19,6 +19,8 @@ spec:
           ports:
             - containerPort: 8888
           env:
+            - name: EUREKA_SERVER
+              value: 'eureka-server'
             - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
               value: 'http://eureka-server:8761/eureka/'
           resources:
@@ -34,4 +36,3 @@ spec:
               port: 8888
             initialDelaySeconds: 120
             periodSeconds: 15
-
