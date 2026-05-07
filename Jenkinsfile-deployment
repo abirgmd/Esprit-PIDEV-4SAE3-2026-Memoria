@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        KUBECONFIG_PATH = '/home/vagrant/.kube/config'
+        KUBECONFIG_PATH = '/var/lib/jenkins/.kube/config'
         GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
     stages {
