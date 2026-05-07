@@ -23,9 +23,16 @@ spec:
               value: 'false'
             - name: EUREKA_CLIENT_FETCH_REGISTRY
               value: 'false'
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 90
+            initialDelaySeconds: 120
             periodSeconds: 10

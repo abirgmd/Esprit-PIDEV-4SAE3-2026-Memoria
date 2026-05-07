@@ -12,26 +12,34 @@ pipeline {
                 echo 'Manifests Kubernetes récupérés'
             }
         }
-        stage('2 - Déploiement Infrastructure (MySQL & Secrets)') {
+        stage('2 - Déploiement Infrastructure (MySQL)') {
             steps {
                 sh "kubectl apply -f k8s/namespaces.yaml --kubeconfig=${KUBECONFIG_PATH} --validate=false || true"
                 sh "kubectl apply -f k8s/secrets/ -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/deployments/mysql-pvc.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/deployments/mysql-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/mysql-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                echo 'Infrastructure MySQL déployée'
+                echo 'Attente de MySQL...'
+                sh "kubectl rollout status deployment/mysql -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
             }
         }
-        stage('3 - Déploiement des Services') {
+        stage('3 - Déploiement Eureka (Service Registry)') {
+            steps {
+                sh "kubectl apply -f k8s/deployments/eureka-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
+                sh "kubectl apply -f k8s/services/eureka-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
+                echo 'Attente de Eureka Server...'
+                sh "kubectl rollout status deployment/eureka-server -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
+            }
+        }
+        stage('4 - Déploiement des Microservices') {
             steps {
                 sh "kubectl apply -f k8s/deployments/ -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/ -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 echo 'Tous les services appliqués sur le cluster K8s'
             }
         }
-        stage('4 - Attendre que les Pods soient prets') {
+        stage('5 - Attendre que les Pods soient prets') {
             steps {
-                sh "kubectl rollout status deployment/eureka-server -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
                 sh "kubectl rollout status deployment/backend-activite -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
                 sh "kubectl rollout status deployment/backend-communaute -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
                 sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
