@@ -1,32 +1,42 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HUB_USER = 'abirgamoudi123'
-        IMAGE_NAME      = 'memoria-gateway'
-        MS_NAME         = 'MemoriA-Gateway'
-        KUBECONFIG_PATH = '/var/lib/jenkins/.kube/config'
-        GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
+        DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
+        DOCKER_HUB_USER    = 'abirgamoudi123'
+        IMAGE_NAME         = 'memoria-gateway'
+        MS_NAME            = 'MemoriA-Gateway'
+        KUBECONFIG_PATH    = '/var/lib/jenkins/.kube/config'
+        GIT_REPO_URL       = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
     stages {
         stage('1 - Checkout') {
             steps {
                 git branch: 'main-push', url: "${GIT_REPO_URL}"
+                echo "Code récupéré depuis GitHub"
             }
         }
         stage('2 - Build & Push Docker') {
             steps {
                 script {
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
-                    sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CRED_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
+                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                    }
                 }
             }
         }
-        stage('3 - Update Kubernetes') {
+        stage('3 - Kubernetes') {
             steps {
-                sh "kubectl apply -f k8s/deployments/gateway-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                sh "kubectl apply -f k8s/services/gateway-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
+                sh "kubectl apply -f k8s/deployments/gateway-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                sh "kubectl apply -f k8s/services/gateway-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
+                sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
             }
+        }
+    }
+    post {
+        always {
+            sh "docker rmi ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest || true"
         }
     }
 }
