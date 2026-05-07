@@ -20,7 +20,7 @@ pipeline {
                 sh "sudo kubectl apply -f k8s/services/mysql-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
                 
                 echo 'Attente de démarrage de MySQL...'
-                sh "sudo kubectl rollout status deployment/mysql -n pidev --timeout=180s --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl rollout status deployment/mysql -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
             }
         }
         stage('3 - Déploiement Eureka (Service Registry)') {
@@ -29,7 +29,7 @@ pipeline {
                 sh "sudo kubectl apply -f k8s/services/eureka-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
                 
                 echo 'Attente de Eureka Server...'
-                sh "sudo kubectl rollout status deployment/eureka-server -n pidev --timeout=120s --kubeconfig=${KUBECONFIG_PATH}"
+                sh "sudo kubectl rollout status deployment/eureka-server -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
             }
         }
         stage('4 - Déploiement des Microservices') {
