@@ -19,14 +19,16 @@ pipeline {
                 sh "kubectl apply -f k8s/deployments/mysql-pvc.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/deployments/mysql-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/mysql-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                echo 'Infrastructure MySQL appliquée'
+                echo 'Attente de MySQL (le build continuera même en cas de timeout)...'
+                sh "kubectl rollout status deployment/mysql -n pidev --timeout=180s --kubeconfig=${KUBECONFIG_PATH} || true"
             }
         }
         stage('3 - Déploiement Eureka (Service Registry)') {
             steps {
                 sh "kubectl apply -f k8s/deployments/eureka-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/eureka-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                echo 'Eureka Server appliqué'
+                echo 'Attente de Eureka Server (le build continuera même en cas de timeout)...'
+                sh "kubectl rollout status deployment/eureka-server -n pidev --timeout=180s --kubeconfig=${KUBECONFIG_PATH} || true"
             }
         }
         stage('4 - Déploiement des Microservices') {
@@ -38,7 +40,7 @@ pipeline {
         }
         stage('5 - Vérification finale') {
             steps {
-                echo 'État des Pods (ils vont démarrer progressivement) :'
+                echo 'État actuel des Pods :'
                 sh "kubectl get pods -n pidev --kubeconfig=${KUBECONFIG_PATH}"
             }
         }
