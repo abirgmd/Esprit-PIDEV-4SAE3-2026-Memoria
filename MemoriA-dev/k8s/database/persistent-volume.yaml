@@ -1,0 +1,66 @@
+# PersistentVolume pour MySQL - Stockage physique sur le nœud
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-pv
+  labels:
+    type: local
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/mysql
+
+---
+# PersistentVolume pour MySQL Users
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-users-pv
+  labels:
+    type: local
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/mysql-users
+
+---
+# PersistentVolume pour MySQL Alerts
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-alerts-pv
+  labels:
+    type: local
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/mysql-alerts
+
+---
+# PersistentVolume pour MySQL Planning (si besoin)
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: mysql-planning-pv
+  labels:
+    type: local
+spec:
+  storageClassName: standard
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/mysql-planning

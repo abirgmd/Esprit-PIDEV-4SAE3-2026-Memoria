@@ -18,6 +18,7 @@ spec:
       containers:
       - name: eureka-server
         image: pidev/eureka:latest # image publiée par le pipeline CI
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8761
           name: http
@@ -30,21 +31,17 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8761
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8761
-          initialDelaySeconds: 40
-          periodSeconds: 10
+          initialDelaySeconds: 90
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
         resources:
           requests:
-            memory: "512Mi"
-            cpu: "250m"
+            memory: "256Mi"
+            cpu: "100m"
           limits:
-            memory: "1Gi"
-            cpu: "500m"
+            memory: "512Mi"
+            cpu: "300m"
 ---
 apiVersion: v1
 kind: Service

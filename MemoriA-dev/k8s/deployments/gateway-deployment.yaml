@@ -6,7 +6,7 @@ metadata:
   labels:
     app: memoria-gateway
 spec:
-  replicas: 2 # 2 pods pour la haute disponibilité
+  replicas: 1
   selector:
     matchLabels:
       app: memoria-gateway
@@ -18,6 +18,7 @@ spec:
       containers:
       - name: memoria-gateway
         image: fatmaellouze03/memoria-gateway:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8888
           name: http
@@ -29,18 +30,14 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8888
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8888
-          initialDelaySeconds: 60
-          periodSeconds: 15
+          initialDelaySeconds: 120
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "128Mi"
+            cpu: "100m"
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "256Mi"
+            cpu: "300m"

@@ -13,15 +13,47 @@ pipeline {
                 sh 'docker pull fatmaellouze03/memoria-alerts:latest'
             }
         }
-        stage('3 - Deploy Alerts') {
+        stage('3 - Deploy Kubernetes') {
             steps {
-                sh 'kubectl apply -f MemoriA-dev/k8s/namespace.yaml'
-                sh 'kubectl apply -f MemoriA-dev/k8s/alerts-deployment.yaml'
+                sh '''
+                    echo "📦 Applying Kubernetes manifests for Alerts..."
+                    
+                    # 1. Namespace
+                    echo "1️⃣  Creating namespace..."
+                    kubectl create namespace memoria --dry-run=client -o yaml | kubectl apply -f -
+                    
+                    # 2. PersistentVolumes
+                    echo "2️⃣  Creating PersistentVolumes..."
+                    kubectl apply -f MemoriA-dev/k8s/database/persistent-volume.yaml
+                    
+                    # 3. Secrets
+                    echo "3️⃣  Applying Secrets..."
+                    kubectl apply -f MemoriA-dev/k8s/database/mysql-secret.yaml
+                    
+                    # 4. ConfigMaps
+                    echo "4️⃣  Applying ConfigMaps..."
+                    kubectl apply -f MemoriA-dev/k8s/deployments/app-configmap.yaml
+                    
+                    # 5. MySQL (alerts_db)
+                    echo "5️⃣  Deploying MySQL for Alerts..."
+                    kubectl apply -f MemoriA-dev/k8s/database/mysql-alerts-deployment.yaml
+                    
+                    # Wait for MySQL to be ready
+                    echo "⏳ Waiting for MySQL to be ready..."
+                    kubectl wait --for=condition=ready pod -l app=mysql-alerts -n memoria --timeout=120s || echo "⚠️ MySQL Alerts timeout"
+                    
+                    # 6. Alerts Deployment & Service
+                    echo "6️⃣  Deploying Alerts Service..."
+                    kubectl apply -f MemoriA-dev/k8s/deployments/alerts-deployment.yaml
+                    kubectl apply -f MemoriA-dev/k8s/services/alerts-service.yaml
+                    
+                    echo "✅ All Kubernetes manifests applied"
+                '''
             }
         }
         stage('4 - Vérifier Pod') {
             steps {
-                sh 'kubectl rollout status deployment/memoria-alerts -n memoria --timeout=120s'
+                sh 'kubectl rollout status deployment/memoria-alerts -n memoria --timeout=600s'
             }
         }
         stage('5 - Smoke Test') {

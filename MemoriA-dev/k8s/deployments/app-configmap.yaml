@@ -1,0 +1,29 @@
+# ConfigMap pour les configurations Spring Boot
+# Contient les URL de connexion aux bases de données et les paramètres Spring
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spring-datasource-config
+  namespace: memoria
+data:
+  # URLs des bases de données pour chaque service
+  SPRING_DATASOURCE_URL_ALERTS: "jdbc:mysql://mysql-alerts:3306/alerts_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+  SPRING_DATASOURCE_URL_USERS: "jdbc:mysql://mysql-users:3306/users_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+  SPRING_DATASOURCE_URL_PLANNING: "jdbc:mysql://mysql-users:3306/users_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+  
+  # Configuration JPA/Hibernate
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+  SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: "org.hibernate.dialect.MySQL8Dialect"
+  
+  # Logging
+  LOGGING_LEVEL_ROOT: "INFO"
+  LOGGING_LEVEL_MEMORIA: "DEBUG"
+  
+  # Server
+  SERVER_SERVLET_CONTEXT_PATH: "/"
+  
+  # Eureka Registry
+  EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: "http://eureka-server:8761/eureka/"
+  EUREKA_INSTANCE_PREFER_IP_ADDRESS: "true"
+  EUREKA_INSTANCE_NON_SECURE_PORT: "8080"

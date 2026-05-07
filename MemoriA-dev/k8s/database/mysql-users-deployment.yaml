@@ -44,11 +44,11 @@ spec:
           mountPath: /var/lib/mysql # données persistées
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
             memory: "512Mi"
-            cpu: "500m"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "250m"
       volumes:
       - name: mysql-storage
         persistentVolumeClaim:
@@ -127,11 +127,11 @@ spec:
           mountPath: /var/lib/mysql # données persistées
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
             memory: "512Mi"
-            cpu: "500m"
+            cpu: "100m"
+          limits:
+            memory: "768Mi"
+            cpu: "250m"
       volumes:
       - name: mysql-storage
         persistentVolumeClaim:

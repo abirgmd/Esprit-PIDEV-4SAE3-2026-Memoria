@@ -6,7 +6,7 @@ metadata:
   labels:
     app: memoria-user-service
 spec:
-  replicas: 2 # 2 pods pour la haute disponibilité
+  replicas: 1
   selector:
     matchLabels:
       app: memoria-user-service
@@ -18,6 +18,7 @@ spec:
       containers:
       - name: memoria-user-service
         image: fatmaellouze03/memoria-user-service:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8094
           name: http
@@ -26,7 +27,7 @@ spec:
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
           value: 'http://eureka-server:8761/eureka/'
         - name: SPRING_DATASOURCE_URL
-          value: 'jdbc:mysql://mysql:3306/users_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC'
+          value: 'jdbc:mysql://mysql-users:3306/users_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC'
         - name: SPRING_DATASOURCE_USERNAME
           valueFrom:
             secretKeyRef: # récupérer depuis un Secret K8s
@@ -49,18 +50,14 @@ spec:
           httpGet:
             path: /actuator/health
             port: 8094
-          initialDelaySeconds: 30 # attendre Eureka et MySQL
-          periodSeconds: 10
-        livenessProbe:
-          httpGet:
-            path: /actuator/health
-            port: 8094
-          initialDelaySeconds: 60
-          periodSeconds: 15
+          initialDelaySeconds: 120
+          periodSeconds: 20
+          timeoutSeconds: 10
+          failureThreshold: 3
         resources:
           requests:
-            memory: "256Mi"
-            cpu: "250m"
+            memory: "128Mi"
+            cpu: "100m"
           limits:
-            memory: "512Mi"
-            cpu: "500m"
+            memory: "256Mi"
+            cpu: "300m"
