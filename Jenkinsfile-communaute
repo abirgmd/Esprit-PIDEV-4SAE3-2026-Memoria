@@ -5,9 +5,15 @@ pipeline {
         IMAGE_NAME      = 'memoria-backend-communaute'
         MS_NAME         = 'MemorIA_Backendgestioncommunaute'
         KUBECONFIG_PATH = '/var/lib/jenkins/.kube/config'
+        GIT_REPO_URL    = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
     }
     stages {
-        stage('1 - Build & Push Docker') {
+        stage('1 - Checkout') {
+            steps {
+                git branch: 'main-push', url: "${GIT_REPO_URL}"
+            }
+        }
+        stage('2 - Build & Push Docker') {
             steps {
                 script {
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
@@ -15,7 +21,7 @@ pipeline {
                 }
             }
         }
-        stage('2 - Update Kubernetes') {
+        stage('3 - Update Kubernetes') {
             steps {
                 sh "kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
