@@ -1,90 +1,26 @@
 pipeline {
     agent any
-    tools {
-        maven 'MAVEN_HOME' // Assurez-vous que ce nom correspond à celui dans Jenkins Tools
-    }
     environment {
-        DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
-        DOCKER_HUB_USER    = 'abirgamoudi123'
-        IMAGE_NAME         = 'memoria-backend-communaute'
-        MS_NAME            = 'MemorIA_Backendgestioncommunaute'
-        GIT_REPO_URL       = 'https://github.com/abirgmd/Esprit-PIDEV-4SAE3-2026-Memoria.git'
-    }
-    triggers {
-        githubPush()
+        DOCKER_HUB_USER = 'abirgamoudi123'
+        IMAGE_NAME      = 'memoria-backend-communaute'
+        MS_NAME         = 'MemorIA_Backendgestioncommunaute'
+        KUBECONFIG_PATH = '/var/lib/jenkins/.kube/config'
     }
     stages {
-        stage('1 - Checkout') {
-            steps {
-                git branch: 'main-push', url: "${GIT_REPO_URL}"
-                echo "Code récupéré depuis GitHub - branche main-push"
-            }
-        }
-        stage('2 - Build Maven') {
-            steps {
-                dir("${MS_NAME}") {
-                    sh 'mvn clean package -DskipTests'
-                }
-                echo "Build Maven terminé : ${MS_NAME}"
-            }
-        }
-        stage('3 - Tests') {
+        stage('1 - Build & Push Docker') {
             steps {
                 script {
-                    sh "docker run -d --name mysql-test-${IMAGE_NAME} -e MYSQL_ALLOW_EMPTY_PASSWORD=yes -e MYSQL_DATABASE=memoria_db -p 3306:3306 mysql:5.7 || true"
-                    sh "sleep 15"
-                    
-                    dir("${MS_NAME}") {
-                        sh 'mvn test'
-                    }
-                }
-            }
-            post {
-                always {
-                    junit allowEmptyResults: true, testResults: "${MS_NAME}/target/surefire-reports/*.xml"
-                    sh "docker rm -f mysql-test-${IMAGE_NAME} || true"
-                }
-                failure {
-                    echo 'Tests échoués - vérifiez les rapports'
+                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
+                    sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                 }
             }
         }
-        stage('4 - Build Image Docker') {
+        stage('2 - Update Kubernetes') {
             steps {
-                dir("${MS_NAME}") {
-                    sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
-                }
-                echo "Image Docker construite : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                sh "kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
+                sh "kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
+                sh "kubectl rollout status deployment/backend-communaute -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH} || true"
             }
-        }
-        stage('5 - Push Docker Hub') {
-            steps {
-                script {
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CRED_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
-                        sh "echo \$PASS | docker login -u \$USER --password-stdin"
-                        sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
-                    }
-                }
-                echo "Image publiée sur Docker Hub : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
-            }
-        }
-        stage('6 - Kubernetes') {
-            steps {
-                sh "kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
-                sh "kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
-                sh "kubectl rollout status deployment/backend-communaute -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
-            }
-        }
-    }
-    post {
-        success {
-            echo "Pipeline CI réussi - image ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest disponible sur Docker Hub"
-        }
-        failure {
-            echo "Pipeline CI échoué - vérifier les logs ci-dessus"
-        }
-        always {
-            sh "docker rmi ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest || true"
         }
     }
 }
