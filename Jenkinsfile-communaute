@@ -20,7 +20,10 @@ pipeline {
         stage('2 - Build Maven') {
             steps {
                 dir("${MS_NAME}") {
-                    sh 'mvn clean package -DskipTests'
+                    script {
+                        // On force Java 17 au cas où Jenkins utiliserait une ancienne version
+                        sh "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 && mvn clean package -DskipTests"
+                    }
                 }
             }
         }

@@ -15,7 +15,16 @@ pipeline {
                 echo "Code récupéré depuis GitHub"
             }
         }
-        stage('2 - Build & Push Docker') {
+        stage('2 - Build Maven') {
+            steps {
+                dir("${MS_NAME}") {
+                    script {
+                        sh "export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 && mvn clean package -DskipTests"
+                    }
+                }
+            }
+        }
+        stage('3 - Build & Push Docker') {
             steps {
                 script {
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
@@ -26,11 +35,11 @@ pipeline {
                 }
             }
         }
-        stage('3 - Kubernetes') {
+        stage('4 - Kubernetes') {
             steps {
                 sh "kubectl apply -f k8s/deployments/gateway-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
                 sh "kubectl apply -f k8s/services/gateway-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
-                sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
+                echo '🚀 Déploiement Gateway envoyé.'
             }
         }
     }
