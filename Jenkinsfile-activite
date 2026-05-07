@@ -48,7 +48,7 @@ pipeline {
             steps {
                 sh "kubectl apply -f k8s/deployments/backend-activite-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
                 sh "kubectl apply -f k8s/services/backend-activite-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
-                echo '🚀 Déploiement Activité envoyé au cluster.'
+                echo '🚀 Déploiement Activité envoyé.'
             }
         }
     }
