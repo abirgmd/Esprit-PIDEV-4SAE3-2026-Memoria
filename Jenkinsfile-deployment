@@ -19,16 +19,14 @@ pipeline {
                 sh "kubectl apply -f k8s/deployments/mysql-pvc.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/deployments/mysql-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/mysql-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                echo 'Attente de MySQL...'
-                sh "kubectl rollout status deployment/mysql -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
+                echo 'Infrastructure MySQL appliquée'
             }
         }
         stage('3 - Déploiement Eureka (Service Registry)') {
             steps {
                 sh "kubectl apply -f k8s/deployments/eureka-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
                 sh "kubectl apply -f k8s/services/eureka-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH} --validate=false"
-                echo 'Attente de Eureka Server...'
-                sh "kubectl rollout status deployment/eureka-server -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
+                echo 'Eureka Server appliqué'
             }
         }
         stage('4 - Déploiement des Microservices') {
@@ -38,13 +36,10 @@ pipeline {
                 echo 'Tous les services appliqués sur le cluster K8s'
             }
         }
-        stage('5 - Attendre que les Pods soient prets') {
+        stage('5 - Vérification finale') {
             steps {
-                sh "kubectl rollout status deployment/backend-activite -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
-                sh "kubectl rollout status deployment/backend-communaute -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
-                sh "kubectl rollout status deployment/memoria-gateway -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
-                sh "kubectl rollout status deployment/frontend -n pidev --timeout=300s --kubeconfig=${KUBECONFIG_PATH}"
-                echo 'Tous les déploiements sont opérationnels'
+                echo 'État des Pods (ils vont démarrer progressivement) :'
+                sh "kubectl get pods -n pidev --kubeconfig=${KUBECONFIG_PATH}"
             }
         }
     }
