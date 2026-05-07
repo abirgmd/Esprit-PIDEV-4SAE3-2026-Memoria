@@ -106,6 +106,12 @@
 			<artifactId>poi</artifactId>
 			<version>5.2.3</version>
 		</dependency>
+
+		<!-- Monitoring avec Prometheus -->
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
