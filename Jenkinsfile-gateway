@@ -24,7 +24,16 @@ pipeline {
                 }
             }
         }
-        stage('3 - Build & Push Docker') {
+        stage('3 - SonarQube Analysis') {
+            steps {
+                dir("${MS_NAME}") {
+                    withSonarQubeEnv('SonarQube') {
+                        sh "mvn sonar:sonar -Dsonar.projectKey=${IMAGE_NAME}"
+                    }
+                }
+            }
+        }
+        stage('4 - Build & Push Docker') {
             steps {
                 script {
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ./${MS_NAME}"
@@ -35,7 +44,7 @@ pipeline {
                 }
             }
         }
-        stage('4 - Kubernetes') {
+        stage('5 - Kubernetes') {
             steps {
                 sh "kubectl apply -f k8s/deployments/gateway-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
                 sh "kubectl apply -f k8s/services/gateway-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
