@@ -48,7 +48,7 @@ pipeline {
             steps {
                 sh "kubectl apply -f k8s/deployments/backend-communaute-deployment.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
                 sh "kubectl apply -f k8s/services/backend-communaute-service.yaml -n pidev --kubeconfig=${KUBECONFIG_PATH}"
-                echo '🚀 Déploiement Communauté envoyé au cluster.'
+                echo '🚀 Déploiement Communauté envoyé.'
             }
         }
     }
