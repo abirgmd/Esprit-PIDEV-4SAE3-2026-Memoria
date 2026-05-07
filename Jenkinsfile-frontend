@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    tools {
-        nodejs 'NODE_HOME' // Assurez-vous d'avoir installé le plugin NodeJS et créé cet outil
-    }
     environment {
         DOCKER_HUB_CRED_ID = 'docker-hub-credentials'
         DOCKER_HUB_USER    = 'abirgamoudi123'
@@ -20,44 +17,21 @@ pipeline {
                 echo "Code récupéré depuis GitHub - branche main-push"
             }
         }
-        stage('2 - Build Node') {
-            steps {
-                dir("${MS_NAME}") {
-                    // Utilisation de --legacy-peer-deps pour éviter les conflits de versions Angular 18
-                    // Et augmentation de la mémoire vive pour le build Angular (souvent nécessaire en CI)
-                    sh 'npm install --legacy-peer-deps'
-                    sh 'export NODE_OPTIONS="--max-old-space-size=4096" && npm run build -- --configuration production'
-                }
-                echo "Build Frontend terminé : ${MS_NAME}"
-            }
-        }
-        stage('3 - Tests') {
-            steps {
-                dir("${MS_NAME}") {
-                    echo "Exécution des tests Frontend..."
-                }
-            }
-        }
-        stage('4 - Build Image Docker') {
+        stage('2 - Build & Push Docker Image') {
             steps {
                 dir("${MS_NAME}") {
                     sh "docker build -t ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest ."
                 }
-                echo "Image Docker construite : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
-            }
-        }
-        stage('5 - Push Docker Hub') {
-            steps {
                 script {
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CRED_ID}", passwordVariable: 'PASS', usernameVariable: 'USER')]) {
                         sh "echo \$PASS | docker login -u \$USER --password-stdin"
                         sh "docker push ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
                     }
                 }
-                echo "Image publiée sur Docker Hub : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
+                echo "Image Docker construite et publiée : ${DOCKER_HUB_USER}/${IMAGE_NAME}:latest"
             }
         }
-        stage('6 - Kubernetes') {
+        stage('3 - Kubernetes Deployment') {
             steps {
                 sh "kubectl apply -f k8s/deployments/frontend-deployment.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
                 sh "kubectl apply -f k8s/services/frontend-service.yaml -n pidev --kubeconfig=/var/lib/jenkins/.kube/config"
